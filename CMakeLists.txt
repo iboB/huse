@@ -26,6 +26,7 @@ option(HUSE_BUILD_TESTS "huse: build tests" ${ICM_DEV_MODE})
 #######################################
 # packages
 CPMAddPackage(gh:iboB/splat@1.0.0)
+CPMAddPackage(gh:iboB/mscharconv@1.0.1)
 
 #######################################
 # subdirs

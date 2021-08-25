@@ -7,6 +7,8 @@
 //
 #include "JsonSerializer.hpp"
 
+#include <msstl/charconv.hpp>
+
 #include <cmath>
 #include <iostream>
 #include <type_traits>
@@ -99,7 +101,9 @@ void JsonSerializer::writeFloatValue(T val)
 {
     if (std::isfinite(val))
     {
-        writeSimpleValue(val);
+        char out[25]; // max length of double
+        auto result = msstl::to_chars(out, out + sizeof(out), val);
+        writeSimpleValue(std::string_view(out, result.ptr - out));
     }
     else
     {
@@ -145,9 +149,13 @@ void JsonSerializer::writeEscapedUTF8String(std::string_view str)
             {
                 m_out.put(c);
             }
-            else {
+            else
+            {
+                char num[3]; // max length of 8-bit integer in hex is 2, plus one byte for termination
+                auto result = msstl::to_chars(num, num + 1, c, 16);
+                *result.ptr = 0;
                 const char* prefix = c < 16 ? "\\u000" : "\\u00";
-                m_out << prefix << std::hex << c << std::dec;
+                m_out << prefix << num;
             }
         }
         break;
