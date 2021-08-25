@@ -123,6 +123,10 @@ public:
     virtual void write(double val) = 0;
     virtual void write(std::string_view val) = 0;
 
+    // explicit calls
+    virtual void write(nullptr_t) = 0; // write null explicitly
+    virtual void write(std::nullopt_t) = 0; // discard current value
+
     // helpers
     void write(const char* s) { write(std::string_view(s)); }
 

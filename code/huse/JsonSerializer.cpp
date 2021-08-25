@@ -47,6 +47,8 @@ void JsonSerializer::write(bool val)
     writeSimpleValue(val ? t : f);
 }
 
+void JsonSerializer::write(nullptr_t) { writeSimpleValue("null"); }
+
 void JsonSerializer::write(short val) { writeSimpleValue(val); }
 void JsonSerializer::write(unsigned short val) { writeSimpleValue(val); }
 void JsonSerializer::write(int val) { writeSimpleValue(val); }
@@ -172,8 +174,14 @@ void JsonSerializer::write(std::string_view val)
     writeEscapedUTF8String(val);
 }
 
+void JsonSerializer::write(std::nullopt_t)
+{
+    m_pendingKey.reset();
+}
+
 void JsonSerializer::pushKey(std::string_view k)
 {
+    assert(!m_pendingKey);
     m_pendingKey = k;
 }
 

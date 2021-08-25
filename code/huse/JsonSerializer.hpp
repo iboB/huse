@@ -40,6 +40,9 @@ private:
     virtual void write(double val) override;
     virtual void write(std::string_view val) override;
 
+    virtual void write(nullptr_t) override;
+    virtual void write(std::nullopt_t) override;
+
     virtual void pushKey(std::string_view k) override;
 
     virtual void openObject() override;
