@@ -1,7 +1,13 @@
 icm_add_lib(huse HUSE
     API.h
+
+    impl/UniqueStack.hpp
+
     Serializer.hpp
     VTableExports.cpp
+
+    JsonSerializer.hpp
+    JsonSerializer.cpp
 )
 
 target_include_directories(huse INTERFACE ..)

@@ -6,3 +6,10 @@
 // https://opensource.org/licenses/MIT
 //
 #include "Serializer.hpp"
+
+// used to export vtables
+
+namespace huse
+{
+Serializer::~Serializer() = default;
+}
