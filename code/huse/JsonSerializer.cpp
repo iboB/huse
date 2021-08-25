@@ -238,6 +238,6 @@ void JsonSerializer::newLine()
     }
 }
 
-void JsonSerializer::throwException(std::string text) const {}
+void JsonSerializer::throwException(std::string /*text*/) const {}
 
 }

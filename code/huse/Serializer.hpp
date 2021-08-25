@@ -177,7 +177,7 @@ void OpenedElement::val(const T& v)
 {
     if constexpr (impl::HasSerializeMethod<T>::value)
     {
-        v.huseSerialize(*m_serializer);
+        v.huseSerialize(m_serializer);
     }
     else if constexpr (impl::HasSerializeFunc<T>::value)
     {
