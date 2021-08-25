@@ -155,7 +155,7 @@ void JsonSerializer::writeEscapedUTF8String(std::string_view str)
             else
             {
                 char num[3]; // max length of 8-bit integer in hex is 2, plus one byte for termination
-                auto result = msstl::to_chars(num, num + 1, c, 16);
+                auto result = msstl::to_chars(num, num + sizeof(num), c, 16);
                 *result.ptr = 0;
                 const char* prefix = c < 16 ? "\\u000" : "\\u00";
                 m_out << prefix << num;
