@@ -50,9 +50,9 @@ private:
 
     std::ostream& m_out;
 
+    std::optional<std::string_view> m_pendingKey;
     bool m_hasValue = false; // used to check whether a coma is needed
     const bool m_pretty;
-    bool m_arrayJustOpen = false; // used for a new line for firt array element if pretty
     uint32_t m_depth = 0; // used to indent if pretty
 
 

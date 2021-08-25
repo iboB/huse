@@ -11,7 +11,7 @@
 
 int main()
 {
-    huse::JsonSerializer j(std::cout, false);
+    huse::JsonSerializer j(std::cout, true);
     {
         auto o = j.obj();
         o.val("foo", "bar");

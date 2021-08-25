@@ -29,6 +29,7 @@ JsonSerializer::~JsonSerializer()
 void JsonSerializer::writeRawJson(std::string_view key, std::string_view json)
 {
     pushKey(key);
+    prepareWriteVal();
     m_out << json;
     m_hasValue = true;
 }
@@ -173,11 +174,7 @@ void JsonSerializer::write(std::string_view val)
 
 void JsonSerializer::pushKey(std::string_view k)
 {
-    if (m_hasValue) m_out << ',';
-    newLine();
-    writeEscapedUTF8String(k);
-    m_out << ':';
-    m_hasValue = false;
+    m_pendingKey = k;
 }
 
 void JsonSerializer::open(char o)
@@ -199,38 +196,34 @@ void JsonSerializer::close(char c)
 
 void JsonSerializer::openObject() { open('{'); }
 void JsonSerializer::closeObject() { close('}'); }
-void JsonSerializer::openArray()
-{
-    open('[');
-    m_arrayJustOpen = true;
-}
-void JsonSerializer::closeArray()
-{
-    close(']');
-    m_arrayJustOpen = false;
-}
+void JsonSerializer::openArray() { open('['); }
+void JsonSerializer::closeArray() { close(']'); }
 
 void JsonSerializer::prepareWriteVal()
 {
     if (m_hasValue)
     {
         m_out << ',';
-        newLine();
     }
-    else if (m_arrayJustOpen)
+
+    newLine();
+
+    if (m_pendingKey)
     {
-        newLine();
-        m_arrayJustOpen = false;
+        writeEscapedUTF8String(*m_pendingKey);
+        m_out << ':';
+        m_pendingKey.reset();
     }
+
     m_hasValue = true;
 }
 
 void JsonSerializer::newLine()
 {
     if (!m_pretty) return; // not pretty
-
-    static constexpr std::string_view indent = "  ";
+    if (m_depth == 0 && !m_hasValue) return; // no new line for initial value
     m_out << '\n';
+    static constexpr std::string_view indent = "  ";
     for (uint32_t i = 0; i < m_depth; ++i)
     {
         m_out << indent;
