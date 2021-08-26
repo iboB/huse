@@ -16,60 +16,60 @@
 namespace huse
 {
 
-class OpenedObject;
-class OpenedArray;
+class SerializerObject;
+class SerializerArray;
 class Serializer;
 
-class OpenedElement : public impl::UniqueStack
+class SerializerNode : public impl::UniqueStack
 {
 protected:
-    OpenedElement(Serializer& s, impl::UniqueStack* parent)
+    SerializerNode(Serializer& s, impl::UniqueStack* parent)
         : impl::UniqueStack(parent)
         , m_serializer(s)
     {}
 
     Serializer& m_serializer;
 public:
-    OpenedElement(const OpenedElement&) = delete;
-    OpenedElement operator=(const OpenedElement&) = delete;
-    OpenedElement(OpenedElement&&) = delete;
-    OpenedElement operator=(OpenedElement&&) = delete;
+    SerializerNode(const SerializerNode&) = delete;
+    SerializerNode operator=(const SerializerNode&) = delete;
+    SerializerNode(SerializerNode&&) = delete;
+    SerializerNode operator=(SerializerNode&&) = delete;
 
-    OpenedObject obj();
-    OpenedArray ar();
+    SerializerObject obj();
+    SerializerArray ar();
 
     template <typename T>
     void val(const T& v);
 };
 
-class OpenedArray : public OpenedElement
+class SerializerArray : public SerializerNode
 {
 public:
-    OpenedArray(Serializer& s, impl::UniqueStack* parent = nullptr);
-    ~OpenedArray();
+    SerializerArray(Serializer& s, impl::UniqueStack* parent = nullptr);
+    ~SerializerArray();
 };
 
-class OpenedObject : public OpenedElement
+class SerializerObject : private SerializerNode
 {
 public:
-    OpenedObject(Serializer& s, impl::UniqueStack* parent = nullptr);
-    ~OpenedObject();
+    SerializerObject(Serializer& s, impl::UniqueStack* parent = nullptr);
+    ~SerializerObject();
 
-    OpenedObject obj(std::string_view k)
+    SerializerObject obj(std::string_view k)
     {
         key(k);
-        return OpenedElement::obj();
+        return SerializerNode::obj();
     }
-    OpenedArray ar(std::string_view k)
+    SerializerArray ar(std::string_view k)
     {
         key(k);
-        return OpenedElement::ar();
+        return SerializerNode::ar();
     }
 
     template <typename T>
     void val(std::string_view k, const T& v) {
         key(k);
-        OpenedElement::val(v);
+        SerializerNode::val(v);
     }
 
     template <typename T>
@@ -78,7 +78,7 @@ public:
         if (v)
         {
             key(k);
-            OpenedElement::val(*v);
+            SerializerNode::val(*v);
         }
     }
 
@@ -100,11 +100,11 @@ private:
     void key(std::string_view k);
 };
 
-class HUSE_API Serializer : public OpenedElement {
-    friend class OpenedArray;
-    friend class OpenedObject;
+class HUSE_API Serializer : public SerializerNode {
+    friend class SerializerArray;
+    friend class SerializerObject;
 public:
-    Serializer() : OpenedElement(*this, nullptr) {}
+    Serializer() : SerializerNode(*this, nullptr) {}
     virtual ~Serializer();
 
     struct HUSE_API Exception {};
@@ -141,14 +141,14 @@ protected:
     virtual void closeArray() = 0;
 };
 
-inline OpenedObject OpenedElement::obj()
+inline SerializerObject SerializerNode::obj()
 {
-    return OpenedObject(m_serializer, this);
+    return SerializerObject(m_serializer, this);
 }
 
-inline OpenedArray OpenedElement::ar()
+inline SerializerArray SerializerNode::ar()
 {
-    return OpenedArray(m_serializer, this);
+    return SerializerArray(m_serializer, this);
 }
 
 namespace impl
@@ -163,17 +163,17 @@ template <typename, typename = void>
 struct HasSerializeMethod : std::false_type {};
 
 template <typename T>
-struct HasSerializeMethod<T, decltype(std::declval<T>().huseSerialize(std::declval<Serializer&>()))> : std::true_type {};
+struct HasSerializeMethod<T, decltype(std::declval<T>().huseSerialize(std::declval<SerializerNode&>()))> : std::true_type {};
 
 template <typename, typename = void>
 struct HasSerializeFunc : std::false_type {};
 
 template <typename T>
-struct HasSerializeFunc<T, decltype(huseSerialize(std::declval<Serializer&>(), std::declval<T>()))> : std::true_type {};
+struct HasSerializeFunc<T, decltype(huseSerialize(std::declval<SerializerNode&>(), std::declval<T>()))> : std::true_type {};
 } // namespace impl
 
 template <typename T>
-void OpenedElement::val(const T& v)
+void SerializerNode::val(const T& v)
 {
     if constexpr (impl::HasSerializeMethod<T>::value)
     {
@@ -194,29 +194,29 @@ void OpenedElement::val(const T& v)
     }
 }
 
-inline OpenedArray::OpenedArray(Serializer& s, impl::UniqueStack* parent)
-    : OpenedElement(s, parent)
+inline SerializerArray::SerializerArray(Serializer& s, impl::UniqueStack* parent)
+    : SerializerNode(s, parent)
 {
     m_serializer.openArray();
 }
 
-inline OpenedArray::~OpenedArray()
+inline SerializerArray::~SerializerArray()
 {
     m_serializer.closeArray();
 }
 
-inline OpenedObject::OpenedObject(Serializer& s, impl::UniqueStack* parent)
-    : OpenedElement(s, parent)
+inline SerializerObject::SerializerObject(Serializer& s, impl::UniqueStack* parent)
+    : SerializerNode(s, parent)
 {
     m_serializer.openObject();
 }
 
-inline OpenedObject::~OpenedObject()
+inline SerializerObject::~SerializerObject()
 {
     m_serializer.closeObject();
 }
 
-inline void OpenedObject::key(std::string_view k)
+inline void SerializerObject::key(std::string_view k)
 {
     m_serializer.pushKey(k);
 }
