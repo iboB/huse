@@ -96,6 +96,18 @@ public:
         val(k, *v);
     }
 
+    template <typename T>
+    void flatval(const T& v);
+
+    template <typename T>
+    void flatval(const std::optional<T>& v)
+    {
+        if (v)
+        {
+            flatval(v);
+        }
+    }
+
 private:
     void key(std::string_view k);
 };
@@ -170,6 +182,18 @@ struct HasSerializeFunc : std::false_type {};
 
 template <typename T>
 struct HasSerializeFunc<T, decltype(huseSerialize(std::declval<SerializerNode&>(), std::declval<T>()))> : std::true_type {};
+
+template <typename, typename = void>
+struct HasSerializeFlatMethod : std::false_type {};
+
+template <typename T>
+struct HasSerializeFlatMethod<T, decltype(std::declval<T>().huseSerializeFlat(std::declval<SerializerObject&>()))> : std::true_type {};
+
+template <typename, typename = void>
+struct HasSerializeFlatFunc : std::false_type {};
+
+template <typename T>
+struct HasSerializeFlatFunc<T, decltype(huseSerializeFlat(std::declval<SerializerObject&>(), std::declval<T>()))> : std::true_type {};
 } // namespace impl
 
 template <typename T>
@@ -177,11 +201,11 @@ void SerializerNode::val(const T& v)
 {
     if constexpr (impl::HasSerializeMethod<T>::value)
     {
-        v.huseSerialize(m_serializer);
+        v.huseSerialize(*this);
     }
     else if constexpr (impl::HasSerializeFunc<T>::value)
     {
-        huseSerialize(m_serializer, v);
+        huseSerialize(*this, v);
     }
     // check last to avoid situations where implicit cast is possible and serialize specializations exist for T
     else if constexpr (impl::HasSerializerWrite<T>::value)
@@ -219,6 +243,23 @@ inline SerializerObject::~SerializerObject()
 inline void SerializerObject::key(std::string_view k)
 {
     m_serializer.pushKey(k);
+}
+
+template <typename T>
+void SerializerObject::flatval(const T& v)
+{
+    if constexpr (impl::HasSerializeFlatMethod<T>::value)
+    {
+        v.huseSerializeFlat(*this);
+    }
+    else if constexpr (impl::HasSerializeFlatFunc<T>::value)
+    {
+        huseSerializeFlat(*this, v);
+    }
+    else
+    {
+        cannot_serialize(v);
+    }
 }
 
 } // namespace huse
