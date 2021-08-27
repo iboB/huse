@@ -3,7 +3,10 @@ icm_add_lib(huse HUSE
 
     impl/UniqueStack.hpp
 
+    fwd.hpp
+
     Serializer.hpp
+    Deserializer.hpp
     VTableExports.cpp
 
     JsonSerializer.hpp

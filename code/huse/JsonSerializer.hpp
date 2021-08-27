@@ -26,6 +26,8 @@ public:
 
     void writeRawJson(std::string_view key, std::string_view json);
 
+    [[noreturn]] virtual void throwException(std::string msg) const override;
+
 private:
     virtual void write(bool val) override;
     virtual void write(short val) override;
@@ -71,8 +73,6 @@ private:
 
     void prepareWriteVal(); // called before each value print
     void newLine(); // prints new line and indentation if pretty otherwise does nothing
-
-    void throwException(std::string text) const;
 };
 
 }

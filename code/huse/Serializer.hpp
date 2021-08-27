@@ -110,7 +110,8 @@ public:
     }
 };
 
-class HUSE_API Serializer : public SerializerNode {
+class HUSE_API Serializer : public SerializerNode
+{
     friend class SerializerNode;
     friend class SerializerArray;
     friend class SerializerObject;
@@ -119,6 +120,7 @@ public:
     virtual ~Serializer();
 
     struct HUSE_API Exception {};
+    [[noreturn]] virtual void throwException(std::string msg) const = 0;
 
 protected:
     // write interface
