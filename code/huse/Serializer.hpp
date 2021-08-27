@@ -16,8 +16,8 @@
 namespace huse
 {
 
-class SerializerObject;
 class SerializerArray;
+class SerializerObject;
 class Serializer;
 
 class SerializerNode : public impl::UniqueStack
@@ -55,21 +55,21 @@ public:
     SerializerObject(Serializer& s, impl::UniqueStack* parent = nullptr);
     ~SerializerObject();
 
+    SerializerNode& key(std::string_view k);
+
     SerializerObject obj(std::string_view k)
     {
-        key(k);
-        return SerializerNode::obj();
+        return key(k).obj();
     }
     SerializerArray ar(std::string_view k)
     {
-        key(k);
-        return SerializerNode::ar();
+        return key(k).ar();
     }
 
     template <typename T>
-    void val(std::string_view k, const T& v) {
-        key(k);
-        SerializerNode::val(v);
+    void val(std::string_view k, const T& v)
+    {
+        key(k).val(v);
     }
 
     template <typename T>
@@ -77,8 +77,7 @@ public:
     {
         if (v)
         {
-            key(k);
-            SerializerNode::val(*v);
+            val(k, *v);
         }
     }
 
@@ -88,12 +87,14 @@ public:
     template <typename T>
     void optval(std::string_view k, const std::optional<T>& v, const T& d)
     {
-        if (!v)
+        if (v)
+        {
+            val(k, *v);
+        }
+        else
         {
             val(k, d);
-            return;
         }
-        val(k, *v);
     }
 
     template <typename T>
@@ -107,9 +108,6 @@ public:
             flatval(v);
         }
     }
-
-private:
-    void key(std::string_view k);
 };
 
 class HUSE_API Serializer : public SerializerNode {
@@ -245,9 +243,10 @@ inline SerializerObject::~SerializerObject()
     m_serializer.closeObject();
 }
 
-inline void SerializerObject::key(std::string_view k)
+inline SerializerNode& SerializerObject::key(std::string_view k)
 {
     m_serializer.pushKey(k);
+    return *this;
 }
 
 template <typename T>

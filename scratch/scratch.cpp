@@ -33,6 +33,7 @@ int main()
         }
         o.ar("yyy");
         o.obj("zzz");
+        o.key("fooz").val(33.55);
     }
     return 0;
 }
