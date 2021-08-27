@@ -113,6 +113,7 @@ private:
 };
 
 class HUSE_API Serializer : public SerializerNode {
+    friend class SerializerNode;
     friend class SerializerArray;
     friend class SerializerObject;
 public:
@@ -121,6 +122,7 @@ public:
 
     struct HUSE_API Exception {};
 
+protected:
     // write interface
     virtual void write(bool val) = 0;
     virtual void write(short val) = 0;
@@ -142,7 +144,6 @@ public:
     // helpers
     void write(const char* s) { write(std::string_view(s)); }
 
-protected:
     // implementation interface
     virtual void pushKey(std::string_view k) = 0;
 
@@ -165,11 +166,15 @@ inline SerializerArray SerializerNode::ar()
 
 namespace impl
 {
+struct SerializerWriteHelper : public Serializer {
+    using Serializer::write;
+};
+
 template <typename, typename = void>
 struct HasSerializerWrite : std::false_type {};
 
 template <typename T>
-struct HasSerializerWrite<T, decltype(std::declval<Serializer>().write(std::declval<T>()))> : std::true_type {};
+struct HasSerializerWrite<T, decltype(std::declval<SerializerWriteHelper>().write(std::declval<T>()))> : std::true_type {};
 
 template <typename, typename = void>
 struct HasSerializeMethod : std::false_type {};
