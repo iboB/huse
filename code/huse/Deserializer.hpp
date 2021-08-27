@@ -40,6 +40,28 @@ public:
 
     template <typename T>
     void val(T& v);
+
+protected:
+    // number of elements in compound object
+    size_t length() const;
+};
+
+class DeserializerArray : public DeserializerNode
+{
+public:
+    DeserializerArray(Deserializer& d, impl::UniqueStack* parent = nullptr);
+    ~DeserializerArray();
+
+    DeserializerNode& index(size_t index);
+};
+
+class DeserializerObject : private DeserializerNode
+{
+public:
+    DeserializerObject(Deserializer& d, impl::UniqueStack* parent = nullptr);
+    ~DeserializerObject();
+
+    DeserializerNode& key(std::string_view k);
 };
 
 class HUSE_API Deserializer
