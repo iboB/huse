@@ -26,7 +26,6 @@ JsonSerializer::~JsonSerializer()
 {
     if (std::uncaught_exceptions()) return; // nothing smart to do
     assert(m_depth == 0);
-    if (m_pretty) m_out << '\n'; // add final newline
 }
 
 void JsonSerializer::writeRawJson(std::string_view key, std::string_view json)
