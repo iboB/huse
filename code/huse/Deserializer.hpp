@@ -52,7 +52,9 @@ public:
     DeserializerArray(Deserializer& d, impl::UniqueStack* parent = nullptr);
     ~DeserializerArray();
 
+    using DeserializerNode::length;
     DeserializerNode& index(size_t index);
+
 };
 
 class DeserializerObject : private DeserializerNode
@@ -61,7 +63,12 @@ public:
     DeserializerObject(Deserializer& d, impl::UniqueStack* parent = nullptr);
     ~DeserializerObject();
 
+    using DeserializerNode::length;
+
     DeserializerNode& key(std::string_view k);
+
+    DeserializerObject obj(std::string_view k);
+    DeserializerArray ar(std::string_view k);
 };
 
 class HUSE_API Deserializer
@@ -73,7 +80,7 @@ public:
     [[noreturn]] virtual void throwException(std::string msg) const = 0;
 
 protected:
-    // virtual interface
+    // read interface
     virtual void read(bool& val) = 0;
     virtual void read(short& val) = 0;
     virtual void read(unsigned short& val) = 0;
@@ -88,11 +95,29 @@ protected:
     virtual void read(std::string_view& val) = 0;
     virtual void read(std::string& val) = 0;
 
+    // implementation interface
     virtual void loadObject() = 0;
     virtual void unloadObject() = 0;
 
     virtual void loadArray() = 0;
     virtual void unloadArray() = 0;
+
+    // number of subNodes in current node
+    virtual size_t curLength() = 0;
+
+    // throw if no key
+    virtual void loadKey(std::string_view key) = 0;
+
+    // load and resturn true if key exists, otherwise return false
+    // equivalent to (but more optimized than)
+    // if (hasKey(k)) { loadKey(k); return true; } else return false;
+    virtual bool tryLoadKey(std::string_view key) = 0;
+
+    // throw if no index
+    virtual void loadIndex(int index) = 0;
+
+    // noad the next key and return it or nullopt if there is no next key
+    virtual std::optional<std::string_view> loadNextKey() = 0;
 };
 
 }
