@@ -60,7 +60,6 @@ private:
     const bool m_pretty;
     uint32_t m_depth = 0; // used to indent if pretty
 
-
     // internal write helpers
     template <typename T> void writeSimpleValue(T val);
     template <typename T> void writePotentiallyBigIntegerValue(T val);

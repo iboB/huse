@@ -7,13 +7,15 @@
 //
 #include <doctest/doctest.h>
 
+#include <huse/JsonDeserializer.hpp>
 #include <huse/JsonSerializer.hpp>
 
 #include <sstream>
 
 TEST_SUITE_BEGIN("json");
 
-struct JsonSerializerPack {
+struct JsonSerializerPack
+{
     std::ostringstream sout;
     std::optional<huse::JsonSerializer> s;
 
@@ -29,10 +31,12 @@ struct JsonSerializerPack {
     }
 };
 
-struct JsonOutTester {
+struct JsonSerializeTester
+{
     std::optional<JsonSerializerPack> pack;
 
-    huse::JsonSerializer& make(bool pretty = false) {
+    huse::JsonSerializer& make(bool pretty = false)
+    {
         assert(!pack);
         pack.emplace(pretty);
         return *pack->s;
@@ -51,7 +55,7 @@ struct JsonOutTester {
 
 TEST_CASE("simple serialize")
 {
-    JsonOutTester j;
+    JsonSerializeTester j;
 
     j.compact().val(5);
     CHECK(j.str() == "5");
@@ -68,14 +72,14 @@ TEST_CASE("simple serialize")
         std::optional<int> nope;
         std::optional<int> yup = -3;
         obj.val("bool",true);
-        obj.val("bool",false);
+        obj.val("bool2",false);
         obj.val("float",3.1f);
         obj.val("int", yup);
         obj.val("nope", nope);
         obj.val("unsigned-long-long",900000000000000ULL);
         obj.val("str", "b\n\\g\t\033sdf");
     }
-    CHECK(j.str() == R"({"array":[1,2,3,4],"bool":true,"bool":false,"float":3.1,"int":-3,"unsigned-long-long":900000000000000,"str":"b\n\\g\t\u001bsdf"})");
+    CHECK(j.str() == R"({"array":[1,2,3,4],"bool":true,"bool2":false,"float":3.1,"int":-3,"unsigned-long-long":900000000000000,"str":"b\n\\g\t\u001bsdf"})");
 
     j.compact().obj().obj("i1").obj("i2").obj("i3").val("deep", true);
     CHECK(j.str() == R"({"i1":{"i2":{"i3":{"deep":true}}}})");
@@ -100,4 +104,63 @@ R"({
   ]
 })"
     );
+}
+
+huse::JsonDeserializer makeD(std::string_view str)
+{
+    return huse::JsonDeserializer::fromConstString(str);
+}
+
+TEST_CASE("simple deserialize")
+{
+    {
+        auto d = makeD("[]");
+        auto ar = d.ar();
+        CHECK(ar.length() == 0);
+    }
+
+    {
+        auto d = makeD(R"({"array":[1,2,3,4],"bool":true,"bool2":false,"float":3.1,"int":-3,"unsigned-long-long":900000000000000,"str":"b\n\\g\t\u001bsdf"})");
+        auto obj = d.obj();
+        {
+            auto ar = obj.ar("array");
+            CHECK(ar.length() == 4);
+            int i;
+            ar.index(2).val(i);
+            CHECK(i == 3);
+            double d;
+            ar.index(0).val(d);
+            CHECK(d == 1.0);
+            unsigned ii;
+            ar.val(ii);
+            CHECK(ii == 2);
+        }
+        bool b;
+        obj.val("bool", b);
+        CHECK(b);
+
+        auto q = obj.nextkey();
+        CHECK(!!q);
+        CHECK(q.name == "bool2");
+        q->val(b);
+        CHECK(!b);
+
+        std::string str;
+        obj.val("str", str);
+        CHECK(str == "b\n\\g\t\033sdf");
+
+        CHECK(!obj.nextkey());
+
+        float f;
+        obj.val("float", f);
+        CHECK(f == 3.1f);
+
+        int i;
+        obj.val("int", i);
+        CHECK(i == -3);
+
+        unsigned long long ull;
+        obj.val("unsigned-long-long", ull);
+        CHECK(ull == 900000000000000);
+    }
 }

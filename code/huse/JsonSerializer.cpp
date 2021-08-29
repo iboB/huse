@@ -61,7 +61,7 @@ void JsonSerializer::writePotentiallyBigIntegerValue(T val)
 {
     if constexpr (sizeof(T) <= 4)
     {
-        // true for long on windows
+        // gcc and clang have long equal intptr_t, msvc has long at 4 bytes
         writeSimpleValue(val);
     }
     else if constexpr (std::is_signed_v<T>)

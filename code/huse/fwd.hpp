@@ -14,4 +14,8 @@ class SerializerNode;
 class SerializerArray;
 class SerializerObject;
 
+class DeserializerNode;
+class DeserializerArray;
+class DeserializerObject;
+
 }

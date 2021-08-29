@@ -131,12 +131,13 @@ public:
     KeyQuery nextkey();
 };
 
-class HUSE_API Deserializer
+class HUSE_API Deserializer : public DeserializerNode
 {
     friend class DeserializerNode;
     friend class DeserializerArray;
     friend class DeserializerObject;
 public:
+    Deserializer() : DeserializerNode(*this, nullptr) {}
     virtual ~Deserializer();
 
     struct HUSE_API Exception {};
@@ -250,7 +251,7 @@ void DeserializerNode::val(T& v) {
     }
 }
 
-int DeserializerNode::length() const
+inline int DeserializerNode::length() const
 {
     return m_deserializer.curLength();
 }
@@ -277,7 +278,7 @@ inline DeserializerObject::DeserializerObject(Deserializer& d, impl::UniqueStack
 {
     m_deserializer.loadObject();
 }
-DeserializerObject::~DeserializerObject()
+inline DeserializerObject::~DeserializerObject()
 {
     m_deserializer.unloadObject();
 }

@@ -11,10 +11,14 @@ icm_add_lib(huse HUSE
 
     JsonSerializer.hpp
     JsonSerializer.cpp
+    JsonDeserializer.hpp
+    JsonDeserializer.cpp
 )
 
 target_include_directories(huse INTERFACE ..)
-target_link_libraries(huse PUBLIC
-    splat
-    mscharconv
+target_link_libraries(huse
+    PUBLIC
+        splat
+    PRIVATE
+        mscharconv
 )
