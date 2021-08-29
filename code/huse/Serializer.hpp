@@ -99,15 +99,6 @@ public:
 
     template <typename T>
     void flatval(const T& v);
-
-    template <typename T>
-    void flatval(const std::optional<T>& v)
-    {
-        if (v)
-        {
-            flatval(v);
-        }
-    }
 };
 
 class HUSE_API Serializer : public SerializerNode

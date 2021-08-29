@@ -43,7 +43,7 @@ public:
 
 protected:
     // number of elements in compound object
-    size_t length() const;
+    int length() const;
 };
 
 class DeserializerArray : public DeserializerNode
@@ -53,8 +53,7 @@ public:
     ~DeserializerArray();
 
     using DeserializerNode::length;
-    DeserializerNode& index(size_t index);
-
+    DeserializerNode& index(int index);
 };
 
 class DeserializerObject : private DeserializerNode
@@ -67,12 +66,76 @@ public:
 
     DeserializerNode& key(std::string_view k);
 
-    DeserializerObject obj(std::string_view k);
-    DeserializerArray ar(std::string_view k);
+    DeserializerObject obj(std::string_view k)
+    {
+        return key(k).obj();
+    }
+    DeserializerArray ar(std::string_view k)
+    {
+        return key(k).ar();
+    }
+
+    DeserializerNode* optkey(std::string_view k);
+
+    template <typename T>
+    void val(std::string_view k, T& v)
+    {
+        key(k).val(v);
+    }
+
+    template <typename T>
+    void val(std::string_view k, std::optional<T>& v)
+    {
+        if (auto open = optkey(k))
+        {
+            open->val(v.emplace());
+        }
+        else
+        {
+            v.reset();
+        }
+    }
+
+    template <typename T>
+    void optval(std::string_view k, T& v)
+    {
+        if (auto open = optkey(k))
+        {
+            open->val(v);
+        }
+    }
+
+    template <typename T>
+    void optval(std::string_view k, std::optional<T>& v, const T& d)
+    {
+        if (auto open = optkey(k))
+        {
+            open->val(v.emplace());
+        }
+        else
+        {
+            v.reset(d);
+        }
+    }
+
+    template <typename T>
+    void flatval(T& v);
+
+    struct KeyQuery
+    {
+        std::string_view name;
+        DeserializerNode* node = nullptr;
+        explicit operator bool() const { return node; }
+        DeserializerNode* operator->() { return node; }
+    };
+    KeyQuery nextkey();
 };
 
 class HUSE_API Deserializer
 {
+    friend class DeserializerNode;
+    friend class DeserializerArray;
+    friend class DeserializerObject;
 public:
     virtual ~Deserializer();
 
@@ -102,8 +165,8 @@ protected:
     virtual void loadArray() = 0;
     virtual void unloadArray() = 0;
 
-    // number of subNodes in current node
-    virtual size_t curLength() = 0;
+    // number of sub-nodes in current node
+    virtual int curLength() const = 0;
 
     // throw if no key
     virtual void loadKey(std::string_view key) = 0;
@@ -120,4 +183,139 @@ protected:
     virtual std::optional<std::string_view> loadNextKey() = 0;
 };
 
+inline DeserializerObject DeserializerNode::obj()
+{
+    return DeserializerObject(m_deserializer, this);
 }
+
+inline DeserializerArray DeserializerNode::ar()
+{
+    return DeserializerArray(m_deserializer, this);
+}
+
+namespace impl
+{
+struct DeserializerReadHelper : public Deserializer {
+    using Deserializer::read;
+};
+
+template <typename, typename = void>
+struct HasDeserializerRead : std::false_type {};
+
+template <typename T>
+struct HasDeserializerRead<T, decltype(std::declval<DeserializerReadHelper>().read(std::declval<T&>()))> : std::true_type {};
+
+template <typename, typename = void>
+struct HasDeserializeMethod : std::false_type {};
+
+template <typename T>
+struct HasDeserializeMethod<T, decltype(std::declval<T>().huseDeserialize(std::declval<DeserializerNode&>()))> : std::true_type {};
+
+template <typename, typename = void>
+struct HasDeserializeFunc : std::false_type {};
+
+template <typename T>
+struct HasDeserializeFunc<T, decltype(huseDeserialize(std::declval<DeserializerNode&>(), std::declval<T&>()))> : std::true_type {};
+
+template <typename, typename = void>
+struct HasDeserializeFlatMethod : std::false_type {};
+
+template <typename T>
+struct HasDeserializeFlatMethod<T, decltype(std::declval<T>().huseSerializeFlat(std::declval<DeserializerObject&>()))> : std::true_type {};
+
+template <typename, typename = void>
+struct HasDeserializeFlatFunc : std::false_type {};
+
+template <typename T>
+struct HasDeserializeFlatFunc<T, decltype(huseSerializeFlat(std::declval<DeserializerObject&>(), std::declval<T&>()))> : std::true_type {};
+} // namespace impl
+
+template <typename T>
+void DeserializerNode::val(T& v) {
+    if constexpr (impl::HasDeserializeMethod<T>::value)
+    {
+        v.huseDeserialize(*this);
+    }
+    else if constexpr (impl::HasDeserializeFunc<T>::value)
+    {
+        huseDeserialize(*this, v);
+    }
+    else if constexpr (impl::HasDeserializerRead<T>::value)
+    {
+        m_deserializer.read(v);
+    }
+    else
+    {
+        cannot_deserialize(v);
+    }
+}
+
+int DeserializerNode::length() const
+{
+    return m_deserializer.curLength();
+}
+
+inline DeserializerArray::DeserializerArray(Deserializer& d, impl::UniqueStack* parent)
+    : DeserializerNode(d, parent)
+{
+    m_deserializer.loadArray();
+}
+
+inline DeserializerArray::~DeserializerArray()
+{
+    m_deserializer.unloadArray();
+}
+
+inline DeserializerNode& DeserializerArray::index(int index)
+{
+    m_deserializer.loadIndex(index);
+    return *this;
+}
+
+inline DeserializerObject::DeserializerObject(Deserializer& d, impl::UniqueStack* parent)
+    : DeserializerNode(d, parent)
+{
+    m_deserializer.loadObject();
+}
+DeserializerObject::~DeserializerObject()
+{
+    m_deserializer.unloadObject();
+}
+
+inline DeserializerNode& DeserializerObject::key(std::string_view k)
+{
+    m_deserializer.loadKey(k);
+    return *this;
+}
+
+inline DeserializerNode* DeserializerObject::optkey(std::string_view k)
+{
+    if (m_deserializer.tryLoadKey(k)) return this;
+    return nullptr;
+}
+
+inline DeserializerObject::KeyQuery DeserializerObject::nextkey()
+{
+    auto name = m_deserializer.loadNextKey();
+    if (!name) return {};
+    return {*name, this};
+}
+
+template <typename T>
+void DeserializerObject::flatval(T& v)
+{
+    if constexpr (impl::HasDeserializeFlatMethod<T>::value)
+    {
+        v.huseDeserializeFlat(*this);
+    }
+    else if constexpr (impl::HasDeserializeFlatFunc<T>::value)
+    {
+        huseDeserializeFlat(*this, v);
+    }
+    else
+    {
+        cannot_deserialize(v);
+    }
+}
+
+} // namespace huse
