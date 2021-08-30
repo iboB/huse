@@ -7,13 +7,24 @@
 //
 #include "Serializer.hpp"
 #include "Deserializer.hpp"
-#include "SerializerException.hpp"
+#include "Exception.hpp"
 
 // used to export vtables
 
 namespace huse
 {
 BasicSerializer::~BasicSerializer() = default;
-BasicSerializer::Exception::~Exception() = default;
 BasicDeserializer::~BasicDeserializer() = default;
+Exception::~Exception() = default;
+
+void BasicSerializer::throwException(const std::string& msg) const
+{
+    throw SerializerException(msg);
+}
+
+void BasicDeserializer::throwException(const std::string& msg) const
+{
+    throw DeserializerException(msg);
+}
+
 }

@@ -59,6 +59,8 @@ void Serializer::write(unsigned int val) { writeSimpleValue(val); }
 template <typename T>
 void Serializer::writePotentiallyBigIntegerValue(T val)
 {
+    static const std::string_view IntegerTooBig = "Integer value is bigger than maximum allowed for JSON";
+
     if constexpr (sizeof(T) <= 4)
     {
         // gcc and clang have long equal intptr_t, msvc has long at 4 bytes
@@ -76,7 +78,7 @@ void Serializer::writePotentiallyBigIntegerValue(T val)
         }
         else
         {
-            // throwException("integer too big");
+            throwException(std::string(IntegerTooBig));
         }
     }
     else
@@ -89,7 +91,7 @@ void Serializer::writePotentiallyBigIntegerValue(T val)
         }
         else
         {
-            // throwException("integer too big");
+            throwException(std::string(IntegerTooBig));
         }
     }
 
@@ -112,7 +114,7 @@ void Serializer::writeFloatValue(T val)
     }
     else
     {
-        // throwException("float not finite");
+        throwException("Floating point value is not finite. Not supported by JSON");
     }
 }
 

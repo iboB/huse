@@ -172,8 +172,7 @@ public:
     BasicDeserializer() : DeserializerNode(*this, nullptr) {}
     virtual ~BasicDeserializer();
 
-    struct HUSE_API Exception {};
-    [[noreturn]] virtual void throwException(std::string msg) const = 0;
+    [[noreturn]] virtual void throwException(const std::string& msg) const;
 
 protected:
     // read interface

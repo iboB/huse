@@ -23,7 +23,7 @@ public:
 
     ~Deserializer();
 
-    [[noreturn]] virtual void throwException(std::string msg) const override;
+    [[noreturn]] virtual void throwException(const std::string& msg) const override;
 
 private:
     Deserializer(sajson::document&& sajsonDoc);

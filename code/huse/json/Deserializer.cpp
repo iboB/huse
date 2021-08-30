@@ -7,23 +7,13 @@
 //
 #include "Deserializer.hpp"
 
-#if defined(__GNUC__) && !defined(__clang__)
-#define DISABLE_SAJSON_WARNINGS \
-     _Pragma("GCC diagnostic push") \
-     _Pragma("GCC diagnostic ignored \"-Wunused-parameter\"") \
-    /*preserve this line*/
-#define REENABLE_SAJSON_WARNINGS _Pragma("GCC diagnostic pop")
-#else
-#define DISABLE_SAJSON_WARNINGS
-#define REENABLE_SAJSON_WARNINGS
-#endif
-
 #include "_sajson/sajson.hpp"
 
 #include <vector>
 #include <string>
 #include <cmath>
 #include <exception>
+#include <sstream>
 
 namespace huse::json
 {
@@ -283,8 +273,18 @@ struct Deserializer::Impl
         return fromSajsonType(top.pending->sjvalue.get_type());
     }
 
-    [[noreturn]] void throwException(std::string msg) const
+    [[noreturn]] void throwException(const std::string& msg) const
     {
+        std::ostringstream sout;
+        sout << msg << '\n';
+        bool first = true;
+        for (auto& elem : stack)
+        {
+            if (!first) sout << '.';
+            auto& val = elem.value;
+            if (val.key.empty()) sout << '[' << val.index << ']';
+            else sout << val.key;
+        }
         throw msg;
     }
 };
@@ -351,6 +351,6 @@ std::optional<std::string_view> Deserializer::loadNextKey() { return m_i->loadNe
 
 Type Deserializer::pendingType() const { return m_i->pendingType(); }
 
-void Deserializer::throwException(std::string msg) const { m_i->throwException(std::move(msg)); }
+void Deserializer::throwException(const std::string& msg) const { m_i->throwException(std::move(msg)); }
 
 }

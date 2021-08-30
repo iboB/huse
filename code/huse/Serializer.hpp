@@ -110,7 +110,7 @@ public:
     BasicSerializer() : SerializerNode(*this, nullptr) {}
     virtual ~BasicSerializer();
 
-    class Exception;
+    [[noreturn]] virtual void throwException(const std::string& msg) const;
 
 protected:
     // write interface
