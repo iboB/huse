@@ -121,9 +121,12 @@ TEST_CASE("simple deserialize")
 
     {
         auto d = makeD(R"({"array":[1,2,3,4],"bool":true,"bool2":false,"float":3.1,"int":-3,"unsigned-long-long":900000000000000,"str":"b\n\\g\t\u001bsdf"})");
+        CHECK(d.type().is(huse::Deserializer::Type::Object));
         auto obj = d.obj();
+        CHECK(obj.type().is(huse::Deserializer::Type::Object));
         {
             auto ar = obj.ar("array");
+            CHECK(ar.type().is(huse::Deserializer::Type::Array));
             CHECK(ar.length() == 4);
             int i;
             ar.index(2).val(i);
@@ -164,5 +167,18 @@ TEST_CASE("simple deserialize")
         unsigned long long ull;
         obj.val("unsigned-long-long", ull);
         CHECK(ull == 900000000000000);
+
+        auto& inode = obj.key("int");
+        CHECK(inode.type().is(huse::Deserializer::Type::Integer));
+        CHECK(inode.type().is(huse::Deserializer::Type::Number));
+        CHECK(!inode.type().is(huse::Deserializer::Type::Float));
+
+        auto& fnode = obj.key("float");
+        CHECK(fnode.type().is(huse::Deserializer::Type::Float));
+        CHECK(fnode.type().is(huse::Deserializer::Type::Number));
+
+        CHECK(obj.key("str").type().is(huse::Deserializer::Type::String));
+
+        CHECK(obj.key("array").type().is(huse::Deserializer::Type::Array));
     }
 }

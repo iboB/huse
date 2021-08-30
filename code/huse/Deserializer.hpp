@@ -160,7 +160,7 @@ public:
     KeyQuery nextkey();
 
     // intentionally hiding parent
-    Type type() const { return {Type::Array}; }
+    Type type() const { return {Type::Object}; }
 };
 
 class HUSE_API Deserializer : public DeserializerNode
