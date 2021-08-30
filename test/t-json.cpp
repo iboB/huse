@@ -7,8 +7,8 @@
 //
 #include <doctest/doctest.h>
 
-#include <huse/JsonDeserializer.hpp>
-#include <huse/JsonSerializer.hpp>
+#include <huse/json/Deserializer.hpp>
+#include <huse/json/Serializer.hpp>
 
 #include <huse/helpers/StdVector.hpp>
 
@@ -19,7 +19,7 @@ TEST_SUITE_BEGIN("json");
 struct JsonSerializerPack
 {
     std::ostringstream sout;
-    std::optional<huse::JsonSerializer> s;
+    std::optional<huse::json::Serializer> s;
 
     JsonSerializerPack(bool pretty)
     {
@@ -37,15 +37,15 @@ struct JsonSerializeTester
 {
     std::optional<JsonSerializerPack> pack;
 
-    huse::JsonSerializer& make(bool pretty = false)
+    huse::json::Serializer& make(bool pretty = false)
     {
         assert(!pack);
         pack.emplace(pretty);
         return *pack->s;
     }
 
-    huse::JsonSerializer& compact() { return make(false); }
-    huse::JsonSerializer& pretty() { return make(true); }
+    huse::json::Serializer& compact() { return make(false); }
+    huse::json::Serializer& pretty() { return make(true); }
 
     std::string str()
     {
@@ -108,9 +108,9 @@ R"({
     );
 }
 
-huse::JsonDeserializer makeD(std::string_view str)
+huse::json::Deserializer makeD(std::string_view str)
 {
-    return huse::JsonDeserializer::fromConstString(str);
+    return huse::json::Deserializer::fromConstString(str);
 }
 
 TEST_CASE("simple deserialize")
@@ -123,12 +123,12 @@ TEST_CASE("simple deserialize")
 
     {
         auto d = makeD(R"({"array":[1,2,3,4],"bool":true,"bool2":false,"float":3.1,"int":-3,"unsigned-long-long":900000000000000,"str":"b\n\\g\t\u001bsdf"})");
-        CHECK(d.type().is(huse::Deserializer::Type::Object));
+        CHECK(d.type().is(huse::Type::Object));
         auto obj = d.obj();
-        CHECK(obj.type().is(huse::Deserializer::Type::Object));
+        CHECK(obj.type().is(huse::Type::Object));
         {
             auto ar = obj.ar("array");
-            CHECK(ar.type().is(huse::Deserializer::Type::Array));
+            CHECK(ar.type().is(huse::Type::Array));
             CHECK(ar.length() == 4);
             int i;
             ar.index(2).val(i);
@@ -147,8 +147,8 @@ TEST_CASE("simple deserialize")
         auto q = obj.nextkey();
         CHECK(!!q);
         CHECK(q.name == "bool2");
-        CHECK(q.node->type().is(huse::Deserializer::Type::Boolean));
-        CHECK(q.node->type().is(huse::Deserializer::Type::False));
+        CHECK(q.node->type().is(huse::Type::Boolean));
+        CHECK(q.node->type().is(huse::Type::False));
         q->val(b);
         CHECK(!b);
 
@@ -171,17 +171,17 @@ TEST_CASE("simple deserialize")
         CHECK(ull == 900000000000000);
 
         auto& inode = obj.key("int");
-        CHECK(inode.type().is(huse::Deserializer::Type::Integer));
-        CHECK(inode.type().is(huse::Deserializer::Type::Number));
-        CHECK(!inode.type().is(huse::Deserializer::Type::Float));
+        CHECK(inode.type().is(huse::Type::Integer));
+        CHECK(inode.type().is(huse::Type::Number));
+        CHECK(!inode.type().is(huse::Type::Float));
 
         auto& fnode = obj.key("float");
-        CHECK(fnode.type().is(huse::Deserializer::Type::Float));
-        CHECK(fnode.type().is(huse::Deserializer::Type::Number));
+        CHECK(fnode.type().is(huse::Type::Float));
+        CHECK(fnode.type().is(huse::Type::Number));
 
-        CHECK(obj.key("str").type().is(huse::Deserializer::Type::String));
+        CHECK(obj.key("str").type().is(huse::Type::String));
 
-        CHECK(obj.key("array").type().is(huse::Deserializer::Type::Array));
+        CHECK(obj.key("array").type().is(huse::Type::Array));
     }
 }
 

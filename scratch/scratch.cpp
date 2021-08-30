@@ -6,11 +6,11 @@
 // https://opensource.org/licenses/MIT
 //
 #include <iostream>
-#include <huse/JsonSerializer.hpp>
+#include <huse/json/Serializer.hpp>
 
 int main()
 {
-    huse::JsonSerializer j(std::cout, true);
+    huse::json::Serializer j(std::cout, true);
     {
         auto o = j.obj();
         o.val("foo", "bar");

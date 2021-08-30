@@ -5,7 +5,7 @@
 // See accompanying file LICENSE.txt or copy at
 // https://opensource.org/licenses/MIT
 //
-#include "JsonDeserializer.hpp"
+#include "Deserializer.hpp"
 
 #if defined(__GNUC__) && !defined(__clang__)
 #define DISABLE_SAJSON_WARNINGS \
@@ -25,27 +25,27 @@
 #include <cmath>
 #include <exception>
 
-namespace huse
+namespace huse::json
 {
 
-JsonDeserializer JsonDeserializer::fromConstString(std::string_view str)
+Deserializer Deserializer::fromConstString(std::string_view str)
 {
-    return JsonDeserializer(
+    return Deserializer(
         sajson::parse(
             sajson::single_allocation(),
             sajson::string(str.data(), str.length())));
 }
 
-JsonDeserializer JsonDeserializer::fromMutableString(char* str, size_t size /*= size_t(-1)*/)
+Deserializer Deserializer::fromMutableString(char* str, size_t size /*= size_t(-1)*/)
 {
     if (size == size_t(-1)) size = strlen(str);
-    return JsonDeserializer(
+    return Deserializer(
     sajson::parse(
         sajson::single_allocation(),
         sajson::mutable_string_view(size, str)));
 }
 
-struct JsonDeserializer::Impl
+struct Deserializer::Impl
 {
     sajson::document document;
 
@@ -256,25 +256,25 @@ struct JsonDeserializer::Impl
         return int(stack.back().value.sjvalue.get_length());
     }
 
-    static JsonDeserializer::Type fromSajsonType(sajson::type t)
+    static Type fromSajsonType(sajson::type t)
     {
         switch (t)
         {
-        case sajson::TYPE_INTEGER: return {JsonDeserializer::Type::Integer};
-        case sajson::TYPE_DOUBLE:  return {JsonDeserializer::Type::Float};
-        case sajson::TYPE_NULL:    return {JsonDeserializer::Type::Null};
-        case sajson::TYPE_FALSE:   return {JsonDeserializer::Type::False};
-        case sajson::TYPE_TRUE:    return {JsonDeserializer::Type::True};
-        case sajson::TYPE_STRING:  return {JsonDeserializer::Type::String};
-        case sajson::TYPE_ARRAY:   return {JsonDeserializer::Type::Array};
-        case sajson::TYPE_OBJECT:  return {JsonDeserializer::Type::Object};
+        case sajson::TYPE_INTEGER: return {Type::Integer};
+        case sajson::TYPE_DOUBLE:  return {Type::Float};
+        case sajson::TYPE_NULL:    return {Type::Null};
+        case sajson::TYPE_FALSE:   return {Type::False};
+        case sajson::TYPE_TRUE:    return {Type::True};
+        case sajson::TYPE_STRING:  return {Type::String};
+        case sajson::TYPE_ARRAY:   return {Type::Array};
+        case sajson::TYPE_OBJECT:  return {Type::Object};
         default:
             assert(false);
-            return JsonDeserializer::Type::Null;
+            return Type::Null;
         }
     }
 
-    JsonDeserializer::Type pendingType() const
+    Type pendingType() const
     {
         if (stack.empty()) return fromSajsonType(document.get_root().get_type());
 
@@ -289,7 +289,7 @@ struct JsonDeserializer::Impl
     }
 };
 
-JsonDeserializer::JsonDeserializer(sajson::document&& doc)
+Deserializer::Deserializer(sajson::document&& doc)
     : m_i(new Impl{std::move(doc), {}})
 {
     if (!m_i->document.is_valid())
@@ -298,13 +298,13 @@ JsonDeserializer::JsonDeserializer(sajson::document&& doc)
     }
 }
 
-JsonDeserializer::~JsonDeserializer()
+Deserializer::~Deserializer()
 {
     if (std::uncaught_exceptions()) return;
     assert(m_i->stack.size() == 0);
 }
 
-void JsonDeserializer::read(bool& val)
+void Deserializer::read(bool& val)
 {
     auto t = m_i->r().get_type();
     if (t == sajson::TYPE_TRUE) val = true;
@@ -312,11 +312,11 @@ void JsonDeserializer::read(bool& val)
     else throwException("not bool");
 }
 
-void JsonDeserializer::read(short& val) { m_i->readInt(val); }
-void JsonDeserializer::read(unsigned short& val) { m_i->readInt(val); }
-void JsonDeserializer::read(int& val) { m_i->readInt(val); }
-void JsonDeserializer::read(unsigned int& val) { m_i->readLargeInt(val); }
-void JsonDeserializer::read(long& val)
+void Deserializer::read(short& val) { m_i->readInt(val); }
+void Deserializer::read(unsigned short& val) { m_i->readInt(val); }
+void Deserializer::read(int& val) { m_i->readInt(val); }
+void Deserializer::read(unsigned int& val) { m_i->readLargeInt(val); }
+void Deserializer::read(long& val)
 {
     if constexpr (sizeof(long) == 4)
     {
@@ -328,29 +328,29 @@ void JsonDeserializer::read(long& val)
         m_i->readLargeInt(val);
     }
 }
-void JsonDeserializer::read(unsigned long& val) { m_i->readLargeInt(val); }
-void JsonDeserializer::read(long long& val) { m_i->readLargeInt(val); }
-void JsonDeserializer::read(unsigned long long& val) { m_i->readLargeInt(val); }
-void JsonDeserializer::read(float& val) { m_i->readFloat(val); }
-void JsonDeserializer::read(double& val) { m_i->readFloat(val); }
-void JsonDeserializer::read(std::string_view& val) { m_i->readString(val); }
-void JsonDeserializer::read(std::string& val) { m_i->readString(val); }
+void Deserializer::read(unsigned long& val) { m_i->readLargeInt(val); }
+void Deserializer::read(long long& val) { m_i->readLargeInt(val); }
+void Deserializer::read(unsigned long long& val) { m_i->readLargeInt(val); }
+void Deserializer::read(float& val) { m_i->readFloat(val); }
+void Deserializer::read(double& val) { m_i->readFloat(val); }
+void Deserializer::read(std::string_view& val) { m_i->readString(val); }
+void Deserializer::read(std::string& val) { m_i->readString(val); }
 
-void JsonDeserializer::loadObject() { m_i->loadCompound(sajson::TYPE_OBJECT); }
-void JsonDeserializer::unloadObject() { m_i->unloadCompound(); }
-void JsonDeserializer::loadArray() { m_i->loadCompound(sajson::TYPE_ARRAY); }
-void JsonDeserializer::unloadArray() { m_i->unloadCompound(); }
+void Deserializer::loadObject() { m_i->loadCompound(sajson::TYPE_OBJECT); }
+void Deserializer::unloadObject() { m_i->unloadCompound(); }
+void Deserializer::loadArray() { m_i->loadCompound(sajson::TYPE_ARRAY); }
+void Deserializer::unloadArray() { m_i->unloadCompound(); }
 
-int JsonDeserializer::curLength() const { return m_i->curLength(); }
+int Deserializer::curLength() const { return m_i->curLength(); }
 
-void JsonDeserializer::loadKey(std::string_view key) { m_i->loadKey(key); }
-bool JsonDeserializer::tryLoadKey(std::string_view key) { return m_i->tryLoadKey(key); }
-void JsonDeserializer::loadIndex(int index) { m_i->loadIndex(index); }
+void Deserializer::loadKey(std::string_view key) { m_i->loadKey(key); }
+bool Deserializer::tryLoadKey(std::string_view key) { return m_i->tryLoadKey(key); }
+void Deserializer::loadIndex(int index) { m_i->loadIndex(index); }
 
-std::optional<std::string_view> JsonDeserializer::loadNextKey() { return m_i->loadNextKey(); }
+std::optional<std::string_view> Deserializer::loadNextKey() { return m_i->loadNextKey(); }
 
-JsonDeserializer::Type JsonDeserializer::pendingType() const { return m_i->pendingType(); }
+Type Deserializer::pendingType() const { return m_i->pendingType(); }
 
-void JsonDeserializer::throwException(std::string msg) const { m_i->throwException(std::move(msg)); }
+void Deserializer::throwException(std::string msg) const { m_i->throwException(std::move(msg)); }
 
 }

@@ -13,7 +13,7 @@
 
 namespace huse
 {
-Serializer::~Serializer() = default;
-Serializer::Exception::~Exception() = default;
-Deserializer::~Deserializer() = default;
+BasicSerializer::~BasicSerializer() = default;
+BasicSerializer::Exception::~Exception() = default;
+BasicDeserializer::~BasicDeserializer() = default;
 }

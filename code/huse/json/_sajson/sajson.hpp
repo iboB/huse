@@ -70,7 +70,7 @@
 /**
  * sajson Public API
  */
-namespace huse::sajson {
+namespace huse::json::sajson {
 
 /**
  * Indicates a JSON value's type.

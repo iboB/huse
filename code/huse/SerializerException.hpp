@@ -13,7 +13,7 @@
 
 namespace huse
 {
-class HUSE_API Serializer::Exception : public std::runtime_error
+class HUSE_API BasicSerializer::Exception : public std::runtime_error
 {
 public:
     using std::runtime_error::runtime_error;

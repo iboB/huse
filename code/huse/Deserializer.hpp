@@ -18,17 +18,41 @@ namespace huse
 
 class DeserializerArray;
 class DeserializerObject;
-class Deserializer;
+class BasicDeserializer;
+
+struct Type
+{
+public:
+    enum Value : int
+    {
+        True    = 0b01,
+        False   = 0b10,
+        Boolean = 0b11,
+        Integer = 0b0100,
+        Float   = 0b1000,
+        Number  = 0b1100,
+        String  = 0b10000,
+        Object  = 0b100000,
+        Array   = 0b1000000,
+        Null    = 0b10000000,
+    };
+
+    Type(Value t) : m_t(t) {}
+
+    bool is(Value mask) const { return m_t & mask; }
+private:
+    Value m_t;
+};
 
 class DeserializerNode : public impl::UniqueStack
 {
 protected:
-    DeserializerNode(Deserializer& d, impl::UniqueStack* parent)
+    DeserializerNode(BasicDeserializer& d, impl::UniqueStack* parent)
         : impl::UniqueStack(parent)
         , m_deserializer(d)
     {}
 
-    Deserializer& m_deserializer;
+    BasicDeserializer& m_deserializer;
 public:
     DeserializerNode(const DeserializerNode&) = delete;
     DeserializerNode operator=(const DeserializerNode&) = delete;
@@ -41,30 +65,6 @@ public:
     template <typename T>
     void val(T& v);
 
-    struct Type
-    {
-    public:
-        enum Value : int
-        {
-            True    = 0b01,
-            False   = 0b10,
-            Boolean = 0b11,
-            Integer = 0b0100,
-            Float   = 0b1000,
-            Number  = 0b1100,
-            String  = 0b10000,
-            Object  = 0b100000,
-            Array   = 0b1000000,
-            Null    = 0b10000000,
-        };
-
-        Type(Value t) : m_t(t) {}
-
-        bool is(Value mask) const { return m_t & mask; }
-    private:
-        Value m_t;
-    };
-
     Type type() const;
 
 protected:
@@ -75,7 +75,7 @@ protected:
 class DeserializerArray : public DeserializerNode
 {
 public:
-    DeserializerArray(Deserializer& d, impl::UniqueStack* parent = nullptr);
+    DeserializerArray(BasicDeserializer& d, impl::UniqueStack* parent = nullptr);
     ~DeserializerArray();
 
     using DeserializerNode::length;
@@ -88,7 +88,7 @@ public:
 class DeserializerObject : private DeserializerNode
 {
 public:
-    DeserializerObject(Deserializer& d, impl::UniqueStack* parent = nullptr);
+    DeserializerObject(BasicDeserializer& d, impl::UniqueStack* parent = nullptr);
     ~DeserializerObject();
 
     using DeserializerNode::length;
@@ -163,14 +163,14 @@ public:
     Type type() const { return {Type::Object}; }
 };
 
-class HUSE_API Deserializer : public DeserializerNode
+class HUSE_API BasicDeserializer : public DeserializerNode
 {
     friend class DeserializerNode;
     friend class DeserializerArray;
     friend class DeserializerObject;
 public:
-    Deserializer() : DeserializerNode(*this, nullptr) {}
-    virtual ~Deserializer();
+    BasicDeserializer() : DeserializerNode(*this, nullptr) {}
+    virtual ~BasicDeserializer();
 
     struct HUSE_API Exception {};
     [[noreturn]] virtual void throwException(std::string msg) const = 0;
@@ -230,8 +230,8 @@ inline DeserializerArray DeserializerNode::ar()
 
 namespace impl
 {
-struct DeserializerReadHelper : public Deserializer {
-    using Deserializer::read;
+struct DeserializerReadHelper : public BasicDeserializer {
+    using BasicDeserializer::read;
 };
 
 template <typename, typename = void>
@@ -285,7 +285,7 @@ void DeserializerNode::val(T& v) {
     }
 }
 
-inline DeserializerNode::Type DeserializerNode::type() const
+inline Type DeserializerNode::type() const
 {
     return m_deserializer.pendingType();
 }
@@ -295,7 +295,7 @@ inline int DeserializerNode::length() const
     return m_deserializer.curLength();
 }
 
-inline DeserializerArray::DeserializerArray(Deserializer& d, impl::UniqueStack* parent)
+inline DeserializerArray::DeserializerArray(BasicDeserializer& d, impl::UniqueStack* parent)
     : DeserializerNode(d, parent)
 {
     m_deserializer.loadArray();
@@ -312,7 +312,7 @@ inline DeserializerNode& DeserializerArray::index(int index)
     return *this;
 }
 
-inline DeserializerObject::DeserializerObject(Deserializer& d, impl::UniqueStack* parent)
+inline DeserializerObject::DeserializerObject(BasicDeserializer& d, impl::UniqueStack* parent)
     : DeserializerNode(d, parent)
 {
     m_deserializer.loadObject();

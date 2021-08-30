@@ -10,10 +10,11 @@ icm_add_lib(huse HUSE
     Deserializer.hpp
     VTableExports.cpp
 
-    JsonSerializer.hpp
-    JsonSerializer.cpp
-    JsonDeserializer.hpp
-    JsonDeserializer.cpp
+    json/Serializer.hpp
+    json/Serializer.cpp
+    json/Deserializer.hpp
+    json/Deserializer.cpp
+    json/_sajson/sajson.hpp
 
     helpers/StdVector.hpp
 )

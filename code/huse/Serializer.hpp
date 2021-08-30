@@ -18,17 +18,17 @@ namespace huse
 
 class SerializerArray;
 class SerializerObject;
-class Serializer;
+class BasicSerializer;
 
 class SerializerNode : public impl::UniqueStack
 {
 protected:
-    SerializerNode(Serializer& s, impl::UniqueStack* parent)
+    SerializerNode(BasicSerializer& s, impl::UniqueStack* parent)
         : impl::UniqueStack(parent)
         , m_serializer(s)
     {}
 
-    Serializer& m_serializer;
+    BasicSerializer& m_serializer;
 public:
     SerializerNode(const SerializerNode&) = delete;
     SerializerNode operator=(const SerializerNode&) = delete;
@@ -45,14 +45,14 @@ public:
 class SerializerArray : public SerializerNode
 {
 public:
-    SerializerArray(Serializer& s, impl::UniqueStack* parent = nullptr);
+    SerializerArray(BasicSerializer& s, impl::UniqueStack* parent = nullptr);
     ~SerializerArray();
 };
 
 class SerializerObject : private SerializerNode
 {
 public:
-    SerializerObject(Serializer& s, impl::UniqueStack* parent = nullptr);
+    SerializerObject(BasicSerializer& s, impl::UniqueStack* parent = nullptr);
     ~SerializerObject();
 
     SerializerNode& key(std::string_view k);
@@ -101,14 +101,14 @@ public:
     void flatval(const T& v);
 };
 
-class HUSE_API Serializer : public SerializerNode
+class HUSE_API BasicSerializer : public SerializerNode
 {
     friend class SerializerNode;
     friend class SerializerArray;
     friend class SerializerObject;
 public:
-    Serializer() : SerializerNode(*this, nullptr) {}
-    virtual ~Serializer();
+    BasicSerializer() : SerializerNode(*this, nullptr) {}
+    virtual ~BasicSerializer();
 
     class Exception;
 
@@ -156,8 +156,8 @@ inline SerializerArray SerializerNode::ar()
 
 namespace impl
 {
-struct SerializerWriteHelper : public Serializer {
-    using Serializer::write;
+struct SerializerWriteHelper : public BasicSerializer {
+    using BasicSerializer::write;
 };
 
 template <typename, typename = void>
@@ -213,7 +213,7 @@ void SerializerNode::val(const T& v)
     }
 }
 
-inline SerializerArray::SerializerArray(Serializer& s, impl::UniqueStack* parent)
+inline SerializerArray::SerializerArray(BasicSerializer& s, impl::UniqueStack* parent)
     : SerializerNode(s, parent)
 {
     m_serializer.openArray();
@@ -224,7 +224,7 @@ inline SerializerArray::~SerializerArray()
     m_serializer.closeArray();
 }
 
-inline SerializerObject::SerializerObject(Serializer& s, impl::UniqueStack* parent)
+inline SerializerObject::SerializerObject(BasicSerializer& s, impl::UniqueStack* parent)
     : SerializerNode(s, parent)
 {
     m_serializer.openObject();

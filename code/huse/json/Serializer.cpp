@@ -5,7 +5,7 @@
 // See accompanying file LICENSE.txt or copy at
 // https://opensource.org/licenses/MIT
 //
-#include "JsonSerializer.hpp"
+#include "Serializer.hpp"
 
 #include <msstl/charconv.hpp>
 
@@ -14,21 +14,21 @@
 #include <type_traits>
 #include <exception>
 
-namespace huse
+namespace huse::json
 {
 
-JsonSerializer::JsonSerializer(std::ostream& out, bool pretty)
+Serializer::Serializer(std::ostream& out, bool pretty)
     : m_out(out)
     , m_pretty(pretty)
 {}
 
-JsonSerializer::~JsonSerializer()
+Serializer::~Serializer()
 {
     if (std::uncaught_exceptions()) return; // nothing smart to do
     assert(m_depth == 0);
 }
 
-void JsonSerializer::writeRawJson(std::string_view key, std::string_view json)
+void Serializer::writeRawJson(std::string_view key, std::string_view json)
 {
     pushKey(key);
     prepareWriteVal();
@@ -37,27 +37,27 @@ void JsonSerializer::writeRawJson(std::string_view key, std::string_view json)
 }
 
 template <typename T>
-void JsonSerializer::writeSimpleValue(T val)
+void Serializer::writeSimpleValue(T val)
 {
     prepareWriteVal();
     m_out << val;
 }
 
-void JsonSerializer::write(bool val)
+void Serializer::write(bool val)
 {
     static constexpr std::string_view t = "true", f = "false";
     writeSimpleValue(val ? t : f);
 }
 
-void JsonSerializer::write(nullptr_t) { writeSimpleValue("null"); }
+void Serializer::write(nullptr_t) { writeSimpleValue("null"); }
 
-void JsonSerializer::write(short val) { writeSimpleValue(val); }
-void JsonSerializer::write(unsigned short val) { writeSimpleValue(val); }
-void JsonSerializer::write(int val) { writeSimpleValue(val); }
-void JsonSerializer::write(unsigned int val) { writeSimpleValue(val); }
+void Serializer::write(short val) { writeSimpleValue(val); }
+void Serializer::write(unsigned short val) { writeSimpleValue(val); }
+void Serializer::write(int val) { writeSimpleValue(val); }
+void Serializer::write(unsigned int val) { writeSimpleValue(val); }
 
 template <typename T>
-void JsonSerializer::writePotentiallyBigIntegerValue(T val)
+void Serializer::writePotentiallyBigIntegerValue(T val)
 {
     if constexpr (sizeof(T) <= 4)
     {
@@ -96,13 +96,13 @@ void JsonSerializer::writePotentiallyBigIntegerValue(T val)
 }
 
 // some values may not fit json's numbers
-void JsonSerializer::write(long val) { writePotentiallyBigIntegerValue(val); }
-void JsonSerializer::write(unsigned long val) { writePotentiallyBigIntegerValue(val); }
-void JsonSerializer::write(long long val) { writePotentiallyBigIntegerValue(val); }
-void JsonSerializer::write(unsigned long long val) { writePotentiallyBigIntegerValue(val); }
+void Serializer::write(long val) { writePotentiallyBigIntegerValue(val); }
+void Serializer::write(unsigned long val) { writePotentiallyBigIntegerValue(val); }
+void Serializer::write(long long val) { writePotentiallyBigIntegerValue(val); }
+void Serializer::write(unsigned long long val) { writePotentiallyBigIntegerValue(val); }
 
 template <typename T>
-void JsonSerializer::writeFloatValue(T val)
+void Serializer::writeFloatValue(T val)
 {
     if (std::isfinite(val))
     {
@@ -116,10 +116,10 @@ void JsonSerializer::writeFloatValue(T val)
     }
 }
 
-void JsonSerializer::write(float val) { writeFloatValue(val); }
-void JsonSerializer::write(double val) { writeFloatValue(val); }
+void Serializer::write(float val) { writeFloatValue(val); }
+void Serializer::write(double val) { writeFloatValue(val); }
 
-void JsonSerializer::writeEscapedUTF8String(std::string_view str)
+void Serializer::writeEscapedUTF8String(std::string_view str)
 {
     m_out.put('\"');
 
@@ -170,24 +170,24 @@ void JsonSerializer::writeEscapedUTF8String(std::string_view str)
     m_out.put('\"');
 }
 
-void JsonSerializer::write(std::string_view val)
+void Serializer::write(std::string_view val)
 {
     prepareWriteVal();
     writeEscapedUTF8String(val);
 }
 
-void JsonSerializer::write(std::nullopt_t)
+void Serializer::write(std::nullopt_t)
 {
     m_pendingKey.reset();
 }
 
-void JsonSerializer::pushKey(std::string_view k)
+void Serializer::pushKey(std::string_view k)
 {
     assert(!m_pendingKey);
     m_pendingKey = k;
 }
 
-void JsonSerializer::open(char o)
+void Serializer::open(char o)
 {
     prepareWriteVal();
     m_out << o;
@@ -195,7 +195,7 @@ void JsonSerializer::open(char o)
     ++m_depth;
 }
 
-void JsonSerializer::close(char c)
+void Serializer::close(char c)
 {
     assert(m_depth);
     --m_depth;
@@ -204,12 +204,12 @@ void JsonSerializer::close(char c)
     m_hasValue = true;
 }
 
-void JsonSerializer::openObject() { open('{'); }
-void JsonSerializer::closeObject() { close('}'); }
-void JsonSerializer::openArray() { open('['); }
-void JsonSerializer::closeArray() { close(']'); }
+void Serializer::openObject() { open('{'); }
+void Serializer::closeObject() { close('}'); }
+void Serializer::openArray() { open('['); }
+void Serializer::closeArray() { close(']'); }
 
-void JsonSerializer::prepareWriteVal()
+void Serializer::prepareWriteVal()
 {
     if (m_hasValue)
     {
@@ -228,7 +228,7 @@ void JsonSerializer::prepareWriteVal()
     m_hasValue = true;
 }
 
-void JsonSerializer::newLine()
+void Serializer::newLine()
 {
     if (!m_pretty) return; // not pretty
     if (m_depth == 0 && !m_hasValue) return; // no new line for initial value

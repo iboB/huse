@@ -6,23 +6,23 @@
 // https://opensource.org/licenses/MIT
 //
 #pragma once
-#include "Serializer.hpp"
+#include "../Serializer.hpp"
 
 #include <iosfwd>
 
-namespace huse
+namespace huse::json
 {
 
-class HUSE_API JsonSerializer final : public Serializer
+class HUSE_API Serializer final : public BasicSerializer
 {
 public:
-    JsonSerializer(std::ostream& out, bool pretty = false);
-    ~JsonSerializer();
+    Serializer(std::ostream& out, bool pretty = false);
+    ~Serializer();
 
-    JsonSerializer(const JsonSerializer&) = delete;
-    JsonSerializer& operator=(const JsonSerializer&) = delete;
-    JsonSerializer(JsonSerializer&&) = delete;
-    JsonSerializer& operator=(JsonSerializer&&) = delete;
+    Serializer(const Serializer&) = delete;
+    Serializer& operator=(const Serializer&) = delete;
+    Serializer(Serializer&&) = delete;
+    Serializer& operator=(Serializer&&) = delete;
 
     void writeRawJson(std::string_view key, std::string_view json);
 
