@@ -10,6 +10,8 @@
 #include <huse/JsonDeserializer.hpp>
 #include <huse/JsonSerializer.hpp>
 
+#include <huse/helpers/StdVector.hpp>
+
 #include <sstream>
 
 TEST_SUITE_BEGIN("json");
@@ -181,4 +183,134 @@ TEST_CASE("simple deserialize")
 
         CHECK(obj.key("array").type().is(huse::Deserializer::Type::Array));
     }
+}
+
+struct SimpleTest
+{
+    int x;
+    std::string y;
+    float z;
+
+    template <typename O, typename Self>
+    static void serializeFlatT(O& o, Self& self)
+    {
+        o.val("x", self.x);
+        o.val("y", self.y);
+        o.val("z", self.z);
+    }
+
+    void huseSerializeFlat(huse::SerializerObject& o) const
+    {
+        serializeFlatT(o, *this);
+    }
+
+    void huseDeserializeFlat(huse::DeserializerObject& o)
+    {
+        serializeFlatT(o, *this);
+    }
+
+    template <typename N, typename Self>
+    static void serializeT(N& n, Self& self)
+    {
+        auto o = n.obj();
+        serializeFlatT(o, self);
+    }
+
+    void huseSerialize(huse::SerializerNode& n) const
+    {
+        serializeT(n, *this);
+    }
+
+    void huseDeserialize(huse::DeserializerNode& n)
+    {
+        serializeT(n, *this);
+    }
+};
+
+bool operator==(const SimpleTest& a, const SimpleTest& b)
+{
+    return a.x == b.x && a.y == b.y && a.z == b.z;
+}
+
+struct ComplexTest
+{
+    SimpleTest a;
+    int b;
+
+    template <typename N, typename Self>
+    static void serialize(N& n, Self& self)
+    {
+        auto o = n.obj();
+        o.val("a", self.a);
+        o.val("b", self.b);
+    }
+};
+
+bool operator==(const ComplexTest& a, const ComplexTest& b)
+{
+    return a.a == b.a && a.b == b.b;
+}
+
+void huseSerialize(huse::SerializerNode& n, const ComplexTest& ct)
+{
+    ComplexTest::serialize(n, ct);
+}
+
+void huseDeserialize(huse::DeserializerNode& n, ComplexTest& ct)
+{
+    ComplexTest::serialize(n, ct);
+}
+
+TEST_CASE("struct i/o")
+{
+    const ComplexTest src = {{334, std::string("hello"), 4.4f}, 7};
+
+    JsonSerializeTester j;
+    j.pretty().val(src);
+
+    ComplexTest cc;
+
+    {
+        auto d = makeD(j.str());
+        d.val(cc);
+    }
+
+    CHECK(src == cc);
+
+    {
+        auto o = j.pretty().obj();
+        o.val("something", 43);
+        o.flatval(src.a);
+    }
+
+    SimpleTest scc;
+    int icc;
+    {
+        auto d = makeD(j.str());
+        auto o = d.obj();
+        o.flatval(scc);
+        o.val("something", icc);
+    }
+
+    CHECK(icc == 43);
+    CHECK(scc == src.a);
+}
+
+TEST_CASE("std::vector")
+{
+    const std::vector<ComplexTest> src = {
+        {{334, std::string("hello"), 4.4f}, 7},
+        {{13,  std::string("asd"),   7.f},  17},
+        {{345, std::string("bye"),  17.f},  99},
+    };
+
+    JsonSerializeTester j;
+    j.pretty().val(src);
+
+    std::vector<ComplexTest> cc;
+    {
+        auto d = makeD(j.str());
+        d.val(cc);
+    }
+    CHECK(src == cc);
 }

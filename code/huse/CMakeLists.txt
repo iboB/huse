@@ -3,7 +3,7 @@ icm_add_lib(huse HUSE
 
     impl/UniqueStack.hpp
 
-    fwd.hpp
+    Fwd.hpp
 
     Serializer.hpp
     Deserializer.hpp
@@ -13,6 +13,8 @@ icm_add_lib(huse HUSE
     JsonSerializer.cpp
     JsonDeserializer.hpp
     JsonDeserializer.cpp
+
+    helpers/StdVector.hpp
 )
 
 target_include_directories(huse INTERFACE ..)

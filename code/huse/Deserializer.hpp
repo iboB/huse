@@ -256,13 +256,13 @@ template <typename, typename = void>
 struct HasDeserializeFlatMethod : std::false_type {};
 
 template <typename T>
-struct HasDeserializeFlatMethod<T, decltype(std::declval<T>().huseSerializeFlat(std::declval<DeserializerObject&>()))> : std::true_type {};
+struct HasDeserializeFlatMethod<T, decltype(std::declval<T>().huseDeserializeFlat(std::declval<DeserializerObject&>()))> : std::true_type {};
 
 template <typename, typename = void>
 struct HasDeserializeFlatFunc : std::false_type {};
 
 template <typename T>
-struct HasDeserializeFlatFunc<T, decltype(huseSerializeFlat(std::declval<DeserializerObject&>(), std::declval<T&>()))> : std::true_type {};
+struct HasDeserializeFlatFunc<T, decltype(huseDeserializeFlat(std::declval<DeserializerObject&>(), std::declval<T&>()))> : std::true_type {};
 } // namespace impl
 
 template <typename T>
