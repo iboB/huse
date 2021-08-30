@@ -256,6 +256,33 @@ struct JsonDeserializer::Impl
         return int(stack.back().value.sjvalue.get_length());
     }
 
+    static JsonDeserializer::Type fromSajsonType(sajson::type t)
+    {
+        switch (t)
+        {
+        case sajson::TYPE_INTEGER: return {JsonDeserializer::Type::Integer};
+        case sajson::TYPE_DOUBLE:  return {JsonDeserializer::Type::Float};
+        case sajson::TYPE_NULL:    return {JsonDeserializer::Type::Null};
+        case sajson::TYPE_FALSE:   return {JsonDeserializer::Type::False};
+        case sajson::TYPE_TRUE:    return {JsonDeserializer::Type::True};
+        case sajson::TYPE_STRING:  return {JsonDeserializer::Type::String};
+        case sajson::TYPE_ARRAY:   return {JsonDeserializer::Type::Array};
+        case sajson::TYPE_OBJECT:  return {JsonDeserializer::Type::Object};
+        default:
+            assert(false);
+            return JsonDeserializer::Type::Null;
+        }
+    }
+
+    JsonDeserializer::Type pendingType() const
+    {
+        if (stack.empty()) return fromSajsonType(document.get_root().get_type());
+
+        auto& top = stack.back();
+        if (!top.pending) throwException("out of range");
+        return fromSajsonType(top.pending->sjvalue.get_type());
+    }
+
     [[noreturn]] void throwException(std::string msg) const
     {
         throw msg;
@@ -321,6 +348,8 @@ bool JsonDeserializer::tryLoadKey(std::string_view key) { return m_i->tryLoadKey
 void JsonDeserializer::loadIndex(int index) { m_i->loadIndex(index); }
 
 std::optional<std::string_view> JsonDeserializer::loadNextKey() { return m_i->loadNextKey(); }
+
+JsonDeserializer::Type JsonDeserializer::pendingType() const { return m_i->pendingType(); }
 
 void JsonDeserializer::throwException(std::string msg) const { m_i->throwException(std::move(msg)); }
 

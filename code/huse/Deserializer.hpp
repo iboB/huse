@@ -41,6 +41,32 @@ public:
     template <typename T>
     void val(T& v);
 
+    struct Type
+    {
+    public:
+        enum Value : int
+        {
+            True    = 0b01,
+            False   = 0b10,
+            Boolean = 0b11,
+            Integer = 0b0100,
+            Float   = 0b1000,
+            Number  = 0b1100,
+            String  = 0b10000,
+            Object  = 0b100000,
+            Array   = 0b1000000,
+            Null    = 0b10000000,
+        };
+
+        Type(Value t) : m_t(t) {}
+
+        bool is(Value mask) const { return m_t & mask; }
+    private:
+        Value m_t;
+    };
+
+    Type type() const;
+
 protected:
     // number of elements in compound object
     int length() const;
@@ -54,6 +80,9 @@ public:
 
     using DeserializerNode::length;
     DeserializerNode& index(int index);
+
+    // intentionally hiding parent
+    Type type() const { return {Type::Array}; }
 };
 
 class DeserializerObject : private DeserializerNode
@@ -129,6 +158,9 @@ public:
         DeserializerNode* operator->() { return node; }
     };
     KeyQuery nextkey();
+
+    // intentionally hiding parent
+    Type type() const { return {Type::Array}; }
 };
 
 class HUSE_API Deserializer : public DeserializerNode
@@ -179,6 +211,8 @@ protected:
 
     // throw if no index
     virtual void loadIndex(int index) = 0;
+
+    virtual Type pendingType() const = 0;
 
     // noad the next key and return it or nullopt if there is no next key
     virtual std::optional<std::string_view> loadNextKey() = 0;
@@ -249,6 +283,11 @@ void DeserializerNode::val(T& v) {
     {
         cannot_deserialize(v);
     }
+}
+
+inline DeserializerNode::Type DeserializerNode::type() const
+{
+    return m_deserializer.pendingType();
 }
 
 inline int DeserializerNode::length() const

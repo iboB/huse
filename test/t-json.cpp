@@ -142,6 +142,8 @@ TEST_CASE("simple deserialize")
         auto q = obj.nextkey();
         CHECK(!!q);
         CHECK(q.name == "bool2");
+        CHECK(q.node->type().is(huse::Deserializer::Type::Boolean));
+        CHECK(q.node->type().is(huse::Deserializer::Type::False));
         q->val(b);
         CHECK(!b);
 

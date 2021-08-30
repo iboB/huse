@@ -55,6 +55,8 @@ private:
     virtual void loadIndex(int index) override;
     virtual std::optional<std::string_view> loadNextKey() override;
 
+    virtual Type pendingType() const override;
+
     struct Impl; // hiding sajson from the outside world
     std::unique_ptr<Impl> m_i;
 };
