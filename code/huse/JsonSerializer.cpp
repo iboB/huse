@@ -76,7 +76,7 @@ void JsonSerializer::writePotentiallyBigIntegerValue(T val)
         }
         else
         {
-            throwException("integer too big");
+            // throwException("integer too big");
         }
     }
     else
@@ -89,7 +89,7 @@ void JsonSerializer::writePotentiallyBigIntegerValue(T val)
         }
         else
         {
-            throwException("integer too big");
+            // throwException("integer too big");
         }
     }
 
@@ -112,7 +112,7 @@ void JsonSerializer::writeFloatValue(T val)
     }
     else
     {
-        throwException("float not finite");
+        // throwException("float not finite");
     }
 }
 
@@ -238,11 +238,6 @@ void JsonSerializer::newLine()
     {
         m_out << indent;
     }
-}
-
-void JsonSerializer::throwException(std::string /*text*/) const
-{
-    throw 0;
 }
 
 }

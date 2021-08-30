@@ -26,8 +26,6 @@ public:
 
     void writeRawJson(std::string_view key, std::string_view json);
 
-    [[noreturn]] virtual void throwException(std::string msg) const override;
-
 private:
     virtual void write(bool val) override;
     virtual void write(short val) override;

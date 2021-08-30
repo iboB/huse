@@ -5,15 +5,18 @@
 // See accompanying file LICENSE.txt or copy at
 // https://opensource.org/licenses/MIT
 //
+#pragma once
+#include "API.h"
 #include "Serializer.hpp"
-#include "Deserializer.hpp"
-#include "SerializerException.hpp"
 
-// used to export vtables
+#include <stdexcept>
 
 namespace huse
 {
-Serializer::~Serializer() = default;
-Serializer::Exception::~Exception() = default;
-Deserializer::~Deserializer() = default;
+class HUSE_API Serializer::Exception : public std::runtime_error
+{
+public:
+    using std::runtime_error::runtime_error;
+    virtual ~Exception(); // still need to export the vtable
+};
 }

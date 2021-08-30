@@ -6,6 +6,7 @@ icm_add_lib(huse HUSE
     Fwd.hpp
 
     Serializer.hpp
+    SerializerException.hpp
     Deserializer.hpp
     VTableExports.cpp
 

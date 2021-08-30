@@ -110,8 +110,7 @@ public:
     Serializer() : SerializerNode(*this, nullptr) {}
     virtual ~Serializer();
 
-    struct HUSE_API Exception {};
-    [[noreturn]] virtual void throwException(std::string msg) const = 0;
+    class Exception;
 
 protected:
     // write interface
