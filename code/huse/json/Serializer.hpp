@@ -26,6 +26,11 @@ public:
 
     void writeRawJson(std::string_view key, std::string_view json);
 
+    // json imposed limits (max integer which can be stored in a double)
+    static inline constexpr int64_t Max_Int64 = 9007199254740992ll;
+    static inline constexpr int64_t Min_Int64 = -9007199254740992ll;
+    static inline constexpr int64_t Max_Uint64 = 9007199254740992ull;
+
 private:
     virtual void write(bool val) override;
     virtual void write(short val) override;

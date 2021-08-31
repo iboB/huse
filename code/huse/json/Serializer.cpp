@@ -68,11 +68,7 @@ void Serializer::writePotentiallyBigIntegerValue(T val)
     }
     else if constexpr (std::is_signed_v<T>)
     {
-        // max integer which can be stored in a double
-        constexpr int64_t MAX_D = 9007199254740992ll;
-        constexpr int64_t MIN_D = -9007199254740992ll;
-
-        if (val >= MIN_D && val <= MAX_D)
+        if (val >= Min_Int64 && val <= Max_Int64)
         {
             writeSimpleValue(val);
         }
@@ -83,9 +79,7 @@ void Serializer::writePotentiallyBigIntegerValue(T val)
     }
     else
     {
-        constexpr uint64_t MAX_D = 9007199254740992ull;
-
-        if (val <= MAX_D)
+        if (val <= Max_Uint64)
         {
             writeSimpleValue(val);
         }

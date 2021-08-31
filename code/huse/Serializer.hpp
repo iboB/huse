@@ -40,6 +40,12 @@ public:
 
     template <typename T>
     void val(const T& v);
+
+    template <typename T, typename F>
+    void cval(const T& v, F f)
+    {
+        f(*this, v);
+    }
 };
 
 class SerializerArray : public SerializerNode
@@ -75,10 +81,7 @@ public:
     template <typename T>
     void val(std::string_view k, const std::optional<T>& v)
     {
-        if (v)
-        {
-            val(k, *v);
-        }
+        if (v) val(k, *v);
     }
 
     template <typename T>
@@ -87,18 +90,24 @@ public:
     template <typename T>
     void optval(std::string_view k, const std::optional<T>& v, const T& d)
     {
-        if (v)
-        {
-            val(k, *v);
-        }
-        else
-        {
-            val(k, d);
-        }
+        if (v) val(k, *v);
+        else val(k, d);
     }
 
     template <typename T>
     void flatval(const T& v);
+
+    template <typename T, typename F>
+    void cval(std::string_view k, const T& v, F f)
+    {
+        key(k).cval(v, std::move(f));
+    }
+
+    template <typename T, typename F>
+    void cval(std::string_view k, const std::optional<T>& v, F f)
+    {
+        if (v) cval(k, *v, std::move(f));
+    }
 };
 
 class HUSE_API BasicSerializer : public SerializerNode

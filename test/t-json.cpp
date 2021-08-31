@@ -379,7 +379,7 @@ TEST_CASE("struct i/o")
     CHECK(scc == src.a);
 }
 
-TEST_CASE("std::vector")
+TEST_CASE("std::vector i/o")
 {
     const std::vector<ComplexTest> src = {
         {{334, std::string("hello"), 4.4f}, 7},
@@ -396,4 +396,94 @@ TEST_CASE("std::vector")
         d.val(cc);
     }
     CHECK(src == cc);
+}
+
+void serializeInt64AsMaybeString(huse::SerializerNode& n, uint64_t i)
+{
+    if (i < huse::json::Serializer::Max_Uint64) n.val(i);
+    else n.val(std::to_string(i));
+}
+
+void serializeInt64AsMaybeString(huse::DeserializerNode& n, uint64_t& i)
+{
+    if (n.type().is(huse::Type::Number)) n.val(i);
+    else
+    {
+        std::string_view str;
+        n.val(str);
+        i = std::strtoull(str.data(), nullptr, 10);
+    }
+}
+
+struct Visitable
+{
+    int a;
+    std::string b;
+
+    template <typename Self, typename Visitor>
+    static void visitFields(Self& s, Visitor& v)
+    {
+        v("a", s.a);
+        v("b", s.b);
+    }
+};
+
+struct CustomSerialization
+{
+    uint64_t a64;
+    uint64_t b64;
+    Visitable visitable;
+
+    template <typename N, typename Self>
+    static void serializeT(N& n, Self& self)
+    {
+        auto obj = n.obj();
+        auto ifunc = [](auto& n, auto& i) { serializeInt64AsMaybeString(n, i); };
+        obj.cval("a64", self.a64, ifunc);
+        obj.cval("b64", self.b64, ifunc);
+        obj.cval("vi", self.visitable, [](auto& n, auto& v) {
+            auto obj = n.obj();
+            auto func = [&obj](auto& k, auto& v) {
+                obj.val(k, v);
+            };
+            Visitable::visitFields(v, func);
+        });
+    }
+
+    void huseSerialize(huse::SerializerNode& n) const
+    {
+        serializeT(n, *this);
+    }
+
+    void huseDeserialize(huse::DeserializerNode& n)
+    {
+        serializeT(n, *this);
+    }
+
+    bool operator==(const CustomSerialization& o) const
+    {
+        return a64 == o.a64
+            && b64 == o.b64
+            && visitable.a == o.visitable.a
+            && visitable.b == o.visitable.b;
+    }
+};
+
+TEST_CASE("custom serialization i/o")
+{
+    CustomSerialization cs = {10'000'000'000'000'000'000ull, 1234ull, {25, "xxx"}};
+
+    JsonSerializeTester j;
+    j.compact().val(cs);
+
+    const auto json = j.str();
+    CHECK(json == R"({"a64":"10000000000000000000","b64":1234,"vi":{"a":25,"b":"xxx"}})");
+
+    CustomSerialization cc;
+    {
+        auto d = makeD(json);
+        d.val(cc);
+    }
+
+    CHECK(cs == cc);
 }

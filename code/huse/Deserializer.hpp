@@ -59,13 +59,19 @@ public:
     DeserializerNode(DeserializerNode&&) = delete;
     DeserializerNode operator=(DeserializerNode&&) = delete;
 
+    Type type() const;
+
     DeserializerObject obj();
     DeserializerArray ar();
 
     template <typename T>
     void val(T& v);
 
-    Type type() const;
+    template <typename T, typename F>
+    void cval(T& v, F f)
+    {
+        f(*this, v);
+    }
 
 protected:
     // number of elements in compound object
@@ -149,6 +155,25 @@ public:
 
     template <typename T>
     void flatval(T& v);
+
+    template <typename T, typename F>
+    void cval(std::string_view k, T& v, F f)
+    {
+        key(k).cval(v, std::move(f));
+    }
+
+    template <typename T, typename F>
+    void cval(std::string_view k, std::optional<T>& v, F f)
+    {
+        if (auto open = optkey(k))
+        {
+            open->cval(v.emplace(), std::move(f));
+        }
+        else
+        {
+            v.reset();
+        }
+    }
 
     struct KeyQuery
     {
