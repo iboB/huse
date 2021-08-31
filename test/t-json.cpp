@@ -229,6 +229,7 @@ struct BigIntegers
     int32_t min32;
     int32_t max32;
     uint32_t maxu32;
+    uint32_t pad = 0; // guarantee that padding bytes don't mess up memcmp
     int64_t i64_d;
     uint64_t u64_d;
 };
@@ -250,6 +251,7 @@ TEST_CASE("limit i/o")
         std::numeric_limits<int32_t>::min(),
         std::numeric_limits<int32_t>::max(),
         std::numeric_limits<uint32_t>::max(),
+        0,
         -9007199254730992ll,
         9007199254730992ull,
     };
@@ -265,6 +267,7 @@ TEST_CASE("limit i/o")
         auto d = makeD(json);
         serializeBI(d, cc);
     }
+
     CHECK(memcmp(&bi, &cc, sizeof(BigIntegers)) == 0);
 }
 
