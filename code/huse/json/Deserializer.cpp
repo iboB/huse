@@ -9,6 +9,8 @@
 
 #include "_sajson/sajson.hpp"
 
+#include "../Exception.hpp"
+
 #include <vector>
 #include <string>
 #include <cmath>
@@ -276,16 +278,23 @@ struct Deserializer::Impl
     [[noreturn]] void throwException(const std::string& msg) const
     {
         std::ostringstream sout;
-        sout << msg << '\n';
-        bool first = true;
-        for (auto& elem : stack)
+
+        if (!stack.empty())
         {
-            if (!first) sout << '.';
-            auto& val = elem.value;
-            if (val.key.empty()) sout << '[' << val.index << ']';
-            else sout << val.key;
+            bool first = true;
+            for (auto& elem : stack)
+            {
+                if (!first) sout << '.';
+                first = false;
+                auto& val = elem.value;
+                if (val.key.empty()) sout << '[' << val.index << ']';
+                else sout << '"' << val.key << '"';
+            }
+            sout << " : ";
         }
-        throw msg;
+
+        sout << msg;
+        throw DeserializerException(sout.str());
     }
 };
 
