@@ -12,7 +12,11 @@
 
 #include <huse/helpers/StdVector.hpp>
 
+#include <huse/Exception.hpp>
+
 #include <sstream>
+#include <limits>
+#include <cstring>
 
 TEST_SUITE_BEGIN("json");
 
@@ -21,7 +25,7 @@ struct JsonSerializerPack
     std::ostringstream sout;
     std::optional<huse::json::Serializer> s;
 
-    JsonSerializerPack(bool pretty)
+    JsonSerializerPack(bool pretty = false)
     {
         s.emplace(sout, pretty);
     }
@@ -108,6 +112,41 @@ R"({
     );
 }
 
+TEST_CASE("serializer exceptions")
+{
+    {
+        CHECK_THROWS_WITH_AS(
+            JsonSerializerPack().s->val(1ull << 55),
+            "Integer value is bigger than maximum allowed for JSON",
+            huse::SerializerException
+        );
+    }
+
+    {
+        CHECK_THROWS_WITH_AS(
+            JsonSerializerPack().s->val(-(1ll << 55)),
+            "Integer value is bigger than maximum allowed for JSON",
+            huse::SerializerException
+        );
+    }
+
+    {
+        CHECK_THROWS_WITH_AS(
+            JsonSerializerPack().s->val(std::numeric_limits<float>::infinity()),
+            "Floating point value is not finite. Not supported by JSON",
+            huse::SerializerException
+        );
+    }
+
+    {
+        CHECK_THROWS_WITH_AS(
+            JsonSerializerPack().s->val(std::numeric_limits<double>::quiet_NaN()),
+            "Floating point value is not finite. Not supported by JSON",
+            huse::SerializerException
+        );
+    }
+}
+
 huse::json::Deserializer makeD(std::string_view str)
 {
     return huse::json::Deserializer::fromConstString(str);
@@ -183,6 +222,50 @@ TEST_CASE("simple deserialize")
 
         CHECK(obj.key("array").type().is(huse::Type::Array));
     }
+}
+
+struct BigIntegers
+{
+    int32_t min32;
+    int32_t max32;
+    uint32_t maxu32;
+    int64_t i64_d;
+    uint64_t u64_d;
+};
+
+template <typename N, typename B>
+void serializeBI(N& n, B& b)
+{
+    auto ar = n.ar();
+    ar.val(b.min32);
+    ar.val(b.max32);
+    ar.val(b.maxu32);
+    ar.val(b.i64_d);
+    ar.val(b.u64_d);
+}
+
+TEST_CASE("limit i/o")
+{
+    BigIntegers bi = {
+        std::numeric_limits<int32_t>::min(),
+        std::numeric_limits<int32_t>::max(),
+        std::numeric_limits<uint32_t>::max(),
+        -9007199254730992ll,
+        9007199254730992ull,
+    };
+
+    JsonSerializeTester j;
+    serializeBI(j.compact(), bi);
+
+    const auto json = j.str();
+    CHECK(json == "[-2147483648,2147483647,4294967295,-9007199254730992,9007199254730992]");
+
+    BigIntegers cc;
+    {
+        auto d = makeD(json);
+        serializeBI(d, cc);
+    }
+    CHECK(memcmp(&bi, &cc, sizeof(BigIntegers)) == 0);
 }
 
 struct SimpleTest
