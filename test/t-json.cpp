@@ -43,7 +43,7 @@ struct JsonSerializeTester
 
     huse::json::Serializer& make(bool pretty = false)
     {
-        assert(!pack);
+        HUSE_ASSERT_INTERNAL(!pack);
         pack.emplace(pretty);
         return *pack->s;
     }
@@ -224,20 +224,52 @@ TEST_CASE("simple deserialize")
     }
 }
 
+#define CHECK_THROWS_D(e, txt) CHECK_THROWS_WITH_AS(e, txt, huse::DeserializerException)
+
 TEST_CASE("serializer exceptions")
 {
     {
         CHECK_THROWS_AS(makeD("{"), huse::DeserializerException);
     }
 
-    constexpr std::string_view json = R"({"ar": [2.3, -5], "val": 5, "b": false})";
+    constexpr std::string_view json = R"({"ar": [2.3, {"x": 1, "y": 3.3}, -5], "val": 5, "b": false})";
     {
         REQUIRE_NOTHROW(makeD(json));
     }
 
+    bool b;
+    int32_t i32;
+    int64_t i64;
+    uint32_t u32;
+    float f;
+    std::string_view str;
     {
         auto d = makeD(json);
-        //CHECK_THROWS_WITH_AS(d.ar(), "";
+        CHECK_THROWS_D(d.val(b), "root : not a boolean");
+    }
+    {
+        auto d = makeD(json);
+        CHECK_THROWS_D(d.val(i32), "root : not an integer");
+    }
+    {
+        auto d = makeD(json);
+        CHECK_THROWS_D(d.val(i64), "root : not an integer");
+    }
+    {
+        auto d = makeD(json);
+        CHECK_THROWS_D(d.obj().ar("ar").val(i64), R"(root."ar".[0] : not an integer)");
+    }
+    {
+        auto d = makeD(json);
+        CHECK_THROWS_D(d.obj().ar("ar").index(2).val(u32), R"(root."ar".[2] : negative integer)");
+    }
+    {
+        auto d = makeD(json);
+        CHECK_THROWS_D(d.val(f), "root : not a number");
+    }
+    {
+        auto d = makeD(json);
+        CHECK_THROWS_D(d.val(str), "root : not a string");
     }
 }
 

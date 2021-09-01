@@ -20,6 +20,11 @@
 namespace huse::json
 {
 
+namespace
+{
+constexpr std::string_view Not_Integer = "not an integer";
+}
+
 Deserializer Deserializer::fromConstString(std::string_view str)
 {
     return Deserializer(
@@ -62,7 +67,7 @@ struct Deserializer::Impl
     {
         if constexpr (std::is_unsigned_v<Target>)
         {
-            if (s < 0) throwException("not unsigned");
+            if (s < 0) throwException("negative integer");
         }
         return Target(s);
     }
@@ -71,7 +76,7 @@ struct Deserializer::Impl
     void readInt(T& val)
     {
         auto jval = r();
-        if (jval.get_type() != sajson::TYPE_INTEGER) throwException("not integer");
+        if (jval.get_type() != sajson::TYPE_INTEGER) throwException(Not_Integer);
         val = signedCheck<T>(jval.get_integer_value());
     }
 
@@ -87,12 +92,12 @@ struct Deserializer::Impl
         {
             auto d = jval.get_double_value();
             double tmp;
-            if (std::modf(d, &tmp) != 0) throwException("not integer");
+            if (std::modf(d, &tmp) != 0) throwException(Not_Integer);
             val = signedCheck<T>(std::floor(d));
         }
         else
         {
-            throwException("not integer");
+            throwException(Not_Integer);
         }
     }
 
@@ -102,14 +107,14 @@ struct Deserializer::Impl
         auto jval = r();
         if (jval.get_type() == sajson::TYPE_INTEGER) val = T(jval.get_integer_value());
         else if (jval.get_type() == sajson::TYPE_DOUBLE) val = T(jval.get_double_value());
-        else throwException("not number");
+        else throwException("not a number");
     }
 
     template <typename S>
     void readString(S& val)
     {
         auto jval = r();
-        if (jval.get_type() != sajson::TYPE_STRING) throwException("not string");
+        if (jval.get_type() != sajson::TYPE_STRING) throwException("not a string");
         val = {jval.as_cstring(), jval.get_string_length()};
     }
 
@@ -181,7 +186,7 @@ struct Deserializer::Impl
 
     void loadKey(std::string_view key)
     {
-        if (!tryLoadKey(key)) throwException(std::string(key));
+        if (!tryLoadKey(key)) throwException(key);
     }
 
     std::optional<std::string_view> loadNextKey()
@@ -280,7 +285,9 @@ struct Deserializer::Impl
         return fromSajsonType(top.pending->sjvalue.get_type());
     }
 
-    [[noreturn]] void throwException(const std::string& msg) const
+    [[noreturn]] void throwException(const char* msg) const { throwException(std::string_view(msg)); }
+    [[noreturn]] void throwException(std::string msg) const { throwException(std::string_view(msg)); }
+    [[noreturn]] void throwException(const std::string_view msg) const
     {
         std::ostringstream sout;
 
@@ -376,6 +383,6 @@ std::optional<std::string_view> Deserializer::loadNextKey() { return m_i->loadNe
 
 Type Deserializer::pendingType() const { return m_i->pendingType(); }
 
-void Deserializer::throwException(const std::string& msg) const { m_i->throwException(std::move(msg)); }
+void Deserializer::throwException(const std::string& msg) const { m_i->throwException(msg); }
 
 }
