@@ -6,34 +6,24 @@
 // https://opensource.org/licenses/MIT
 //
 #include <iostream>
-#include <huse/json/Serializer.hpp>
+#include <huse/json/Deserializer.hpp>
+#include <huse/Exception.hpp>
 
 int main()
 {
-    huse::json::Serializer j(std::cout, true);
+    constexpr std::string_view json = R"({"ar": [2.3, -5], "val": 5, "b": false})";
+
+    try
     {
-        auto o = j.obj();
-        o.val("foo", "bar");
-        {
-            auto a = o.ar("xxx");
-            a.val(1);
-            a.ar();
-            a.val(4);
-            a.obj();
-            {
-                auto xx = a.obj();
-                xx.val("as", 43.3);
-            }
-            {
-                auto xx = a.ar();
-                xx.val(1);
-                xx.val(3.4);
-                xx.val("asd");
-            }
-        }
-        o.ar("yyy");
-        o.obj("zzz");
-        o.key("fooz").val(33.55);
+        auto d = huse::json::Deserializer::fromConstString(json);
+        int i;
+        d.val(i);
     }
+    catch (std::exception& e)
+    {
+        std::cout << e.what() << std::endl;
+        return 1;
+    }
+
     return 0;
 }

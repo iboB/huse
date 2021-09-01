@@ -55,6 +55,8 @@ struct Deserializer::Impl
     };
     std::vector<StackElement> stack;
 
+    Value current; // only valid after advance
+
     template <typename Target, typename Source>
     Target signedCheck(Source s)
     {
@@ -111,9 +113,13 @@ struct Deserializer::Impl
         val = {jval.as_cstring(), jval.get_string_length()};
     }
 
-    Value advance()
+    void advance()
     {
-        if (stack.empty()) return Value{ document.get_root(), "root", 0};
+        if (stack.empty())
+        {
+            current = {document.get_root(), "root", 0};
+            return;
+        }
 
         auto& top = stack.back();
         auto tt = top.value.sjvalue.get_type();
@@ -121,13 +127,12 @@ struct Deserializer::Impl
 
         if (!top.pending) throwException("out of range");
 
-        const auto current = *top.pending;
+        current = *top.pending;
         auto nextIndex = top.pending->index + 1;
 
         if (int(top.value.sjvalue.get_length()) <= nextIndex)
         {
             top.pending.reset();
-            return current;
         }
 
         auto& pending = *top.pending;
@@ -144,12 +149,12 @@ struct Deserializer::Impl
         }
 
         pending.index = nextIndex;
-        return current;
     }
 
-    sajson::value r()
+    const sajson::value& r()
     {
-        return advance().sjvalue;
+        advance();
+        return current.sjvalue;
     }
 
     bool tryLoadKey(std::string_view key)
@@ -209,7 +214,7 @@ struct Deserializer::Impl
 
     void loadCompound(sajson::type target)
     {
-        const auto current = advance();
+        advance();
         if (current.sjvalue.get_type() != target)
         {
             if (target == sajson::TYPE_ARRAY) throwException("not array");
@@ -281,29 +286,40 @@ struct Deserializer::Impl
 
         if (!stack.empty())
         {
-            bool first = true;
-            for (auto& elem : stack)
-            {
-                if (!first) sout << '.';
-                first = false;
-                auto& val = elem.value;
+            auto i = stack.begin();
+            sout << i->value.key; // don't wrap root in quotes
+
+            auto printStackItem = [&sout](const Value& val) {
+                sout << '.';
                 if (val.key.empty()) sout << '[' << val.index << ']';
                 else sout << '"' << val.key << '"';
+            };
+
+            for (++i; i!=stack.end(); ++i)
+            {
+                printStackItem(i->value);
             }
-            sout << " : ";
+            printStackItem(current);
+        }
+        else
+        {
+            // certainly this is root
+            sout << current.key;
         }
 
-        sout << msg;
+        sout << " : " << msg;
         throw DeserializerException(sout.str());
     }
 };
 
 Deserializer::Deserializer(sajson::document&& doc)
-    : m_i(new Impl{std::move(doc), {}})
+    : m_i(new Impl{std::move(doc), {}, {}})
 {
     if (!m_i->document.is_valid())
     {
-        throwException(m_i->document.get_error_message_as_cstring());
+        // don't use m_i->throwException because it adds the stack
+        // we certainly don't have a stack here
+        throw DeserializerException(m_i->document.get_error_message_as_cstring());
     }
 }
 

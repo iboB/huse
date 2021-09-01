@@ -224,6 +224,23 @@ TEST_CASE("simple deserialize")
     }
 }
 
+TEST_CASE("serializer exceptions")
+{
+    {
+        CHECK_THROWS_AS(makeD("{"), huse::DeserializerException);
+    }
+
+    constexpr std::string_view json = R"({"ar": [2.3, -5], "val": 5, "b": false})";
+    {
+        REQUIRE_NOTHROW(makeD(json));
+    }
+
+    {
+        auto d = makeD(json);
+        //CHECK_THROWS_WITH_AS(d.ar(), "";
+    }
+}
+
 struct BigIntegers
 {
     int32_t min32;
