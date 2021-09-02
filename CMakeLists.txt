@@ -22,6 +22,7 @@ include(icm_add_lib)
 
 option(HUSE_STATIC "huse: build as static lib" OFF)
 option(HUSE_BUILD_TESTS "huse: build tests" ${ICM_DEV_MODE})
+option(HUSE_BUILD_EXAMPLES "huse: build examples" ${ICM_DEV_MODE})
 
 #######################################
 # packages
@@ -35,6 +36,10 @@ add_subdirectory(code/huse)
 
 if(ICM_DEV_MODE)
     add_subdirectory(scratch)
+endif()
+
+if(HUSE_BUILD_EXAMPLES)
+    add_subdirectory(example)
 endif()
 
 if(HUSE_BUILD_TESTS)
