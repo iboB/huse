@@ -6,7 +6,7 @@
 // https://opensource.org/licenses/MIT
 //
 #pragma once
-#include <cassert>
+#include "Assert.hpp"
 
 namespace huse::impl
 {
@@ -20,12 +20,14 @@ public:
         : m_parent(parent)
     {
         if (!m_parent) return;
-        assert(!m_parent->m_hasActiveSubObject);
+        HUSE_ASSERT_USAGE(!m_parent->m_hasActiveSubObject, "multi subobj");
         m_parent->m_hasActiveSubObject = true;
     }
-    ~UniqueStack() {
+    ~UniqueStack()
+    {
+        HUSE_ASSERT_USAGE(!m_hasActiveSubObject, "parent before child");
         if (!m_parent) return;
-        assert(m_parent->m_hasActiveSubObject);
+        HUSE_ASSERT_INTERNAL(m_parent->m_hasActiveSubObject);
         m_parent->m_hasActiveSubObject = false;
     }
 };

@@ -14,7 +14,6 @@
 #include <vector>
 #include <string>
 #include <cmath>
-#include <exception>
 #include <sstream>
 
 namespace huse::json
@@ -128,7 +127,7 @@ struct Deserializer::Impl
 
         auto& top = stack.back();
         auto tt = top.value.sjvalue.get_type();
-        assert(tt == sajson::TYPE_ARRAY || tt == sajson::TYPE_OBJECT);
+        HUSE_ASSERT_INTERNAL(tt == sajson::TYPE_ARRAY || tt == sajson::TYPE_OBJECT);
 
         if (!top.pending) throwException("out of range");
 
@@ -164,11 +163,11 @@ struct Deserializer::Impl
 
     bool tryLoadKey(std::string_view key)
     {
-        assert(!stack.empty());
+        HUSE_ASSERT_INTERNAL(!stack.empty());
 
         auto& top = stack.back();
 
-        assert(top.value.sjvalue.get_type() == sajson::TYPE_OBJECT);
+        HUSE_ASSERT_INTERNAL(top.value.sjvalue.get_type() == sajson::TYPE_OBJECT);
 
         // optimistic check whether the pending key is what we actually want
         if (top.pending && top.pending->key == key) return true;
@@ -191,20 +190,20 @@ struct Deserializer::Impl
 
     std::optional<std::string_view> loadNextKey()
     {
-        assert(!stack.empty());
+        HUSE_ASSERT_INTERNAL(!stack.empty());
         auto& top = stack.back();
-        assert(top.value.sjvalue.get_type() == sajson::TYPE_OBJECT);
+        HUSE_ASSERT_INTERNAL(top.value.sjvalue.get_type() == sajson::TYPE_OBJECT);
         if (top.pending) return top.pending->key;
         return std::nullopt;
     }
 
     void loadIndex(int index)
     {
-        assert(!stack.empty());
+        HUSE_ASSERT_INTERNAL(!stack.empty());
 
         auto& top = stack.back();
 
-        assert(top.value.sjvalue.get_type() == sajson::TYPE_ARRAY);
+        HUSE_ASSERT_INTERNAL(top.value.sjvalue.get_type() == sajson::TYPE_ARRAY);
 
         // optimistic check whether the pending index is the same
         if (top.pending && top.pending->index == index) return;
@@ -271,8 +270,8 @@ struct Deserializer::Impl
         case sajson::TYPE_ARRAY:   return {Type::Array};
         case sajson::TYPE_OBJECT:  return {Type::Object};
         default:
-            assert(false);
-            return Type::Null;
+            HUSE_ASSERT_INTERNAL(false);
+            return {Type::Null};
         }
     }
 
@@ -281,7 +280,8 @@ struct Deserializer::Impl
         if (stack.empty()) return fromSajsonType(document.get_root().get_type());
 
         auto& top = stack.back();
-        if (!top.pending) throwException("out of range");
+        HUSE_ASSERT_INTERNAL(top.pending);
+        //if (!top.pending) throwException("out of range");
         return fromSajsonType(top.pending->sjvalue.get_type());
     }
 
@@ -332,8 +332,7 @@ Deserializer::Deserializer(sajson::document&& doc)
 
 Deserializer::~Deserializer()
 {
-    if (std::uncaught_exceptions()) return;
-    assert(m_i->stack.size() == 0);
+    HUSE_ASSERT_INTERNAL(m_i->stack.size() == 0);
 }
 
 void Deserializer::read(bool& val)
@@ -341,7 +340,7 @@ void Deserializer::read(bool& val)
     auto t = m_i->r().get_type();
     if (t == sajson::TYPE_TRUE) val = true;
     else if (t == sajson::TYPE_FALSE) val = false;
-    else throwException("not bool");
+    else throwException("not a boolean");
 }
 
 void Deserializer::read(short& val) { m_i->readInt(val); }

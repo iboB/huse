@@ -25,7 +25,7 @@ Serializer::Serializer(std::ostream& out, bool pretty)
 Serializer::~Serializer()
 {
     if (std::uncaught_exceptions()) return; // nothing smart to do
-    assert(m_depth == 0);
+    HUSE_ASSERT_INTERNAL(m_depth == 0);
 }
 
 void Serializer::writeRawJson(std::string_view key, std::string_view json)
@@ -179,7 +179,7 @@ void Serializer::write(std::nullopt_t)
 
 void Serializer::pushKey(std::string_view k)
 {
-    assert(!m_pendingKey);
+    HUSE_ASSERT_INTERNAL(!m_pendingKey);
     m_pendingKey = k;
 }
 
@@ -193,7 +193,7 @@ void Serializer::open(char o)
 
 void Serializer::close(char c)
 {
-    assert(m_depth);
+    HUSE_ASSERT_INTERNAL(m_depth);
     --m_depth;
     if (m_hasValue) newLine();
     m_out << c;
