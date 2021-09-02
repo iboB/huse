@@ -63,7 +63,7 @@ struct Character : public SerializableT<Character>
         auto obj = n.obj();
         obj.val("character", self.name);
         obj.val("HP", self.hp);
-        obj.val("MP", self.hp);
+        obj.val("MP", self.mp);
         obj.val("skills", self.skills);
         obj.val("familiar", self.familiar);
     }
