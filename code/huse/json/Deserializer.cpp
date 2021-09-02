@@ -134,7 +134,7 @@ struct Deserializer::Impl
         {
             // "hacky" adjust current so that the exception stack printer does something nice
             current.key = {};
-            current.index = top.value.sjvalue.get_length();
+            current.index = int(top.value.sjvalue.get_length());
             throwException(Out_of_Range);
         }
 
@@ -144,6 +144,7 @@ struct Deserializer::Impl
         if (int(top.value.sjvalue.get_length()) <= nextIndex)
         {
             top.pending.reset();
+            return;
         }
 
         auto& pending = *top.pending;
