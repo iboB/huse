@@ -22,6 +22,7 @@ namespace huse::json
 namespace
 {
 constexpr std::string_view Not_Integer = "not an integer";
+constexpr std::string_view Out_of_Range = "out of range";
 }
 
 Deserializer Deserializer::fromConstString(std::string_view str)
@@ -129,7 +130,13 @@ struct Deserializer::Impl
         auto tt = top.value.sjvalue.get_type();
         HUSE_ASSERT_INTERNAL(tt == sajson::TYPE_ARRAY || tt == sajson::TYPE_OBJECT);
 
-        if (!top.pending) throwException("out of range");
+        if (!top.pending)
+        {
+            // "hacky" adjust current so that the exception stack printer does something nice
+            current.key = {};
+            current.index = top.value.sjvalue.get_length();
+            throwException(Out_of_Range);
+        }
 
         current = *top.pending;
         auto nextIndex = top.pending->index + 1;
@@ -185,7 +192,12 @@ struct Deserializer::Impl
 
     void loadKey(std::string_view key)
     {
-        if (!tryLoadKey(key)) throwException(key);
+        if (!tryLoadKey(key))
+        {
+            // "hacky" adjust current so that the exception stack printer does something nice
+            current.key = key;
+            throwException(Out_of_Range);
+        }
     }
 
     std::optional<std::string_view> loadNextKey()
@@ -208,7 +220,12 @@ struct Deserializer::Impl
         // optimistic check whether the pending index is the same
         if (top.pending && top.pending->index == index) return;
 
-        if (index >= int(top.value.sjvalue.get_length())) throwException(std::to_string(index));
+        if (index >= int(top.value.sjvalue.get_length())) {
+            // "hacky" adjust current so that the exception stack printer does something nice
+            current.key = {};
+            current.index = index;
+            throwException(Out_of_Range);
+        }
 
         // adjust pending so the next call of advance loads it
         auto& pending = top.pending.emplace();
@@ -221,8 +238,8 @@ struct Deserializer::Impl
         advance();
         if (current.sjvalue.get_type() != target)
         {
-            if (target == sajson::TYPE_ARRAY) throwException("not array");
-            else throwException("not object");
+            if (target == sajson::TYPE_ARRAY) throwException("not an array");
+            else throwException("not an object");
         }
 
         auto& top = stack.emplace_back();
@@ -281,7 +298,7 @@ struct Deserializer::Impl
 
         auto& top = stack.back();
         HUSE_ASSERT_INTERNAL(top.pending);
-        //if (!top.pending) throwException("out of range");
+        //if (!top.pending) throwException(Out_of_Range);
         return fromSajsonType(top.pending->sjvalue.get_type());
     }
 

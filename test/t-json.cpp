@@ -271,6 +271,29 @@ TEST_CASE("serializer exceptions")
         auto d = makeD(json);
         CHECK_THROWS_D(d.val(str), "root : not a string");
     }
+    {
+        auto d = makeD(json);
+        CHECK_THROWS_D(d.ar(), "root : not an array");
+    }
+    {
+        auto d = makeD(json);
+        CHECK_THROWS_D(d.obj().obj("ar"), R"(root."ar" : not an object)");
+    }
+    {
+        auto d = makeD(json);
+        CHECK_THROWS_D(d.obj().ar("ar").index(5), R"(root."ar".[5] : out of range)");
+    }
+    {
+        auto d = makeD(json);
+        CHECK_THROWS_D(d.obj().key("zzz"), R"(root."zzz" : out of range)");
+    }
+    {
+        auto d = makeD(json);
+        auto o = d.obj();
+        auto a = o.ar("ar");
+        a.index(2).val(i32);
+        CHECK_THROWS_D(a.val(str), R"(root."ar".[3] : out of range)");
+    }
 }
 
 struct BigIntegers
