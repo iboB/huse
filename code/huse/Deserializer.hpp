@@ -238,8 +238,11 @@ protected:
 
     virtual Type pendingType() const = 0;
 
-    // noad the next key and return it or nullopt if there is no next key
-    virtual std::optional<std::string_view> loadNextKey() = 0;
+    // throw if no next key
+    virtual std::string_view loadNextKey() = 0;
+
+    // load the next key and return it or nullopt if there is no next key
+    virtual std::optional<std::string_view> tryLoadNextKey() = 0;
 };
 
 inline DeserializerObject DeserializerNode::obj()
@@ -360,7 +363,7 @@ inline DeserializerNode* DeserializerObject::optkey(std::string_view k)
 
 inline DeserializerObject::KeyQuery DeserializerObject::nextkey()
 {
-    auto name = m_deserializer.loadNextKey();
+    auto name = m_deserializer.tryLoadNextKey();
     if (!name) return {};
     return {*name, this};
 }

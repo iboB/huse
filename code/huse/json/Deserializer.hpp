@@ -53,7 +53,8 @@ private:
     virtual void loadKey(std::string_view key) override;
     virtual bool tryLoadKey(std::string_view key) override;
     virtual void loadIndex(int index) override;
-    virtual std::optional<std::string_view> loadNextKey() override;
+    virtual std::string_view loadNextKey() override;
+    virtual std::optional<std::string_view> tryLoadNextKey() override;
 
     virtual Type pendingType() const override;
 

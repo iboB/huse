@@ -201,7 +201,14 @@ struct Deserializer::Impl
         }
     }
 
-    std::optional<std::string_view> loadNextKey()
+    std::string_view loadNextKey()
+    {
+        auto t = tryLoadNextKey();
+        if (t) return *t;
+        throwException(Out_of_Range);
+    }
+
+    std::optional<std::string_view> tryLoadNextKey()
     {
         HUSE_ASSERT_INTERNAL(!stack.empty());
         auto& top = stack.back();
@@ -396,7 +403,8 @@ void Deserializer::loadKey(std::string_view key) { m_i->loadKey(key); }
 bool Deserializer::tryLoadKey(std::string_view key) { return m_i->tryLoadKey(key); }
 void Deserializer::loadIndex(int index) { m_i->loadIndex(index); }
 
-std::optional<std::string_view> Deserializer::loadNextKey() { return m_i->loadNextKey(); }
+std::string_view Deserializer::loadNextKey() { return m_i->loadNextKey(); }
+std::optional<std::string_view> Deserializer::tryLoadNextKey() { return m_i->tryLoadNextKey(); }
 
 Type Deserializer::pendingType() const { return m_i->pendingType(); }
 
