@@ -115,53 +115,35 @@ void Serializer::writeFloatValue(T val)
 void Serializer::write(float val) { writeFloatValue(val); }
 void Serializer::write(double val) { writeFloatValue(val); }
 
+namespace
+{
+std::optional<std::string_view> escapeUtf8Byte(char c)
+{
+    auto u = uint8_t(c);
+
+    // http://www.json.org/
+    if (u > '\\') return {}; // no escape needed for characters above backslash
+    if (u == '"') return "\\\"";
+    if (u == '\\') return "\\\\";
+    if (u >= ' ') return {}; // no escape needed for other characters above space
+    static constexpr std::string_view belowSpace[' '] = {
+        "\\u0000","\\u0001","\\u0002","\\u0003","\\u0004","\\u0005","\\u0006","\\u0007",
+          "\\b"  ,  "\\t"  ,  "\\n"  ,"\\u000b",  "\\f"  ,  "\\r"  ,"\\u000e","\\u000f",
+        "\\u0010","\\u0011","\\u0012","\\u0013","\\u0014","\\u0015","\\u0016","\\u0017",
+        "\\u0018","\\u0019","\\u001a","\\u001b","\\u001c","\\u001d","\\u001e","\\u001f"};
+    return belowSpace[u];
+}
+}
+
 void Serializer::writeEscapedUTF8String(std::string_view str)
 {
     m_out.put('\"');
 
     for (auto c : str)
     {
-        auto u = uint8_t(c);
-        switch (u) {
-            // http://www.json.org/
-        case '"':
-            m_out << "\\\"";
-            break;
-        case '\\':
-            m_out << "\\\\";
-            break;
-        case '\n':
-            m_out << "\\n";
-            break;
-        case '\r':
-            m_out << "\\r";
-            break;
-        case '\b':
-            m_out << "\\b";
-            break;
-        case '\t':
-            m_out << "\\t";
-            break;
-        case '\f':
-            m_out << "\\f";
-            break;
-        default:
-        {
-            if (u >= ' ')
-            {
-                m_out.put(u);
-            }
-            else
-            {
-                char num[3]; // max length of 8-bit integer in hex is 2, plus one byte for termination
-                auto result = msstl::to_chars(num, num + sizeof(num), u, 16);
-                *result.ptr = 0;
-                const char* prefix = u < 16 ? "\\u000" : "\\u00";
-                m_out << prefix << num;
-            }
-        }
-        break;
-        }
+        auto e = escapeUtf8Byte(c);
+        if (!e) m_out.put(c);
+        else m_out << *e;
     }
 
     m_out.put('\"');
