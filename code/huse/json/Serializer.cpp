@@ -121,7 +121,8 @@ void Serializer::writeEscapedUTF8String(std::string_view str)
 
     for (auto c : str)
     {
-        switch (c) {
+        auto u = uint8_t(c);
+        switch (u) {
             // http://www.json.org/
         case '"':
             m_out << "\\\"";
@@ -146,16 +147,16 @@ void Serializer::writeEscapedUTF8String(std::string_view str)
             break;
         default:
         {
-            if (c >= ' ')
+            if (u >= ' ')
             {
-                m_out.put(c);
+                m_out.put(u);
             }
             else
             {
                 char num[3]; // max length of 8-bit integer in hex is 2, plus one byte for termination
-                auto result = msstl::to_chars(num, num + sizeof(num), c, 16);
+                auto result = msstl::to_chars(num, num + sizeof(num), u, 16);
                 *result.ptr = 0;
-                const char* prefix = c < 16 ? "\\u000" : "\\u00";
+                const char* prefix = u < 16 ? "\\u000" : "\\u00";
                 m_out << prefix << num;
             }
         }
