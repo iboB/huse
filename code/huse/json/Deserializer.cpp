@@ -205,6 +205,9 @@ struct Deserializer::Impl
     {
         auto t = tryLoadNextKey();
         if (t) return *t;
+        // "hacky" adjust current so that the exception stack printer does something nice
+        current.key = {};
+        current.index = int(stack.back().value.sjvalue.get_length());
         throwException(Out_of_Range);
     }
 

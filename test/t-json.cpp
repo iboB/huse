@@ -221,6 +221,14 @@ TEST_CASE("simple deserialize")
         CHECK(obj.key("str").type().is(huse::Type::String));
 
         CHECK(obj.key("array").type().is(huse::Type::Array));
+
+        obj.val("float", f);
+
+        std::string key;
+        int i2 = 0;
+        obj.nextkeyval(key, i2);
+        CHECK(key == "int");
+        CHECK(i2 == -3);
     }
 }
 
@@ -293,6 +301,14 @@ TEST_CASE("deserializer exceptions")
         auto a = o.ar("ar");
         a.index(2).val(i32);
         CHECK_THROWS_D(a.val(str), R"(root."ar".[3] : out of range)");
+    }
+    {
+        auto d = makeD(json);
+        auto o = d.obj();
+        bool b;
+        o.val("b", b);
+        std::string_view key;
+        CHECK_THROWS_D(o.nextkeyval(key, b), "root.[3] : out of range");
     }
 }
 

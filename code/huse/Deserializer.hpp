@@ -184,6 +184,9 @@ public:
     };
     KeyQuery nextkey();
 
+    template <typename Key, typename T>
+    void nextkeyval(Key& k, T& v);
+
     // intentionally hiding parent
     Type type() const { return {Type::Object}; }
 };
@@ -366,6 +369,13 @@ inline DeserializerObject::KeyQuery DeserializerObject::nextkey()
     auto name = m_deserializer.tryLoadNextKey();
     if (!name) return {};
     return {*name, this};
+}
+
+template <typename Key, typename T>
+void DeserializerObject::nextkeyval(Key& k, T& v)
+{
+    k = Key(m_deserializer.loadNextKey());
+    this->DeserializerNode::val(v);
 }
 
 template <typename T>
