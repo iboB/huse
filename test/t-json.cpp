@@ -314,34 +314,40 @@ TEST_CASE("deserializer exceptions")
 
 TEST_CASE("string i/o")
 {
-    const std::string_view a = R"(C:\Windows\foo\n\tIndented text\nSomething "else".\0After zero)";
-    const std::string_view b =
+    std::string zeroStart = "0starts with zero";
+    zeroStart[0] = 0;
+    std::string midZero = R"(C:\Windows\foo\n\tIndented text\nSomething "else")";
+    midZero += '\0';
+    midZero += "After zero";
+    const std::vector<std::string_view> vec = {
+        "",
+        "simple string",
+        midZero,
+        zeroStart,
+        "\"quoted string\"",
+        "windows newline\r\n",
+        "something\b\t\ff\tu\nn\rk\fy\nor other\t\t\t",
         u8"\u0417\u0434\u0440\u0430\u0432\u0435\u0439\u002c\u0020\u0441\u0432\u044f"
         u8"\u0442\u0021\u000d\u000a\u662f\u6307\u5728\u96fb\u8166\u87a2\u5e55\u986f"
         u8"\u793a\u000d\u000a\u03a0\u03c1\u03cc\u03b3\u03c1\u03b1\u03bc\u03bc\u03b1"
         u8"\u0020\u0022\u0068\u0065\u006c\u006c\u006f\u0020\u0077\u006f\u0072\u006c"
         u8"\u0064\u0022\u000d\u000a\u30cf\u30ed\u30fc\u30fb\u30ef\u30fc\u30eb\u30c9"
-        u8"\U0001f34c";
+        u8"\U0001f34c",
+    };
 
     JsonSerializeTester j;
-    {
-        auto obj = j.compact().obj();
-        obj.val("easy", a);
-        obj.val("hard", b);
-    }
+    j.compact().val(vec);
 
     auto json = j.str();
 
-    std::string_view da, db;
-    {
-        auto d = makeD(json);
-        auto obj = d.obj();
-        obj.val("easy", da);
-        obj.val("hard", db);
-    }
+    std::vector<std::string> copy;
+    makeD(json).val(copy);
 
-    CHECK(a == da);
-    CHECK(b == db);
+    REQUIRE(vec.size() == copy.size());
+    for (size_t i=0; i<vec.size(); ++i)
+    {
+        CHECK(vec[i] == copy[i]);
+    }
 }
 
 struct BigIntegers
