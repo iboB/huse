@@ -139,12 +139,35 @@ void Serializer::writeEscapedUTF8String(std::string_view str)
 {
     m_out.put('\"');
 
-    for (auto c : str)
-    {
-        auto e = escapeUtf8Byte(c);
-        if (!e) m_out.put(c);
-        else m_out << *e;
+    // we could use this simple code here
+    // but it writes bytes one by one
+    //
+    // for (auto c : str)
+    // {
+    //     auto e = escapeUtf8Byte(c);
+    //     if (!e) m_out.put(c);
+    //     else m_out << *e;
+    // }
+    //
+    // to optimize, we'll use the following which writes in chunks
+    // if there is nothing to be escaped in a string,
+    //  it will print the whole string at the end as a single operation
+
+    auto begin = str.data();
+    const auto end = str.data() + str.size();
+
+    auto p = begin;
+    while (p != end) {
+        auto esc = escapeUtf8Byte(*p);
+        if (!esc) ++p;
+        else
+        {
+            if (p != begin) m_out.write(begin, p-begin);
+            m_out << *esc;
+            begin = ++p;
+        }
     }
+    if (p != begin) m_out.write(begin, p-begin);
 
     m_out.put('\"');
 }
