@@ -8,7 +8,7 @@
 #pragma once
 #include "../Serializer.hpp"
 
-#include <iosfwd>
+#include <type_traits>
 
 namespace huse::json
 {
@@ -47,6 +47,9 @@ private:
 
     virtual void write(nullptr_t) override;
     virtual void write(std::nullopt_t) override;
+
+    virtual std::ostream& openStringStream() override;
+    virtual void closeStringStream() override;
 
     virtual void pushKey(std::string_view k) override;
 

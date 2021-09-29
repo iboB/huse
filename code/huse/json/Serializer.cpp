@@ -11,7 +11,6 @@
 
 #include <cmath>
 #include <iostream>
-#include <type_traits>
 #include <exception>
 
 namespace huse::json
@@ -181,6 +180,15 @@ void Serializer::write(std::string_view val)
 void Serializer::write(std::nullopt_t)
 {
     m_pendingKey.reset();
+}
+
+std::ostream& Serializer::openStringStream()
+{
+    return std::cout;
+}
+
+void Serializer::closeStringStream()
+{
 }
 
 void Serializer::pushKey(std::string_view k)

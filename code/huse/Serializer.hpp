@@ -12,6 +12,7 @@
 
 #include <string_view>
 #include <optional>
+#include <iosfwd>
 
 namespace huse
 {
@@ -139,6 +140,10 @@ protected:
     // explicit calls
     virtual void write(nullptr_t) = 0; // write null explicitly
     virtual void write(std::nullopt_t) = 0; // discard current value
+
+    // stateful writes
+    virtual std::ostream& openStringStream() = 0;
+    virtual void closeStringStream() = 0;
 
     // helpers
     void write(const char* s) { write(std::string_view(s)); }
