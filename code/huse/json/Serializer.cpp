@@ -7,11 +7,13 @@
 //
 #include "Serializer.hpp"
 
+#include "../Exception.hpp"
+
 #include <msstl/charconv.hpp>
 
 #include <cmath>
-#include <iostream>
 #include <exception>
+#include <new>
 
 namespace huse::json
 {
@@ -129,14 +131,14 @@ std::optional<std::string_view> escapeUtf8Byte(char c)
         "\\u0000","\\u0001","\\u0002","\\u0003","\\u0004","\\u0005","\\u0006","\\u0007",
           "\\b"  ,  "\\t"  ,  "\\n"  ,"\\u000b",  "\\f"  ,  "\\r"  ,"\\u000e","\\u000f",
         "\\u0010","\\u0011","\\u0012","\\u0013","\\u0014","\\u0015","\\u0016","\\u0017",
-        "\\u0018","\\u0019","\\u001a","\\u001b","\\u001c","\\u001d","\\u001e","\\u001f"};
+        "\\u0018","\\u0019","\\u001a","\\u001b","\\u001c","\\u001d","\\u001e","\\u001f" };
     return belowSpace[u];
 }
 }
 
 void Serializer::writeEscapedUTF8String(std::string_view str)
 {
-    m_out.put('\"');
+    m_out.put('"');
 
     // we could use this simple code here
     // but it writes bytes one by one
@@ -161,14 +163,14 @@ void Serializer::writeEscapedUTF8String(std::string_view str)
         if (!esc) ++p;
         else
         {
-            if (p != begin) m_out.write(begin, p-begin);
+            if (p != begin) m_out.write(begin, p - begin);
             m_out << *esc;
             begin = ++p;
         }
     }
-    if (p != begin) m_out.write(begin, p-begin);
+    if (p != begin) m_out.write(begin, p - begin);
 
-    m_out.put('\"');
+    m_out.put('"');
 }
 
 void Serializer::write(std::string_view val)
@@ -180,15 +182,6 @@ void Serializer::write(std::string_view val)
 void Serializer::write(std::nullopt_t)
 {
     m_pendingKey.reset();
-}
-
-std::ostream& Serializer::openStringStream()
-{
-    return std::cout;
-}
-
-void Serializer::closeStringStream()
-{
 }
 
 void Serializer::pushKey(std::string_view k)
@@ -248,6 +241,72 @@ void Serializer::newLine()
     {
         m_out << indent;
     }
+}
+
+namespace
+{
+struct JsonRedirectStreambuf : public std::streambuf
+{
+    JsonRedirectStreambuf(std::streambuf& redirectTarget) : m_redirectTarget(redirectTarget) {}
+
+    int_type overflow(int_type ch) override
+    {
+        m_redirectTarget.sputc(ch);
+        return ch;
+    }
+
+    std::streamsize xsputn(const char_type* s, std::streamsize num) override
+    {
+        m_redirectTarget.sputn(s, num);
+        return num;
+    }
+
+    [[noreturn]] void throwSeekException()
+    {
+        throw SerializerException("Seek is not supported by JSON string streams");
+    }
+
+    [[noreturn]] pos_type seekpos(pos_type, std::ios_base::openmode) override
+    {
+        throwSeekException();
+    }
+
+    [[noreturn]] pos_type seekoff(off_type, std::ios_base::seekdir, std::ios_base::openmode) override
+    {
+        throwSeekException();
+    }
+
+    std::streambuf& m_redirectTarget;
+};
+}
+
+class Serializer::JsonOStream
+{
+public:
+    JsonOStream(std::ostream& rt)
+        : streambuf(*rt.rdbuf())
+        , stream(&streambuf)
+    {}
+
+    JsonRedirectStreambuf streambuf;
+    std::ostream stream;
+};
+
+std::ostream& Serializer::openStringStream()
+{
+    static_assert(sizeof(JsonOStream) == sizeof(m_stringStreamBuffer));
+    HUSE_ASSERT_INTERNAL(!m_stringStream);
+    m_out << '"';
+    m_stringStream = new (&m_stringStreamBuffer) JsonOStream(m_out);
+    return m_stringStream->stream;
+}
+
+void Serializer::closeStringStream()
+{
+    assert(!!m_stringStream);
+    m_stringStream->~JsonOStream();
+    m_stringStream = nullptr;
+    m_out << '"';
 }
 
 }

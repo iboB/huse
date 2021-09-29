@@ -9,6 +9,7 @@
 #include "../Serializer.hpp"
 
 #include <type_traits>
+#include <ostream>
 
 namespace huse::json
 {
@@ -78,6 +79,12 @@ private:
 
     void prepareWriteVal(); // called before each value print
     void newLine(); // prints new line and indentation if pretty otherwise does nothing
+
+    // hacky pimpl, but that's the only way to skip allocations altogether with this class
+    // the size of the aligned storage must be updated manually if JsonStream's definition gets updated
+    std::aligned_storage_t<sizeof(std::ostream) + sizeof(std::streambuf) + sizeof(void*), alignof(void*)> m_stringStreamBuffer;
+    class JsonOStream;
+    JsonOStream* m_stringStream = nullptr;
 };
 
 }

@@ -112,6 +112,11 @@ R"({
     );
 }
 
+TEST_CASE("serializer stream")
+{
+    JsonSerializeTester j;
+}
+
 TEST_CASE("serializer exceptions")
 {
     {
