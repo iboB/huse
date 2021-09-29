@@ -7,7 +7,7 @@ include(./get_cpm.cmake)
 
 #######################################
 # cmake lib
-CPMAddPackage(gh:iboB/icm@1.3.1)
+CPMAddPackage(gh:iboB/icm@1.3.2)
 
 set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH}
@@ -28,6 +28,7 @@ option(HUSE_BUILD_EXAMPLES "huse: build examples" ${ICM_DEV_MODE})
 # packages
 CPMAddPackage(gh:iboB/splat@1.0.0)
 CPMAddPackage(gh:iboB/mscharconv@1.0.1)
+CPMAddPackage(gh:iboB/itlib@1.4.2)
 
 #######################################
 # subdirs

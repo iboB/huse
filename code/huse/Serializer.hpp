@@ -31,9 +31,9 @@ protected:
     BasicSerializer& m_serializer;
 public:
     SerializerNode(const SerializerNode&) = delete;
-    SerializerNode operator=(const SerializerNode&) = delete;
+    SerializerNode& operator=(const SerializerNode&) = delete;
     SerializerNode(SerializerNode&&) = delete;
-    SerializerNode operator=(SerializerNode&&) = delete;
+    SerializerNode& operator=(SerializerNode&&) = delete;
 
     SerializerObject obj();
     SerializerArray ar();

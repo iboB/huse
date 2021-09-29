@@ -42,6 +42,9 @@ private:
     virtual void read(std::string_view& val) override;
     virtual void read(std::string& val) override;
 
+    virtual std::istream& openStringStream() override;
+    virtual void closeStringStream() override;
+
     virtual void loadObject() override;
     virtual void unloadObject() override;
 

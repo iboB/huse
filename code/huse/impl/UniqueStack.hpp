@@ -30,6 +30,17 @@ public:
         HUSE_ASSERT_INTERNAL(m_parent->m_hasActiveSubObject);
         m_parent->m_hasActiveSubObject = false;
     }
+
+    UniqueStack(const UniqueStack&) = delete;
+    UniqueStack& operator=(const UniqueStack&) = delete;
+    UniqueStack(UniqueStack&& other)
+        : m_parent(other.m_parent)
+        , m_hasActiveSubObject(other.m_hasActiveSubObject)
+    {
+        other.m_parent = nullptr;
+        other.m_hasActiveSubObject = false;
+    }
+    UniqueStack& operator=(UniqueStack&&) = delete;
 };
 
 }

@@ -13,6 +13,8 @@
 #include <string_view>
 #include <optional>
 
+#include <iosfwd>
+
 namespace huse
 {
 
@@ -25,16 +27,16 @@ struct Type
 public:
     enum Value : int
     {
-        True    = 0b01,
-        False   = 0b10,
+        True = 0b01,
+        False = 0b10,
         Boolean = 0b11,
         Integer = 0b0100,
-        Float   = 0b1000,
-        Number  = 0b1100,
-        String  = 0b10000,
-        Object  = 0b100000,
-        Array   = 0b1000000,
-        Null    = 0b10000000,
+        Float = 0b1000,
+        Number = 0b1100,
+        String = 0b10000,
+        Object = 0b100000,
+        Array = 0b1000000,
+        Null = 0b10000000,
     };
 
     Type(Value t) : m_t(t) {}
@@ -42,6 +44,39 @@ public:
     bool is(Value mask) const { return m_t & mask; }
 private:
     Value m_t;
+};
+
+class DeserializerSStream : public impl::UniqueStack
+{
+public:
+    DeserializerSStream(BasicDeserializer& d, impl::UniqueStack* parent);
+    ~DeserializerSStream();
+
+    DeserializerSStream(const DeserializerSStream&) = delete;
+    DeserializerSStream& operator=(const DeserializerSStream&) = delete;
+
+    // can't delete this too, as we need it to be inside std::optional
+    DeserializerSStream(DeserializerSStream&& other) noexcept
+        : impl::UniqueStack(std::move(other))
+        , m_deserializer(other.m_deserializer)
+        , m_stream(other.m_stream)
+    {
+        other.m_stream = nullptr;
+    }
+    DeserializerSStream& operator=(DeserializerSStream&&) = delete;
+
+    template <typename T>
+    DeserializerSStream& operator>>(T& t)
+    {
+        *m_stream >> t;
+        return *this;
+    }
+
+    std::istream& get() { return *m_stream; }
+
+private:
+    BasicDeserializer& m_deserializer;
+    std::istream* m_stream;
 };
 
 class DeserializerNode : public impl::UniqueStack
@@ -55,9 +90,9 @@ protected:
     BasicDeserializer& m_deserializer;
 public:
     DeserializerNode(const DeserializerNode&) = delete;
-    DeserializerNode operator=(const DeserializerNode&) = delete;
+    DeserializerNode& operator=(const DeserializerNode&) = delete;
     DeserializerNode(DeserializerNode&&) = delete;
-    DeserializerNode operator=(DeserializerNode&&) = delete;
+    DeserializerNode& operator=(DeserializerNode&&) = delete;
 
     Type type() const;
 
@@ -71,6 +106,11 @@ public:
     void cval(T& v, F f)
     {
         f(*this, v);
+    }
+
+    DeserializerSStream sstream()
+    {
+        return DeserializerSStream(m_deserializer, this);
     }
 
 protected:
@@ -88,7 +128,7 @@ public:
     DeserializerNode& index(int index);
 
     // intentionally hiding parent
-    Type type() const { return {Type::Array}; }
+    Type type() const { return { Type::Array }; }
 };
 
 class DeserializerObject : private DeserializerNode
@@ -175,6 +215,20 @@ public:
         }
     }
 
+    DeserializerSStream sstream(std::string_view k)
+    {
+        return key(k).sstream();
+    }
+
+    std::optional<DeserializerSStream> optsstream(std::string_view k)
+    {
+        if (auto open = optkey(k))
+        {
+            return open->sstream();
+        }
+        return std::nullopt;
+    }
+
     struct KeyQuery
     {
         std::string_view name;
@@ -188,11 +242,12 @@ public:
     void nextkeyval(Key& k, T& v);
 
     // intentionally hiding parent
-    Type type() const { return {Type::Object}; }
+    Type type() const { return { Type::Object }; }
 };
 
 class HUSE_API BasicDeserializer : public DeserializerNode
 {
+    friend class DeserializerSStream;
     friend class DeserializerNode;
     friend class DeserializerArray;
     friend class DeserializerObject;
@@ -217,6 +272,10 @@ protected:
     virtual void read(double& val) = 0;
     virtual void read(std::string_view& val) = 0;
     virtual void read(std::string& val) = 0;
+
+    // stateful reads
+    virtual std::istream& openStringStream() = 0;
+    virtual void closeStringStream() = 0;
 
     // implementation interface
     virtual void loadObject() = 0;
@@ -247,6 +306,17 @@ protected:
     // load the next key and return it or nullopt if there is no next key
     virtual std::optional<std::string_view> tryLoadNextKey() = 0;
 };
+
+inline DeserializerSStream::DeserializerSStream(BasicDeserializer& d, impl::UniqueStack* parent)
+    : impl::UniqueStack(parent)
+    , m_deserializer(d)
+    , m_stream(&d.openStringStream())
+{}
+
+inline DeserializerSStream::~DeserializerSStream()
+{
+    if (m_stream) m_deserializer.closeStringStream();
+}
 
 inline DeserializerObject DeserializerNode::obj()
 {

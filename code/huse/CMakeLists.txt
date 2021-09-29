@@ -25,4 +25,5 @@ target_link_libraries(huse
         splat
     PRIVATE
         mscharconv
+        itlib
 )

@@ -232,6 +232,33 @@ TEST_CASE("simple deserialize")
     }
 }
 
+TEST_CASE("stream deserialize")
+{
+    auto d = makeD(R"({"string":"aa bbb c"})");
+    auto o = d.obj();
+    CHECK(!o.optsstream("asdf"));
+    CHECK(!!o.optsstream("string"));
+
+    {
+        std::string a, b, c;
+        o.sstream("string") >> a >> b >> c;
+        CHECK(a == "aa");
+        CHECK(b == "bbb");
+        CHECK(c == "c");
+    }
+
+    {
+        std::string a, b, c;
+        auto s = o.optsstream("string");
+        REQUIRE(!!s);
+        *s >> a >> b >> c;
+        CHECK(a == "aa");
+        CHECK(b == "bbb");
+        CHECK(c == "c");
+        CHECK(s->get().eof());
+    }
+}
+
 #define CHECK_THROWS_D(e, txt) CHECK_THROWS_WITH_AS(e, txt, huse::DeserializerException)
 
 TEST_CASE("deserializer exceptions")
@@ -615,4 +642,9 @@ TEST_CASE("custom serialization i/o")
     }
 
     CHECK(cs == cc);
+}
+
+TEST_CASE("stream i/o")
+{
+
 }

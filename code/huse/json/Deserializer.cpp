@@ -11,6 +11,8 @@
 
 #include "../Exception.hpp"
 
+#include <itlib/mem_streambuf.hpp>
+
 #include <vector>
 #include <string>
 #include <cmath>
@@ -23,6 +25,17 @@ namespace
 {
 constexpr std::string_view Not_Integer = "not an integer";
 constexpr std::string_view Out_of_Range = "out of range";
+
+struct MemIStream
+{
+    MemIStream(std::string_view str)
+        : streambuf(str.data(), str.size())
+        , stream(&streambuf)
+    {}
+
+    itlib::mem_istreambuf<char> streambuf;
+    std::istream stream;
+};
 }
 
 Deserializer Deserializer::fromConstString(std::string_view str)
@@ -61,6 +74,8 @@ struct Deserializer::Impl
     std::vector<StackElement> stack;
 
     Value current; // only valid after advance
+
+    std::optional<MemIStream> m_stringStream;
 
     template <typename Target, typename Source>
     Target signedCheck(Source s)
@@ -345,6 +360,21 @@ struct Deserializer::Impl
         sout << " : " << msg;
         throw DeserializerException(sout.str());
     }
+
+    std::istream& openStringStream()
+    {
+        std::string_view cur;
+        readString(cur);
+        HUSE_ASSERT_INTERNAL(!m_stringStream);
+        m_stringStream.emplace(cur);
+        return m_stringStream->stream;
+    }
+
+    void closeStringStream()
+    {
+        assert(!!m_stringStream);
+        m_stringStream.reset();
+    }
 };
 
 Deserializer::Deserializer(sajson::document&& doc)
@@ -394,6 +424,9 @@ void Deserializer::read(float& val) { m_i->readFloat(val); }
 void Deserializer::read(double& val) { m_i->readFloat(val); }
 void Deserializer::read(std::string_view& val) { m_i->readString(val); }
 void Deserializer::read(std::string& val) { m_i->readString(val); }
+
+std::istream& Deserializer::openStringStream() { return m_i->openStringStream(); }
+void Deserializer::closeStringStream() { m_i->closeStringStream(); }
 
 void Deserializer::loadObject() { m_i->loadCompound(sajson::TYPE_OBJECT); }
 void Deserializer::unloadObject() { m_i->unloadCompound(); }
