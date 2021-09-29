@@ -274,8 +274,8 @@ protected:
     virtual void read(std::string& val) = 0;
 
     // stateful reads
-    virtual std::istream& openStringStream() = 0;
-    virtual void closeStringStream() = 0;
+    virtual std::istream& loadStringStream() = 0;
+    virtual void unloadStringStream() = 0;
 
     // implementation interface
     virtual void loadObject() = 0;
@@ -310,12 +310,12 @@ protected:
 inline DeserializerSStream::DeserializerSStream(BasicDeserializer& d, impl::UniqueStack* parent)
     : impl::UniqueStack(parent)
     , m_deserializer(d)
-    , m_stream(&d.openStringStream())
+    , m_stream(&d.loadStringStream())
 {}
 
 inline DeserializerSStream::~DeserializerSStream()
 {
-    if (m_stream) m_deserializer.closeStringStream();
+    if (m_stream) m_deserializer.unloadStringStream();
 }
 
 inline DeserializerObject DeserializerNode::obj()

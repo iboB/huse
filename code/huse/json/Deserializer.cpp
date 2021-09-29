@@ -361,7 +361,7 @@ struct Deserializer::Impl
         throw DeserializerException(sout.str());
     }
 
-    std::istream& openStringStream()
+    std::istream& loadStringStream()
     {
         std::string_view cur;
         readString(cur);
@@ -370,7 +370,7 @@ struct Deserializer::Impl
         return m_stringStream->stream;
     }
 
-    void closeStringStream()
+    void unloadStringStream()
     {
         assert(!!m_stringStream);
         m_stringStream.reset();
@@ -378,7 +378,7 @@ struct Deserializer::Impl
 };
 
 Deserializer::Deserializer(sajson::document&& doc)
-    : m_i(new Impl{std::move(doc), {}, {}})
+    : m_i(new Impl{std::move(doc), {}, {}, {}})
 {
     if (!m_i->document.is_valid())
     {
@@ -425,8 +425,8 @@ void Deserializer::read(double& val) { m_i->readFloat(val); }
 void Deserializer::read(std::string_view& val) { m_i->readString(val); }
 void Deserializer::read(std::string& val) { m_i->readString(val); }
 
-std::istream& Deserializer::openStringStream() { return m_i->openStringStream(); }
-void Deserializer::closeStringStream() { m_i->closeStringStream(); }
+std::istream& Deserializer::loadStringStream() { return m_i->loadStringStream(); }
+void Deserializer::unloadStringStream() { m_i->unloadStringStream(); }
 
 void Deserializer::loadObject() { m_i->loadCompound(sajson::TYPE_OBJECT); }
 void Deserializer::unloadObject() { m_i->unloadCompound(); }
