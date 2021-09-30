@@ -129,7 +129,12 @@ TEST_CASE("serializer stream")
 
     {
         auto s = j.compact().sstream();
+        s << "b\n\\g";
+        s.get().put('\t');
+        s.get().put(27);
+        s << "sdf";
     }
+    CHECK(j.str() == R"("b\n\\g\t\u001bsdf")");
 }
 
 TEST_CASE("serializer exceptions")

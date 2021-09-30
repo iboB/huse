@@ -71,7 +71,7 @@ private:
     template <typename T> void writeSimpleValue(T val);
     template <typename T> void writePotentiallyBigIntegerValue(T val);
     template <typename T> void writeFloatValue(T val);
-    void writeEscapedUTF8String(std::string_view val); // this is used for keys, too
+    void writeQuotedEscapedUTF8String(std::string_view val); // this is used for keys, too
 
     // open close helpers
     void open(char o);

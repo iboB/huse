@@ -134,12 +134,9 @@ std::optional<std::string_view> escapeUtf8Byte(char c)
         "\\u0018","\\u0019","\\u001a","\\u001b","\\u001c","\\u001d","\\u001e","\\u001f" };
     return belowSpace[u];
 }
-}
 
-void Serializer::writeEscapedUTF8String(std::string_view str)
+void writeEscapedUTF8StringToStreambuf(std::streambuf& buf, std::string_view str)
 {
-    m_out.put('"');
-
     // we could use this simple code here
     // but it writes bytes one by one
     //
@@ -163,20 +160,26 @@ void Serializer::writeEscapedUTF8String(std::string_view str)
         if (!esc) ++p;
         else
         {
-            if (p != begin) m_out.write(begin, p - begin);
-            m_out << *esc;
+            if (p != begin) buf.sputn(begin, p - begin);
+            buf.sputn(esc->data(), esc->length());
             begin = ++p;
         }
     }
-    if (p != begin) m_out.write(begin, p - begin);
+    if (p != begin) buf.sputn(begin, p - begin);
+}
+}
 
+void Serializer::writeQuotedEscapedUTF8String(std::string_view str)
+{
+    m_out.put('"');
+    writeEscapedUTF8StringToStreambuf(*m_out.rdbuf(), str);
     m_out.put('"');
 }
 
 void Serializer::write(std::string_view val)
 {
     prepareWriteVal();
-    writeEscapedUTF8String(val);
+    writeQuotedEscapedUTF8String(val);
 }
 
 void Serializer::write(std::nullopt_t)
@@ -223,7 +226,7 @@ void Serializer::prepareWriteVal()
 
     if (m_pendingKey)
     {
-        writeEscapedUTF8String(*m_pendingKey);
+        writeQuotedEscapedUTF8String(*m_pendingKey);
         m_out << ':';
         m_pendingKey.reset();
     }
@@ -251,13 +254,22 @@ struct JsonRedirectStreambuf : public std::streambuf
 
     int_type overflow(int_type ch) override
     {
-        m_redirectTarget.sputc(ch);
+        auto esc = escapeUtf8Byte(char(ch));
+        if (esc)
+        {
+            m_redirectTarget.sputn(esc->data(), esc->length());
+        }
+        else
+        {
+            m_redirectTarget.sputc(ch);
+        }
+
         return ch;
     }
 
     std::streamsize xsputn(const char_type* s, std::streamsize num) override
     {
-        m_redirectTarget.sputn(s, num);
+        writeEscapedUTF8StringToStreambuf(m_redirectTarget, std::string_view(s, num));
         return num;
     }
 
@@ -296,7 +308,7 @@ std::ostream& Serializer::openStringStream()
 {
     static_assert(sizeof(JsonOStream) == sizeof(m_stringStreamBuffer));
     HUSE_ASSERT_INTERNAL(!m_stringStream);
-    m_out << '"';
+    m_out.put('"');
     m_stringStream = new (&m_stringStreamBuffer) JsonOStream(m_out);
     return m_stringStream->stream;
 }
@@ -306,7 +318,7 @@ void Serializer::closeStringStream()
     assert(!!m_stringStream);
     m_stringStream->~JsonOStream();
     m_stringStream = nullptr;
-    m_out << '"';
+    m_out.put('"');
 }
 
 }
