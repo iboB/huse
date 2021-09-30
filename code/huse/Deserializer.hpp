@@ -72,6 +72,13 @@ public:
         return *this;
     }
 
+    template <typename T>
+    DeserializerSStream& operator&(T& t)
+    {
+        *m_stream >> t;
+        return *this;
+    }
+
     std::istream& get() { return *m_stream; }
 
 private:

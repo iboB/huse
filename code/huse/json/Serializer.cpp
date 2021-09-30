@@ -306,6 +306,7 @@ public:
 
 std::ostream& Serializer::openStringStream()
 {
+    prepareWriteVal();
     static_assert(sizeof(JsonOStream) == sizeof(m_stringStreamBuffer));
     HUSE_ASSERT_INTERNAL(!m_stringStream);
     m_out.put('"');

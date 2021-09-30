@@ -669,7 +669,60 @@ TEST_CASE("custom serialization i/o")
     CHECK(cs == cc);
 }
 
+struct vector2 { int x, y; };
+std::ostream& operator<<(std::ostream& o, const vector2& v)
+{
+    o << '(' << v.x << ';' << v.y << ')';
+    return o;
+}
+
+std::istream& operator>>(std::istream& i, vector2& v)
+{
+    i.get(); // (
+    i >> v.x;
+    i.get(); // ;
+    i >> v.y;
+    i.get(); // )
+    return i;
+}
+
+struct MultipleValuesAsString
+{
+    std::string a;
+    vector2 b;
+
+    template <typename N, typename MVS>
+    static void serializeT(N& n, MVS& self)
+    {
+        n.obj().sstream("data") & self.b & self.a;
+    }
+
+    void huseSerialize(huse::SerializerNode& n) const
+    {
+        serializeT(n, *this);
+    }
+
+    void huseDeserialize(huse::DeserializerNode& n)
+    {
+        serializeT(n, *this);
+    }
+};
+
 TEST_CASE("stream i/o")
 {
+    MultipleValuesAsString mvs = {"xyz", {34, 88}};
+    JsonSerializeTester j;
+    j.compact().val(mvs);
 
+    auto json = j.str();
+
+    MultipleValuesAsString cc;
+    {
+        auto d = makeD(json);
+        d.val(cc);
+    }
+
+    CHECK(mvs.a == cc.a);
+    CHECK(mvs.b.x == cc.b.x);
+    CHECK(mvs.b.y == cc.b.y);
 }

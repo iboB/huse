@@ -39,6 +39,13 @@ public:
         return *this;
     }
 
+    template <typename T>
+    SerializerSStream& operator&(const T& t)
+    {
+        m_stream << t;
+        return *this;
+    }
+
     std::ostream& get() { return m_stream; }
 
 private:
