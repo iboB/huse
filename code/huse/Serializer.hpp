@@ -21,6 +21,31 @@ class SerializerArray;
 class SerializerObject;
 class BasicSerializer;
 
+class SerializerSStream : public impl::UniqueStack
+{
+public:
+    SerializerSStream(BasicSerializer& s, impl::UniqueStack* parent);
+    ~SerializerSStream();
+
+    SerializerSStream(const SerializerSStream&) = delete;
+    SerializerSStream& operator=(const SerializerSStream&) = delete;
+    SerializerSStream(SerializerSStream&& other) noexcept = delete;
+    SerializerSStream& operator=(SerializerSStream&&) = delete;
+
+    template <typename T>
+    SerializerSStream& operator<<(const T& t)
+    {
+        m_stream << t;
+        return *this;
+    }
+
+    std::ostream& get() { return m_stream; }
+
+private:
+    BasicSerializer& m_serializer;
+    std::ostream& m_stream;
+};
+
 class SerializerNode : public impl::UniqueStack
 {
 protected:
@@ -46,6 +71,11 @@ public:
     void cval(const T& v, F f)
     {
         f(*this, v);
+    }
+
+    SerializerSStream sstream()
+    {
+        return SerializerSStream(m_serializer, this);
     }
 };
 
@@ -109,10 +139,16 @@ public:
     {
         if (v) cval(k, *v, std::move(f));
     }
+
+    SerializerSStream sstream(std::string_view k)
+    {
+        return key(k).sstream();
+    }
 };
 
 class HUSE_API BasicSerializer : public SerializerNode
 {
+    friend class SerializerSStream;
     friend class SerializerNode;
     friend class SerializerArray;
     friend class SerializerObject;
@@ -157,6 +193,17 @@ protected:
     virtual void openArray() = 0;
     virtual void closeArray() = 0;
 };
+
+inline SerializerSStream::SerializerSStream(BasicSerializer& s, impl::UniqueStack* parent)
+    : impl::UniqueStack(parent)
+    , m_serializer(s)
+    , m_stream(s.openStringStream())
+{}
+
+inline SerializerSStream::~SerializerSStream()
+{
+    m_serializer.closeStringStream();
+}
 
 inline SerializerObject SerializerNode::obj()
 {

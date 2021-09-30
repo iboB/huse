@@ -115,6 +115,21 @@ R"({
 TEST_CASE("serializer stream")
 {
     JsonSerializeTester j;
+
+    j.compact().sstream() << "xx " << 123;
+    CHECK(j.str() == R"("xx 123")");
+
+    {
+        auto s = j.compact().sstream();
+        s << -5;
+        s.get().put(' ');
+        s.get().write("abc", 3);
+    }
+    CHECK(j.str() == R"("-5 abc")");
+
+    {
+        auto s = j.compact().sstream();
+    }
 }
 
 TEST_CASE("serializer exceptions")
