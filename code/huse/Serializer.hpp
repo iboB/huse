@@ -12,6 +12,7 @@
 
 #include <string_view>
 #include <optional>
+#include <cstdint>
 #include <iosfwd>
 
 namespace huse
@@ -67,6 +68,8 @@ public:
     SerializerNode& operator=(const SerializerNode&) = delete;
     SerializerNode(SerializerNode&&) = delete;
     SerializerNode& operator=(SerializerNode&&) = delete;
+
+    uintptr_t context() const;
 
     SerializerObject obj();
     SerializerArray ar();
@@ -160,7 +163,7 @@ class HUSE_API BasicSerializer : public SerializerNode
     friend class SerializerArray;
     friend class SerializerObject;
 public:
-    BasicSerializer() : SerializerNode(*this, nullptr) {}
+    BasicSerializer(uintptr_t ctx) : SerializerNode(*this, nullptr), m_context(ctx) {}
     virtual ~BasicSerializer();
 
     [[noreturn]] virtual void throwException(const std::string& msg) const;
@@ -199,6 +202,9 @@ protected:
 
     virtual void openArray() = 0;
     virtual void closeArray() = 0;
+
+private:
+    uintptr_t m_context;
 };
 
 inline SerializerSStream::SerializerSStream(BasicSerializer& s, impl::UniqueStack* parent)
@@ -210,6 +216,11 @@ inline SerializerSStream::SerializerSStream(BasicSerializer& s, impl::UniqueStac
 inline SerializerSStream::~SerializerSStream()
 {
     m_serializer.closeStringStream();
+}
+
+inline uintptr_t SerializerNode::context() const
+{
+    return m_serializer.m_context;
 }
 
 inline SerializerObject SerializerNode::obj()

@@ -101,6 +101,8 @@ public:
     DeserializerNode(DeserializerNode&&) = delete;
     DeserializerNode& operator=(DeserializerNode&&) = delete;
 
+    uintptr_t context() const;
+
     Type type() const;
 
     DeserializerObject obj();
@@ -259,7 +261,7 @@ class HUSE_API BasicDeserializer : public DeserializerNode
     friend class DeserializerArray;
     friend class DeserializerObject;
 public:
-    BasicDeserializer() : DeserializerNode(*this, nullptr) {}
+    BasicDeserializer(uintptr_t ctx) : DeserializerNode(*this, nullptr), m_context(ctx) {}
     virtual ~BasicDeserializer();
 
     [[noreturn]] virtual void throwException(const std::string& msg) const;
@@ -312,6 +314,9 @@ protected:
 
     // load the next key and return it or nullopt if there is no next key
     virtual std::optional<std::string_view> tryLoadNextKey() = 0;
+
+private:
+    uintptr_t m_context;
 };
 
 inline DeserializerSStream::DeserializerSStream(BasicDeserializer& d, impl::UniqueStack* parent)
@@ -390,6 +395,11 @@ void DeserializerNode::val(T& v) {
     {
         cannot_deserialize(v);
     }
+}
+
+inline uintptr_t DeserializerNode::context() const
+{
+    return m_deserializer.m_context;
 }
 
 inline Type DeserializerNode::type() const

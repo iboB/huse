@@ -38,21 +38,25 @@ struct MemIStream
 };
 }
 
-Deserializer Deserializer::fromConstString(std::string_view str)
+Deserializer Deserializer::fromConstString(std::string_view str, uintptr_t ctx)
 {
     return Deserializer(
         sajson::parse(
             sajson::single_allocation(),
-            sajson::string(str.data(), str.length())));
+            sajson::string(str.data(), str.length())),
+        ctx
+    );
 }
 
-Deserializer Deserializer::fromMutableString(char* str, size_t size /*= size_t(-1)*/)
+Deserializer Deserializer::fromMutableString(char* str, size_t size /*= size_t(-1)*/, uintptr_t ctx)
 {
     if (size == size_t(-1)) size = strlen(str);
     return Deserializer(
-    sajson::parse(
-        sajson::single_allocation(),
-        sajson::mutable_string_view(size, str)));
+        sajson::parse(
+            sajson::single_allocation(),
+            sajson::mutable_string_view(size, str)),
+        ctx
+    );
 }
 
 struct Deserializer::Impl
@@ -377,8 +381,9 @@ struct Deserializer::Impl
     }
 };
 
-Deserializer::Deserializer(sajson::document&& doc)
-    : m_i(new Impl{std::move(doc), {}, {}, {}})
+Deserializer::Deserializer(sajson::document&& doc, uintptr_t ctx)
+    : BasicDeserializer(ctx)
+    , m_i(new Impl{std::move(doc), {}, {}, {}})
 {
     if (!m_i->document.is_valid())
     {

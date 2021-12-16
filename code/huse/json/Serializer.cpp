@@ -18,8 +18,9 @@
 namespace huse::json
 {
 
-Serializer::Serializer(std::ostream& out, bool pretty)
-    : m_out(out)
+Serializer::Serializer(std::ostream& out, bool pretty, uintptr_t ctx)
+    : BasicSerializer(ctx)
+    , m_out(out)
     , m_pretty(pretty)
 {}
 
