@@ -10,6 +10,8 @@
 
 #include "impl/UniqueStack.hpp"
 
+#include "Context.hpp"
+
 #include <string_view>
 #include <optional>
 
@@ -101,7 +103,7 @@ public:
     DeserializerNode(DeserializerNode&&) = delete;
     DeserializerNode& operator=(DeserializerNode&&) = delete;
 
-    uintptr_t context() const;
+    Context context() const;
 
     Type type() const;
 
@@ -261,7 +263,7 @@ class HUSE_API BasicDeserializer : public DeserializerNode
     friend class DeserializerArray;
     friend class DeserializerObject;
 public:
-    BasicDeserializer(uintptr_t ctx) : DeserializerNode(*this, nullptr), m_context(ctx) {}
+    BasicDeserializer(Context ctx) : DeserializerNode(*this, nullptr), m_context(ctx) {}
     virtual ~BasicDeserializer();
 
     [[noreturn]] virtual void throwException(const std::string& msg) const;
@@ -316,7 +318,7 @@ protected:
     virtual std::optional<std::string_view> tryLoadNextKey() = 0;
 
 private:
-    uintptr_t m_context;
+    Context m_context;
 };
 
 inline DeserializerSStream::DeserializerSStream(BasicDeserializer& d, impl::UniqueStack* parent)
@@ -397,7 +399,7 @@ void DeserializerNode::val(T& v) {
     }
 }
 
-inline uintptr_t DeserializerNode::context() const
+inline Context DeserializerNode::context() const
 {
     return m_deserializer.m_context;
 }

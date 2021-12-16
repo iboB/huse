@@ -17,7 +17,7 @@ namespace huse::json
 class HUSE_API Serializer final : public BasicSerializer
 {
 public:
-    Serializer(std::ostream& out, bool pretty = false, uintptr_t ctx = 0);
+    Serializer(std::ostream& out, bool pretty = false, Context ctx = {});
     ~Serializer();
 
     Serializer(const Serializer&) = delete;

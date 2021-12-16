@@ -742,13 +742,13 @@ struct ContextSerialization
 
     void huseSerialize(huse::SerializerNode& n) const
     {
-        if (n.context() == 0)
+        if (n.context().i() == 0)
         {
             serializeT(n, *this);
             return;
         }
 
-        CHECK(n.context() == 43);
+        CHECK(n.context().i() == 43);
 
         auto o = n.obj();
         o.val("aa", a * 100);
@@ -757,13 +757,13 @@ struct ContextSerialization
 
     void huseDeserialize(huse::DeserializerNode& n)
     {
-        if (n.context() == 0)
+        if (n.context().i() == 0)
         {
             serializeT(n, *this);
             return;
         }
 
-        CHECK(n.context() == 88);
+        CHECK(n.context().i() == 88);
 
         auto o = n.obj();
         o.val("aa", a);
