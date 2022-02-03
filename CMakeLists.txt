@@ -27,8 +27,8 @@ option(HUSE_BUILD_EXAMPLES "huse: build examples" ${ICM_DEV_MODE})
 #######################################
 # packages
 CPMAddPackage(gh:iboB/splat@1.1.0)
-CPMAddPackage(gh:iboB/mscharconv@1.0.1)
-CPMAddPackage(gh:iboB/itlib@1.4.2)
+CPMAddPackage(gh:iboB/mscharconv@1.1.1)
+CPMAddPackage(gh:iboB/itlib@1.4.5)
 
 #######################################
 # subdirs
