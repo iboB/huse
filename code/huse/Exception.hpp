@@ -23,12 +23,14 @@ class HUSE_API SerializerException : public Exception
 {
 public:
     using Exception::Exception;
+    ~SerializerException();
 };
 
 class HUSE_API DeserializerException : public Exception
 {
 public:
     using Exception::Exception;
+    ~DeserializerException();
 };
 
 }
