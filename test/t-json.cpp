@@ -257,6 +257,16 @@ TEST_CASE("simple deserialize")
     }
 }
 
+TEST_CASE("deserialize iteration")
+{
+    auto d = makeD(R"({"a": 1, "b": 2, "c": 3})");
+    auto obj = d.obj();
+    auto q = obj.nextkey();
+    CHECK(q.name == "a");
+    q = obj.nextkey();
+    CHECK(q.name == "b");
+}
+
 TEST_CASE("stream deserialize")
 {
     auto d = makeD(R"({"string":"aa bbb c"})");
