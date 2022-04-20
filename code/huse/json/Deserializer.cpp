@@ -235,8 +235,25 @@ struct Deserializer::Impl
         HUSE_ASSERT_INTERNAL(!stack.empty());
         auto& top = stack.back();
         HUSE_ASSERT_INTERNAL(top.value.sjvalue.get_type() == sajson::TYPE_OBJECT);
-        if (top.pending) return top.pending->key;
-        return std::nullopt;
+
+        if (!top.pending) return std::nullopt; // no pending = no next
+
+        // here we use current as a helper to determine whether we should advance
+        // we can do that as at this point current is not used (it's only used after advance)
+        if (current.sjvalue._internal_get_payload() == top.pending->sjvalue._internal_get_payload())
+        {
+            // current and pending are the same, this means we have to advance
+            // someone has called tryLoadNextKey without reading a value
+            advance();
+
+            // the advance led to the end
+            if (!top.pending) return std::nullopt;
+        }
+
+        // set curent to pending
+        // this way next time we enter this function the if check above will trigger an advance
+        current = *top.pending;
+        return top.pending->key;
     }
 
     void loadIndex(int index)
