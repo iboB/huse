@@ -257,17 +257,6 @@ TEST_CASE("simple deserialize")
     }
 }
 
-TEST_CASE("deserialize iteration")
-{
-    auto d = makeD(R"({"a": 1, "b": 2, "c": 3})");
-    auto obj = d.obj();
-    auto q = obj.peeknext();
-    CHECK(q.name == "a");
-    q.node->skip();
-    q = obj.peeknext();
-    CHECK(q.name == "b");
-}
-
 TEST_CASE("stream deserialize")
 {
     auto d = makeD(R"({"string":"aa bbb c"})");
@@ -296,6 +285,53 @@ TEST_CASE("stream deserialize")
 }
 
 #define CHECK_THROWS_D(e, txt) CHECK_THROWS_WITH_AS(e, txt, huse::DeserializerException)
+
+TEST_CASE("deserialize iteration")
+{
+    {
+        auto d = makeD(R"({"a": 1, "b": 2, "c": 3, "d": 4})");
+        auto obj = d.obj();
+        CHECK(obj.length() == 4);
+        auto q = obj.peeknext();
+        CHECK(q.name == "a");
+        q->skip();
+        q = obj.peeknext();
+        CHECK(q.name == "b");
+        int n;
+        q->val(n);
+        CHECK(n == 2);
+        std::string_view ksv;
+        obj.nextkeyval(ksv, n);
+        CHECK(ksv == "c");
+        CHECK(n == 3);
+        std::string kstr;
+        obj.nextkeyval(kstr, n);
+        CHECK(kstr == "d");
+        CHECK(n == 4);
+        CHECK(obj.end());
+        CHECK(!obj.peeknext());
+        CHECK_THROWS_D(obj.nextkeyval(ksv, n), "root.[4] : out of range");
+    }
+
+    {
+        auto d = makeD(R"([10, true, "xx"])");
+        auto ar = d.ar();
+        CHECK(ar.length() == 3);
+        auto q = ar.peeknext();
+        CHECK(q);
+        CHECK(q->type().is(huse::Type::Number));
+        int n;
+        q->val(n);
+        CHECK(n == 10);
+        ar.skip();
+        std::string_view s;
+        ar.val(s);
+        CHECK(s == "xx");
+        CHECK(ar.end());
+        CHECK(!ar.peeknext());
+        CHECK_THROWS_D(ar.val(n), "root.[3] : out of range");
+    }
+}
 
 TEST_CASE("deserializer exceptions")
 {

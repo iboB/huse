@@ -126,6 +126,8 @@ public:
 
     void skip();
 
+    bool end() const;
+
 protected:
     // number of elements in compound object
     int length() const;
@@ -142,6 +144,14 @@ public:
 
     // intentionally hiding parent
     Type type() const { return { Type::Array }; }
+
+    struct Query
+    {
+        DeserializerNode* node = nullptr;
+        explicit operator bool() const { return node; }
+        DeserializerNode* operator->() { return node; }
+    };
+    Query peeknext();
 };
 
 class DeserializerObject : private DeserializerNode
@@ -151,6 +161,7 @@ public:
     ~DeserializerObject();
 
     using DeserializerNode::length;
+    using DeserializerNode::end;
 
     DeserializerNode& key(std::string_view k);
 
@@ -314,13 +325,15 @@ protected:
     // throw if no index
     virtual void loadIndex(int index) = 0;
 
+    virtual bool hasPending() const = 0;
+
     virtual Type pendingType() const = 0;
 
     // throw if no pending key
-    virtual std::string_view pendingKey() = 0;
+    virtual std::string_view pendingKey() const = 0;
 
     // return pending key or nullopt if there is none
-    virtual std::optional<std::string_view> optPendingKey() = 0;
+    virtual std::optional<std::string_view> optPendingKey() const = 0;
 
 private:
     Context m_context;
@@ -419,8 +432,14 @@ inline int DeserializerNode::length() const
     return m_deserializer.curLength();
 }
 
-inline void DeserializerNode::skip() {
+inline void DeserializerNode::skip()
+{
     m_deserializer.skip();
+}
+
+inline bool DeserializerNode::end() const
+{
+    return !m_deserializer.hasPending();
 }
 
 inline DeserializerArray::DeserializerArray(BasicDeserializer& d, impl::UniqueStack* parent)
@@ -438,6 +457,12 @@ inline DeserializerNode& DeserializerArray::index(int index)
 {
     m_deserializer.loadIndex(index);
     return *this;
+}
+
+inline DeserializerArray::Query DeserializerArray::peeknext()
+{
+    if (!m_deserializer.hasPending()) return {};
+    return {this};
 }
 
 inline DeserializerObject::DeserializerObject(BasicDeserializer& d, impl::UniqueStack* parent)

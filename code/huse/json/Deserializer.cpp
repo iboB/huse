@@ -220,6 +220,12 @@ struct Deserializer::Impl
         }
     }
 
+    bool hasPending() const
+    {
+        if (stack.empty()) return true; // root is pending
+        return !!stack.back().pending;
+    }
+
     std::string_view pendingKey()
     {
         auto t = optPendingKey();
@@ -230,7 +236,7 @@ struct Deserializer::Impl
         throwException(Out_of_Range);
     }
 
-    std::optional<std::string_view> optPendingKey()
+    std::optional<std::string_view> optPendingKey() const
     {
         HUSE_ASSERT_INTERNAL(!stack.empty());
         auto& top = stack.back();
@@ -445,10 +451,10 @@ void Deserializer::loadKey(std::string_view key) { m_i->loadKey(key); }
 bool Deserializer::tryLoadKey(std::string_view key) { return m_i->tryLoadKey(key); }
 void Deserializer::loadIndex(int index) { m_i->loadIndex(index); }
 
-std::string_view Deserializer::pendingKey() { return m_i->pendingKey(); }
-std::optional<std::string_view> Deserializer::optPendingKey() { return m_i->optPendingKey(); }
-
+bool Deserializer::hasPending() const { return m_i->hasPending(); }
 Type Deserializer::pendingType() const { return m_i->pendingType(); }
+std::string_view Deserializer::pendingKey() const { return m_i->pendingKey(); }
+std::optional<std::string_view> Deserializer::optPendingKey() const { return m_i->optPendingKey(); }
 
 void Deserializer::throwException(const std::string& msg) const { m_i->throwException(msg); }
 

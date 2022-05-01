@@ -57,10 +57,11 @@ private:
     virtual void loadKey(std::string_view key) override;
     virtual bool tryLoadKey(std::string_view key) override;
     virtual void loadIndex(int index) override;
-    virtual std::string_view pendingKey() override;
-    virtual std::optional<std::string_view> optPendingKey() override;
 
+    virtual bool hasPending() const override;
     virtual Type pendingType() const override;
+    virtual std::string_view pendingKey() const override;
+    virtual std::optional<std::string_view> optPendingKey() const override;
 
     struct Impl; // hiding sajson from the outside world
     std::unique_ptr<Impl> m_i;
