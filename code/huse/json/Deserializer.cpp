@@ -220,9 +220,9 @@ struct Deserializer::Impl
         }
     }
 
-    std::string_view loadNextKey()
+    std::string_view pendingKey()
     {
-        auto t = tryLoadNextKey();
+        auto t = optPendingKey();
         if (t) return *t;
         // "hacky" adjust current so that the exception stack printer does something nice
         current.key = {};
@@ -230,7 +230,7 @@ struct Deserializer::Impl
         throwException(Out_of_Range);
     }
 
-    std::optional<std::string_view> tryLoadNextKey()
+    std::optional<std::string_view> optPendingKey()
     {
         HUSE_ASSERT_INTERNAL(!stack.empty());
         auto& top = stack.back();
@@ -429,6 +429,7 @@ void Deserializer::read(float& val) { m_i->readFloat(val); }
 void Deserializer::read(double& val) { m_i->readFloat(val); }
 void Deserializer::read(std::string_view& val) { m_i->readString(val); }
 void Deserializer::read(std::string& val) { m_i->readString(val); }
+void Deserializer::skip() { m_i->advance(); }
 
 std::istream& Deserializer::loadStringStream() { return m_i->loadStringStream(); }
 void Deserializer::unloadStringStream() { m_i->unloadStringStream(); }
@@ -444,8 +445,8 @@ void Deserializer::loadKey(std::string_view key) { m_i->loadKey(key); }
 bool Deserializer::tryLoadKey(std::string_view key) { return m_i->tryLoadKey(key); }
 void Deserializer::loadIndex(int index) { m_i->loadIndex(index); }
 
-std::string_view Deserializer::loadNextKey() { return m_i->loadNextKey(); }
-std::optional<std::string_view> Deserializer::tryLoadNextKey() { return m_i->tryLoadNextKey(); }
+std::string_view Deserializer::pendingKey() { return m_i->pendingKey(); }
+std::optional<std::string_view> Deserializer::optPendingKey() { return m_i->optPendingKey(); }
 
 Type Deserializer::pendingType() const { return m_i->pendingType(); }
 

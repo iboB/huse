@@ -208,7 +208,7 @@ TEST_CASE("simple deserialize")
         obj.val("bool", b);
         CHECK(b);
 
-        auto q = obj.nextkey();
+        auto q = obj.peeknext();
         CHECK(!!q);
         CHECK(q.name == "bool2");
         CHECK(q.node->type().is(huse::Type::Boolean));
@@ -220,7 +220,7 @@ TEST_CASE("simple deserialize")
         obj.val("str", str);
         CHECK(str == "b\n\\g\t\033sdf");
 
-        CHECK(!obj.nextkey());
+        CHECK(!obj.peeknext());
 
         float f;
         obj.val("float", f);
@@ -261,9 +261,10 @@ TEST_CASE("deserialize iteration")
 {
     auto d = makeD(R"({"a": 1, "b": 2, "c": 3})");
     auto obj = d.obj();
-    auto q = obj.nextkey();
+    auto q = obj.peeknext();
     CHECK(q.name == "a");
-    q = obj.nextkey();
+    q.node->skip();
+    q = obj.peeknext();
     CHECK(q.name == "b");
 }
 

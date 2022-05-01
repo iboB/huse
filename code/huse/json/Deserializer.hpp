@@ -41,6 +41,7 @@ private:
     virtual void read(double& val) override;
     virtual void read(std::string_view& val) override;
     virtual void read(std::string& val) override;
+    virtual void skip() override;
 
     virtual std::istream& loadStringStream() override;
     virtual void unloadStringStream() override;
@@ -56,8 +57,8 @@ private:
     virtual void loadKey(std::string_view key) override;
     virtual bool tryLoadKey(std::string_view key) override;
     virtual void loadIndex(int index) override;
-    virtual std::string_view loadNextKey() override;
-    virtual std::optional<std::string_view> tryLoadNextKey() override;
+    virtual std::string_view pendingKey() override;
+    virtual std::optional<std::string_view> optPendingKey() override;
 
     virtual Type pendingType() const override;
 

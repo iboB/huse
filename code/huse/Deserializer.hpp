@@ -124,6 +124,8 @@ public:
         return DeserializerSStream(m_deserializer, this);
     }
 
+    void skip();
+
 protected:
     // number of elements in compound object
     int length() const;
@@ -247,7 +249,7 @@ public:
         explicit operator bool() const { return node; }
         DeserializerNode* operator->() { return node; }
     };
-    KeyQuery nextkey();
+    KeyQuery peeknext();
 
     template <typename Key, typename T>
     void nextkeyval(Key& k, T& v);
@@ -284,6 +286,9 @@ protected:
     virtual void read(std::string_view& val) = 0;
     virtual void read(std::string& val) = 0;
 
+    // skip a value
+    virtual void skip() = 0;
+
     // stateful reads
     virtual std::istream& loadStringStream() = 0;
     virtual void unloadStringStream() = 0;
@@ -311,11 +316,11 @@ protected:
 
     virtual Type pendingType() const = 0;
 
-    // throw if no next key
-    virtual std::string_view loadNextKey() = 0;
+    // throw if no pending key
+    virtual std::string_view pendingKey() = 0;
 
-    // load the next key and return it or nullopt if there is no next key
-    virtual std::optional<std::string_view> tryLoadNextKey() = 0;
+    // return pending key or nullopt if there is none
+    virtual std::optional<std::string_view> optPendingKey() = 0;
 
 private:
     Context m_context;
@@ -414,6 +419,10 @@ inline int DeserializerNode::length() const
     return m_deserializer.curLength();
 }
 
+inline void DeserializerNode::skip() {
+    m_deserializer.skip();
+}
+
 inline DeserializerArray::DeserializerArray(BasicDeserializer& d, impl::UniqueStack* parent)
     : DeserializerNode(d, parent)
 {
@@ -453,9 +462,9 @@ inline DeserializerNode* DeserializerObject::optkey(std::string_view k)
     return nullptr;
 }
 
-inline DeserializerObject::KeyQuery DeserializerObject::nextkey()
+inline DeserializerObject::KeyQuery DeserializerObject::peeknext()
 {
-    auto name = m_deserializer.tryLoadNextKey();
+    auto name = m_deserializer.optPendingKey();
     if (!name) return {};
     return {*name, this};
 }
@@ -463,7 +472,7 @@ inline DeserializerObject::KeyQuery DeserializerObject::nextkey()
 template <typename Key, typename T>
 void DeserializerObject::nextkeyval(Key& k, T& v)
 {
-    k = Key(m_deserializer.loadNextKey());
+    k = Key(m_deserializer.pendingKey());
     this->DeserializerNode::val(v);
 }
 
