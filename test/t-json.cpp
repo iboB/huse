@@ -203,6 +203,9 @@ TEST_CASE("simple deserialize")
             unsigned ii;
             ar.val(ii);
             CHECK(ii == 2);
+            uint16_t i16;
+            ar.index(3).val(i16);
+            CHECK(i16 == 4);
         }
         bool b;
         obj.val("bool", b);
