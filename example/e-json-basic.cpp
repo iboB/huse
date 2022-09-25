@@ -1,3 +1,6 @@
+// Copyright (c) Borislav Stanimirov
+// SPDX-License-Identifier: MIT
+//
 #include <huse/json/Serializer.hpp>
 #include <huse/json/Deserializer.hpp>
 #include <huse/helpers/StdVector.hpp>
