@@ -25,8 +25,8 @@ icm_add_lib(huse HUSE
 target_include_directories(huse INTERFACE ..)
 target_link_libraries(huse
     PUBLIC
-        splat
+        splat::splat
     PRIVATE
-        mscharconv
-        itlib
+        msstl::charconv
+        itlib::itlib
 )

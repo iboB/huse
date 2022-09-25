@@ -1,9 +1,12 @@
+# Copyright (c) Borislav Stanimirov
+# SPDX-License-Identifier: MIT
+#
 include(icm_testing)
 
-CPMAddPackage(gh:iboB/doctest-lib@2.4.6)
+CPMAddPackage(gh:iboB/doctest-util@0.0.5)
 
 macro(huse_test test)
-    icm_add_doctest_lib_test(${test} huse ${ARGN})
+    add_doctest_lib_test(${test} huse ${ARGN})
 endmacro()
 
 huse_test(json t-json.cpp)
