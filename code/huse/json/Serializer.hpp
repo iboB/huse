@@ -64,7 +64,8 @@ private:
     uint32_t m_depth = 0; // used to indent if pretty
 
     // internal write helpers
-    template <typename T> void writeSimpleValue(T val);
+    void writeRawString(std::string_view str);
+    template <typename T> void writeSmallInteger(T n);
     template <typename T> void writePotentiallyBigIntegerValue(T val);
     template <typename T> void writeFloatValue(T val);
     void writeQuotedEscapedUTF8String(std::string_view val); // this is used for keys, too

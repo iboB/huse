@@ -34,25 +34,53 @@ void Serializer::writeRawJson(std::string_view key, std::string_view json)
     m_hasValue = true;
 }
 
-template <typename T>
-void Serializer::writeSimpleValue(T val)
+void Serializer::writeRawString(std::string_view str)
 {
     prepareWriteVal();
-    m_out << val;
+    m_out.rdbuf()->sputn(str.data(), str.size());
+}
+
+template <typename T>
+void Serializer::writeSmallInteger(T n)
+{
+    prepareWriteVal();
+
+    auto& out = *m_out.rdbuf();
+
+    using Unsigned = std::make_unsigned_t<T>;
+    Unsigned uvalue = Unsigned(n);
+
+    if constexpr (std::is_signed_v<T>) {
+        if (n < 0) {
+            out.sputc('-');
+            uvalue = 0 - uvalue;
+        }
+    }
+
+    char buf[24]; // enough for signed 2^64 in decimal
+    const auto end = buf + sizeof(buf);
+    auto p = end;
+
+    do {
+        *--p = char('0' + uvalue % 10);
+        uvalue /= 10;
+    } while (uvalue != 0);
+
+    out.sputn(p, end - p);
 }
 
 void Serializer::write(bool val)
 {
     static constexpr std::string_view t = "true", f = "false";
-    writeSimpleValue(val ? t : f);
+    writeRawString(val ? t : f);
 }
 
-void Serializer::write(nullptr_t) { writeSimpleValue("null"); }
+void Serializer::write(nullptr_t) { writeRawString("null"); }
 
-void Serializer::write(short val) { writeSimpleValue(val); }
-void Serializer::write(unsigned short val) { writeSimpleValue(val); }
-void Serializer::write(int val) { writeSimpleValue(val); }
-void Serializer::write(unsigned int val) { writeSimpleValue(val); }
+void Serializer::write(short val) { writeSmallInteger(val); }
+void Serializer::write(unsigned short val) { writeSmallInteger(val); }
+void Serializer::write(int val) { writeSmallInteger(val); }
+void Serializer::write(unsigned int val) { writeSmallInteger(val); }
 
 template <typename T>
 void Serializer::writePotentiallyBigIntegerValue(T val)
@@ -62,13 +90,13 @@ void Serializer::writePotentiallyBigIntegerValue(T val)
     if constexpr (sizeof(T) <= 4)
     {
         // gcc and clang have long equal intptr_t, msvc has long at 4 bytes
-        writeSimpleValue(val);
+        writeSmallInteger(val);
     }
     else if constexpr (std::is_signed_v<T>)
     {
         if (val >= Min_Int64 && val <= Max_Int64)
         {
-            writeSimpleValue(val);
+            writeSmallInteger(val);
         }
         else
         {
@@ -79,7 +107,7 @@ void Serializer::writePotentiallyBigIntegerValue(T val)
     {
         if (val <= Max_Uint64)
         {
-            writeSimpleValue(val);
+            writeSmallInteger(val);
         }
         else
         {
@@ -102,7 +130,7 @@ void Serializer::writeFloatValue(T val)
     {
         char out[25]; // max length of double
         auto result = msstl::to_chars(out, out + sizeof(out), val);
-        writeSimpleValue(std::string_view(out, result.ptr - out));
+        writeRawString(std::string_view(out, result.ptr - out));
     }
     else
     {
