@@ -30,7 +30,7 @@ void Serializer::writeRawJson(std::string_view key, std::string_view json)
 {
     pushKey(key);
     prepareWriteVal();
-    m_out << json;
+    m_out.rdbuf()->sputn(json.data(), json.size());
     m_hasValue = true;
 }
 
@@ -196,9 +196,10 @@ void writeEscapedUTF8StringToStreambuf(std::streambuf& buf, std::string_view str
 
 void Serializer::writeQuotedEscapedUTF8String(std::string_view str)
 {
-    m_out.put('"');
-    writeEscapedUTF8StringToStreambuf(*m_out.rdbuf(), str);
-    m_out.put('"');
+    auto& out = *m_out.rdbuf();
+    out.sputc('"');
+    writeEscapedUTF8StringToStreambuf(out, str);
+    out.sputc('"');
 }
 
 void Serializer::write(std::string_view val)
@@ -221,7 +222,7 @@ void Serializer::pushKey(std::string_view k)
 void Serializer::open(char o)
 {
     prepareWriteVal();
-    m_out << o;
+    m_out.rdbuf()->sputc(o);
     m_hasValue = false;
     ++m_depth;
 }
@@ -231,7 +232,7 @@ void Serializer::close(char c)
     HUSE_ASSERT_INTERNAL(m_depth);
     --m_depth;
     if (m_hasValue) newLine();
-    m_out << c;
+    m_out.rdbuf()->sputc(c);
     m_hasValue = true;
 }
 
@@ -242,9 +243,11 @@ void Serializer::closeArray() { close(']'); }
 
 void Serializer::prepareWriteVal()
 {
+    auto& out = *m_out.rdbuf();
+
     if (m_hasValue)
     {
-        m_out << ',';
+        out.sputc(',');
     }
 
     newLine();
@@ -252,7 +255,7 @@ void Serializer::prepareWriteVal()
     if (m_pendingKey)
     {
         writeQuotedEscapedUTF8String(*m_pendingKey);
-        m_out << ':';
+        out.sputc(':');
         m_pendingKey.reset();
     }
 
@@ -263,11 +266,13 @@ void Serializer::newLine()
 {
     if (!m_pretty) return; // not pretty
     if (m_depth == 0 && !m_hasValue) return; // no new line for initial value
-    m_out << '\n';
+
+    auto& out = *m_out.rdbuf();
+    out.sputc('\n');
     static constexpr std::string_view indent = "  ";
     for (uint32_t i = 0; i < m_depth; ++i)
     {
-        m_out << indent;
+        out.sputn(indent.data(), indent.size());
     }
 }
 
@@ -334,7 +339,7 @@ std::ostream& Serializer::openStringStream()
     prepareWriteVal();
     static_assert(sizeof(JsonOStream) == sizeof(m_stringStreamBuffer));
     HUSE_ASSERT_INTERNAL(!m_stringStream);
-    m_out.put('"');
+    m_out.rdbuf()->sputc('"');
     m_stringStream = new (&m_stringStreamBuffer) JsonOStream(m_out);
     return m_stringStream->stream;
 }
@@ -344,7 +349,7 @@ void Serializer::closeStringStream()
     assert(!!m_stringStream);
     m_stringStream->~JsonOStream();
     m_stringStream = nullptr;
-    m_out.put('"');
+    m_out.rdbuf()->sputc('"');
 }
 
 }
