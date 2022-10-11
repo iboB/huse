@@ -21,6 +21,7 @@ icm_add_lib(huse HUSE
 
     helpers/StdVector.hpp
 )
+add_library(huse::huse ALIAS huse)
 
 target_include_directories(huse INTERFACE ..)
 target_link_libraries(huse
