@@ -63,7 +63,7 @@ struct Deserializer::Impl
     {
         sajson::value sjvalue;
         std::string_view key;
-        int index = 0;
+        int index;
     };
 
     struct StackElement
