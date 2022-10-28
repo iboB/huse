@@ -75,7 +75,7 @@ void Serializer::write(bool val)
     writeRawString(val ? t : f);
 }
 
-void Serializer::write(nullptr_t) { writeRawString("null"); }
+void Serializer::write(std::nullptr_t) { writeRawString("null"); }
 
 void Serializer::write(short val) { writeSmallInteger(val); }
 void Serializer::write(unsigned short val) { writeSmallInteger(val); }

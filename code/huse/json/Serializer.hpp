@@ -42,7 +42,7 @@ private:
     virtual void write(double val) override;
     virtual void write(std::string_view val) override;
 
-    virtual void write(nullptr_t) override;
+    virtual void write(std::nullptr_t) override;
     virtual void write(std::nullopt_t) override;
 
     virtual std::ostream& openStringStream() override;

@@ -181,7 +181,7 @@ protected:
     virtual void write(std::string_view val) = 0;
 
     // explicit calls
-    virtual void write(nullptr_t) = 0; // write null explicitly
+    virtual void write(std::nullptr_t) = 0; // write null explicitly
     virtual void write(std::nullopt_t) = 0; // discard current value
 
     // stateful writes
