@@ -17,6 +17,19 @@ class SerializerArray;
 class SerializerObject;
 class BasicSerializer;
 
+class SerializerContextSentry {
+    BasicSerializer& m_serializer;
+    Context* m_old;
+public:
+    SerializerContextSentry(BasicSerializer& serializer, Context* newc);
+    ~SerializerContextSentry();
+
+    SerializerContextSentry(const SerializerContextSentry&) = delete;
+    SerializerContextSentry& operator=(const SerializerContextSentry&) = delete;
+    SerializerContextSentry(SerializerContextSentry&& other) noexcept = delete;
+    SerializerContextSentry& operator=(SerializerContextSentry&&) = delete;
+};
+
 class SerializerSStream : public impl::UniqueStack
 {
 public:
@@ -86,6 +99,11 @@ public:
     }
 
     [[noreturn]] void throwException(const std::string& msg) const;
+
+    SerializerContextSentry contextChange(Context* newc)
+    {
+        return SerializerContextSentry(m_serializer, newc);
+    }
 };
 
 class SerializerArray : public SerializerNode
@@ -102,6 +120,7 @@ public:
     ~SerializerObject();
 
     using SerializerNode::throwException;
+    using SerializerNode::contextChange;
 
     SerializerNode& key(std::string_view k);
 
@@ -163,6 +182,7 @@ class HUSE_API BasicSerializer : public SerializerNode
     friend class SerializerNode;
     friend class SerializerArray;
     friend class SerializerObject;
+    friend class SerializerContextSentry;
 public:
     BasicSerializer(Context* ctx) : SerializerNode(*this, nullptr), m_context(ctx) {}
     virtual ~BasicSerializer();
@@ -207,6 +227,18 @@ protected:
 
     Context* m_context;
 };
+
+inline SerializerContextSentry::SerializerContextSentry(BasicSerializer& serializer, Context* newc)
+    : m_serializer(serializer)
+    , m_old(serializer.m_context)
+{
+    serializer.m_context = newc;
+}
+
+inline SerializerContextSentry::~SerializerContextSentry()
+{
+    m_serializer.m_context = m_old;
+}
 
 inline SerializerSStream::SerializerSStream(BasicSerializer& s, impl::UniqueStack* parent)
     : impl::UniqueStack(parent)

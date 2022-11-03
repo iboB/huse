@@ -18,7 +18,18 @@ class DeserializerArray;
 class DeserializerObject;
 class BasicDeserializer;
 
-class ContextSentry;
+class DeserializerContextSentry {
+    BasicDeserializer& m_deserializer;
+    Context* m_old;
+public:
+    DeserializerContextSentry(BasicDeserializer& deserializer, Context* newc);
+    ~DeserializerContextSentry();
+
+    DeserializerContextSentry(const DeserializerContextSentry&) = delete;
+    DeserializerContextSentry& operator=(const DeserializerContextSentry&) = delete;
+    DeserializerContextSentry(DeserializerContextSentry&& other) noexcept = delete;
+    DeserializerContextSentry& operator=(DeserializerContextSentry&&) = delete;
+};
 
 struct Type
 {
@@ -128,6 +139,11 @@ public:
 
     [[noreturn]] void throwException(const std::string& msg) const;
 
+    DeserializerContextSentry contextChange(Context* newc)
+    {
+        return DeserializerContextSentry(m_deserializer, newc);
+    }
+
 protected:
     // number of elements in compound object
     int length() const;
@@ -156,7 +172,6 @@ public:
 
 class DeserializerObject : private DeserializerNode
 {
-    friend class ContextSentry;
 public:
     DeserializerObject(BasicDeserializer& d, impl::UniqueStack* parent = nullptr);
     ~DeserializerObject();
@@ -165,6 +180,7 @@ public:
     using DeserializerNode::length;
     using DeserializerNode::end;
     using DeserializerNode::throwException;
+    using DeserializerNode::contextChange;
 
     DeserializerNode& key(std::string_view k);
 
@@ -278,6 +294,7 @@ class HUSE_API BasicDeserializer : public DeserializerNode
     friend class DeserializerNode;
     friend class DeserializerArray;
     friend class DeserializerObject;
+    friend class DeserializerContextSentry;
 public:
     BasicDeserializer(Context* ctx) : DeserializerNode(*this, nullptr), m_context(ctx) {}
     virtual ~BasicDeserializer();
@@ -341,6 +358,19 @@ protected:
 
     Context* m_context;
 };
+
+inline DeserializerContextSentry::DeserializerContextSentry(BasicDeserializer& deserializer, Context* newc)
+    : m_deserializer(deserializer)
+    , m_old(deserializer.m_context)
+{
+    deserializer.m_context = newc;
+}
+
+inline DeserializerContextSentry::~DeserializerContextSentry()
+{
+    m_deserializer.m_context = m_old;
+}
+
 
 inline DeserializerSStream::DeserializerSStream(BasicDeserializer& d, impl::UniqueStack* parent)
     : impl::UniqueStack(parent)

@@ -865,4 +865,27 @@ TEST_CASE("context-based i/o")
 
     CHECK(orig.a == cc2.a);
     CHECK(orig.b == cc2.b);
+
+   {
+        auto ar = j.compact().ar();
+        ar.val(orig);
+        auto ctxc = ar.contextChange(&c);
+        ar.val(orig);
+    }
+    json = j.str();
+    CHECK(json == R"([{"a":72,"b":"xyz"},{"aa":7200,"bb":"xyz_"}])");
+
+    ContextSerialization cc3;
+    ContextSerialization cc4;
+    {
+        auto d = makeD(json, &c);
+        auto ar = d.ar();
+        ar.index(1).val(cc3);
+        auto ctxc = ar.contextChange(nullptr);
+        ar.index(0).val(cc4);
+    }
+    CHECK(orig.a == cc3.a);
+    CHECK(orig.b == cc3.b);
+    CHECK(orig.a == cc4.a);
+    CHECK(orig.b == cc4.b);
 }
