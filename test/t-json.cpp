@@ -408,6 +408,20 @@ TEST_CASE("deserializer exceptions")
         std::string_view key;
         CHECK_THROWS_D(o.nextkeyval(key, b), "root.[3] : out of range");
     }
+    {
+        auto d = makeD(json);
+        auto o = d.obj();
+        auto a = o.ar("ar");
+        auto io = a.index(1).obj();
+        auto rf = [](huse::DeserializerNode& n, float& out) {
+            n.val(out);
+            if (out > 2) n.throwException("val too big");
+        };
+        float f;
+        CHECK_NOTHROW(io.cval("x", f, rf));
+        CHECK(f == 1);
+        CHECK_THROWS_D(io.cval("y", f, rf), R"(root."ar".[1]."y" : val too big)");
+    }
 }
 
 TEST_CASE("string i/o")

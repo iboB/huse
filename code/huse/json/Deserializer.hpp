@@ -19,8 +19,6 @@ public:
 
     ~Deserializer();
 
-    [[noreturn]] virtual void throwException(const std::string& msg) const override;
-
 private:
     Deserializer(sajson::document&& sajsonDoc, Context ctx);
 
@@ -58,6 +56,8 @@ private:
     virtual Type pendingType() const override;
     virtual std::string_view pendingKey() const override;
     virtual std::optional<std::string_view> optPendingKey() const override;
+
+    [[noreturn]] virtual void throwException(const std::string& msg) const override;
 
     struct Impl; // hiding sajson from the outside world
     std::unique_ptr<Impl> m_i;

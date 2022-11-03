@@ -334,8 +334,6 @@ struct Deserializer::Impl
         return fromSajsonType(top.pending->sjvalue.get_type());
     }
 
-    [[noreturn]] void throwException(const char* msg) const { throwException(std::string_view(msg)); }
-    [[noreturn]] void throwException(std::string msg) const { throwException(std::string_view(msg)); }
     [[noreturn]] void throwException(const std::string_view msg) const
     {
         std::ostringstream sout;

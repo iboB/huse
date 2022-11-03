@@ -79,6 +79,8 @@ public:
 
     std::istream& get() { return *m_stream; }
 
+    [[noreturn]] void throwException(const std::string& msg) const;
+
 private:
     BasicDeserializer& m_deserializer;
     std::istream* m_stream;
@@ -124,6 +126,8 @@ public:
 
     bool end() const;
 
+    [[noreturn]] void throwException(const std::string& msg) const;
+
 protected:
     // number of elements in compound object
     int length() const;
@@ -158,6 +162,7 @@ public:
 
     using DeserializerNode::length;
     using DeserializerNode::end;
+    using DeserializerNode::throwException;
 
     DeserializerNode& key(std::string_view k);
 
@@ -275,8 +280,6 @@ public:
     BasicDeserializer(Context ctx) : DeserializerNode(*this, nullptr), m_context(ctx) {}
     virtual ~BasicDeserializer();
 
-    [[noreturn]] virtual void throwException(const std::string& msg) const;
-
 protected:
     // read interface
     virtual void read(bool& val) = 0;
@@ -331,6 +334,8 @@ protected:
     // return pending key or nullopt if there is none
     virtual std::optional<std::string_view> optPendingKey() const = 0;
 
+    // throw contextualized exception (default impl throws with no context)
+    [[noreturn]] virtual void throwException(const std::string& msg) const;
 private:
     Context m_context;
 };
@@ -346,6 +351,10 @@ inline DeserializerSStream::~DeserializerSStream()
     if (m_stream) m_deserializer.unloadStringStream();
 }
 
+inline void DeserializerSStream::throwException(const std::string& msg) const {
+    m_deserializer.throwException(msg);
+}
+
 inline DeserializerObject DeserializerNode::obj()
 {
     return DeserializerObject(m_deserializer, this);
@@ -354,6 +363,10 @@ inline DeserializerObject DeserializerNode::obj()
 inline DeserializerArray DeserializerNode::ar()
 {
     return DeserializerArray(m_deserializer, this);
+}
+
+inline void DeserializerNode::throwException(const std::string& msg) const {
+    m_deserializer.throwException(msg);
 }
 
 namespace impl

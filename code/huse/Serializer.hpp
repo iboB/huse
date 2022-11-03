@@ -46,6 +46,8 @@ public:
 
     std::ostream& get() { return m_stream; }
 
+    [[noreturn]] void throwException(const std::string& msg) const;
+
 private:
     BasicSerializer& m_serializer;
     std::ostream& m_stream;
@@ -84,6 +86,8 @@ public:
     {
         return SerializerSStream(m_serializer, this);
     }
+
+    [[noreturn]] void throwException(const std::string& msg) const;
 };
 
 class SerializerArray : public SerializerNode
@@ -98,6 +102,8 @@ class SerializerObject : private SerializerNode
 public:
     SerializerObject(BasicSerializer& s, impl::UniqueStack* parent = nullptr);
     ~SerializerObject();
+
+    using SerializerNode::throwException;
 
     SerializerNode& key(std::string_view k);
 
@@ -163,8 +169,6 @@ public:
     BasicSerializer(Context ctx) : SerializerNode(*this, nullptr), m_context(ctx) {}
     virtual ~BasicSerializer();
 
-    [[noreturn]] virtual void throwException(const std::string& msg) const;
-
 protected:
     // write interface
     virtual void write(bool val) = 0;
@@ -200,6 +204,9 @@ protected:
     virtual void openArray() = 0;
     virtual void closeArray() = 0;
 
+    // throw contextualized exception (default impl throws with no context)
+    [[noreturn]] virtual void throwException(const std::string& msg) const;
+
 private:
     Context m_context;
 };
@@ -213,6 +220,10 @@ inline SerializerSStream::SerializerSStream(BasicSerializer& s, impl::UniqueStac
 inline SerializerSStream::~SerializerSStream()
 {
     m_serializer.closeStringStream();
+}
+
+inline void SerializerSStream::throwException(const std::string& msg) const {
+    m_serializer.throwException(msg);
 }
 
 inline Context SerializerNode::context() const
@@ -287,6 +298,10 @@ void SerializerNode::val(const T& v)
     {
         cannot_serialize(v);
     }
+}
+
+inline void SerializerNode::throwException(const std::string& msg) const {
+    m_serializer.throwException(msg);
 }
 
 inline SerializerArray::SerializerArray(BasicSerializer& s, impl::UniqueStack* parent)
