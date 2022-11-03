@@ -14,13 +14,13 @@ namespace sajson { class document; }
 class HUSE_API Deserializer final : public BasicDeserializer
 {
 public:
-    static Deserializer fromConstString(std::string_view str, Context ctx = {});
-    static Deserializer fromMutableString(char* str, size_t size = size_t(-1), Context ctx = {});
+    static Deserializer fromConstString(std::string_view str, Context* ctx = nullptr);
+    static Deserializer fromMutableString(char* str, size_t size = size_t(-1), Context* ctx = nullptr);
 
     ~Deserializer();
 
 private:
-    Deserializer(sajson::document&& sajsonDoc, Context ctx);
+    Deserializer(sajson::document&& sajsonDoc, Context* ctx);
 
     virtual void read(bool& val) override;
     virtual void read(short& val) override;

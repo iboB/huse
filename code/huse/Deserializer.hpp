@@ -6,8 +6,6 @@
 
 #include "impl/UniqueStack.hpp"
 
-#include "Context.hpp"
-
 #include <string_view>
 #include <optional>
 
@@ -15,10 +13,12 @@
 
 namespace huse
 {
-
+class Context;
 class DeserializerArray;
 class DeserializerObject;
 class BasicDeserializer;
+
+class ContextSentry;
 
 struct Type
 {
@@ -101,7 +101,7 @@ public:
     DeserializerNode(DeserializerNode&&) = delete;
     DeserializerNode& operator=(DeserializerNode&&) = delete;
 
-    Context context() const;
+    Context* context() const;
 
     Type type() const;
 
@@ -156,10 +156,12 @@ public:
 
 class DeserializerObject : private DeserializerNode
 {
+    friend class ContextSentry;
 public:
     DeserializerObject(BasicDeserializer& d, impl::UniqueStack* parent = nullptr);
     ~DeserializerObject();
 
+    using DeserializerNode::context;
     using DeserializerNode::length;
     using DeserializerNode::end;
     using DeserializerNode::throwException;
@@ -277,7 +279,7 @@ class HUSE_API BasicDeserializer : public DeserializerNode
     friend class DeserializerArray;
     friend class DeserializerObject;
 public:
-    BasicDeserializer(Context ctx) : DeserializerNode(*this, nullptr), m_context(ctx) {}
+    BasicDeserializer(Context* ctx) : DeserializerNode(*this, nullptr), m_context(ctx) {}
     virtual ~BasicDeserializer();
 
 protected:
@@ -336,8 +338,8 @@ protected:
 
     // throw contextualized exception (default impl throws with no context)
     [[noreturn]] virtual void throwException(const std::string& msg) const;
-private:
-    Context m_context;
+
+    Context* m_context;
 };
 
 inline DeserializerSStream::DeserializerSStream(BasicDeserializer& d, impl::UniqueStack* parent)
@@ -426,7 +428,7 @@ void DeserializerNode::val(T& v) {
     }
 }
 
-inline Context DeserializerNode::context() const
+inline Context* DeserializerNode::context() const
 {
     return m_deserializer.m_context;
 }

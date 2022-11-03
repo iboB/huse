@@ -2,23 +2,15 @@
 // SPDX-License-Identifier: MIT
 //
 #pragma once
-
-#include <cstdint>
+#include "API.h"
 
 namespace huse
 {
 
-class Context
+class HUSE_API Context
 {
 public:
-    using val_t = uintptr_t;
-
-    Context(val_t val = 0) : m_val(val) {}
-
-    val_t i() const { return m_val; }
-
-private:
-    val_t m_val;
+    virtual ~Context();
 };
 
 }

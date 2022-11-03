@@ -34,7 +34,7 @@ struct MemIStream
 };
 }
 
-Deserializer Deserializer::fromConstString(std::string_view str, Context ctx)
+Deserializer Deserializer::fromConstString(std::string_view str, Context* ctx)
 {
     return Deserializer(
         sajson::parse(
@@ -44,7 +44,7 @@ Deserializer Deserializer::fromConstString(std::string_view str, Context ctx)
     );
 }
 
-Deserializer Deserializer::fromMutableString(char* str, size_t size /*= size_t(-1)*/, Context ctx)
+Deserializer Deserializer::fromMutableString(char* str, size_t size /*= size_t(-1)*/, Context* ctx)
 {
     if (size == size_t(-1)) size = strlen(str);
     return Deserializer(
@@ -381,7 +381,7 @@ struct Deserializer::Impl
     }
 };
 
-Deserializer::Deserializer(sajson::document&& doc, Context ctx)
+Deserializer::Deserializer(sajson::document&& doc, Context* ctx)
     : BasicDeserializer(ctx)
     , m_i(new Impl{std::move(doc), {}, {}, {}})
 {

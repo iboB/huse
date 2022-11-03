@@ -1,6 +1,7 @@
 // Copyright (c) Borislav Stanimirov
 // SPDX-License-Identifier: MIT
 //
+#include "Context.hpp"
 #include "Serializer.hpp"
 #include "Deserializer.hpp"
 #include "Exception.hpp"
@@ -9,6 +10,7 @@
 
 namespace huse
 {
+Context::~Context() = default;
 BasicSerializer::~BasicSerializer() = default;
 BasicDeserializer::~BasicDeserializer() = default;
 Exception::~Exception() = default;

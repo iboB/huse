@@ -6,15 +6,13 @@
 
 #include "impl/UniqueStack.hpp"
 
-#include "Context.hpp"
-
 #include <string_view>
 #include <optional>
 #include <iosfwd>
 
 namespace huse
 {
-
+class Context;
 class SerializerArray;
 class SerializerObject;
 class BasicSerializer;
@@ -68,7 +66,7 @@ public:
     SerializerNode(SerializerNode&&) = delete;
     SerializerNode& operator=(SerializerNode&&) = delete;
 
-    Context context() const;
+    Context* context() const;
 
     SerializerObject obj();
     SerializerArray ar();
@@ -166,7 +164,7 @@ class HUSE_API BasicSerializer : public SerializerNode
     friend class SerializerArray;
     friend class SerializerObject;
 public:
-    BasicSerializer(Context ctx) : SerializerNode(*this, nullptr), m_context(ctx) {}
+    BasicSerializer(Context* ctx) : SerializerNode(*this, nullptr), m_context(ctx) {}
     virtual ~BasicSerializer();
 
 protected:
@@ -207,8 +205,7 @@ protected:
     // throw contextualized exception (default impl throws with no context)
     [[noreturn]] virtual void throwException(const std::string& msg) const;
 
-private:
-    Context m_context;
+    Context* m_context;
 };
 
 inline SerializerSStream::SerializerSStream(BasicSerializer& s, impl::UniqueStack* parent)
@@ -226,7 +223,7 @@ inline void SerializerSStream::throwException(const std::string& msg) const {
     m_serializer.throwException(msg);
 }
 
-inline Context SerializerNode::context() const
+inline Context* SerializerNode::context() const
 {
     return m_serializer.m_context;
 }

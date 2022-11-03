@@ -9,6 +9,7 @@
 #include <huse/helpers/StdVector.hpp>
 
 #include <huse/Exception.hpp>
+#include <huse/Context.hpp>
 
 #include <sstream>
 #include <limits>
@@ -21,7 +22,7 @@ struct JsonSerializerPack
     std::ostringstream sout;
     std::optional<huse::json::Serializer> s;
 
-    JsonSerializerPack(bool pretty = false, uintptr_t ctx = 0)
+    JsonSerializerPack(bool pretty = false, huse::Context* ctx = nullptr)
     {
         s.emplace(sout, pretty, ctx);
     }
@@ -37,15 +38,15 @@ struct JsonSerializeTester
 {
     std::optional<JsonSerializerPack> pack;
 
-    huse::json::Serializer& make(bool pretty, uintptr_t ctx)
+    huse::json::Serializer& make(bool pretty, huse::Context* ctx)
     {
         HUSE_ASSERT_INTERNAL(!pack);
         pack.emplace(pretty, ctx);
         return *pack->s;
     }
 
-    huse::json::Serializer& compact(uintptr_t ctx = 0) { return make(false, ctx); }
-    huse::json::Serializer& pretty(uintptr_t ctx = 0) { return make(true, ctx); }
+    huse::json::Serializer& compact(huse::Context* ctx = nullptr) { return make(false, ctx); }
+    huse::json::Serializer& pretty(huse::Context* ctx = nullptr) { return make(true, ctx); }
 
     std::string str()
     {
@@ -168,7 +169,7 @@ TEST_CASE("serializer exceptions")
     }
 }
 
-huse::json::Deserializer makeD(std::string_view str, uintptr_t ctx = 0)
+huse::json::Deserializer makeD(std::string_view str, huse::Context* ctx = 0)
 {
     return huse::json::Deserializer::fromConstString(str, ctx);
 }
@@ -802,13 +803,11 @@ struct ContextSerialization
 
     void huseSerialize(huse::SerializerNode& n) const
     {
-        if (n.context().i() == 0)
+        if (!n.context())
         {
             serializeT(n, *this);
             return;
         }
-
-        CHECK(n.context().i() == 43);
 
         auto o = n.obj();
         o.val("aa", a * 100);
@@ -817,13 +816,11 @@ struct ContextSerialization
 
     void huseDeserialize(huse::DeserializerNode& n)
     {
-        if (n.context().i() == 0)
+        if (!n.context())
         {
             serializeT(n, *this);
             return;
         }
-
-        CHECK(n.context().i() == 88);
 
         auto o = n.obj();
         o.val("aa", a);
@@ -855,13 +852,14 @@ TEST_CASE("context-based i/o")
     CHECK(orig.a == cc.a);
     CHECK(orig.b == cc.b);
 
-    j.compact(43).val(orig);
+    huse::Context c;
+    j.compact(&c).val(orig);
     json = j.str();
     CHECK(json == R"({"aa":7200,"bb":"xyz_"})");
 
     ContextSerialization cc2;
     {
-        auto d = makeD(json, 88);
+        auto d = makeD(json, &c);
         d.val(cc2);
     }
 
