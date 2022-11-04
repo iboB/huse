@@ -30,7 +30,7 @@ option(HUSE_BUILD_EXAMPLES "huse: build examples" ${ICM_DEV_MODE})
 #######################################
 # packages
 CPMAddPackage(gh:iboB/splat@1.2.1)
-CPMAddPackage(gh:iboB/mscharconv@1.2.2)
+CPMAddPackage(gh:iboB/mscharconv@1.2.3)
 CPMAddPackage(gh:iboB/itlib@1.6.3)
 
 #######################################
