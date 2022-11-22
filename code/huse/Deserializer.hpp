@@ -125,7 +125,7 @@ public:
     void val(T& v);
 
     template <typename T, typename F>
-    void cval(T& v, F f)
+    void cval(T& v, F&& f)
     {
         f(*this, v);
     }
@@ -243,17 +243,17 @@ public:
     void flatval(T& v);
 
     template <typename T, typename F>
-    void cval(std::string_view k, T& v, F f)
+    void cval(std::string_view k, T& v, F&& f)
     {
-        key(k).cval(v, std::move(f));
+        key(k).cval(v, std::forward<F>(f));
     }
 
     template <typename T, typename F>
-    void cval(std::string_view k, std::optional<T>& v, F f)
+    void cval(std::string_view k, std::optional<T>& v, F&& f)
     {
         if (auto open = optkey(k))
         {
-            open->cval(v.emplace(), std::move(f));
+            open->cval(v.emplace(), std::forward<F>(f));
         }
         else
         {

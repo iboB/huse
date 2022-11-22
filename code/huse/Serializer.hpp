@@ -90,7 +90,7 @@ public:
     void val(const T& v);
 
     template <typename T, typename F>
-    void cval(const T& v, F f)
+    void cval(const T& v, F&& f)
     {
         f(*this, v);
     }
@@ -163,15 +163,15 @@ public:
     void flatval(const T& v);
 
     template <typename T, typename F>
-    void cval(std::string_view k, const T& v, F f)
+    void cval(std::string_view k, const T& v, F&& f)
     {
-        key(k).cval(v, std::move(f));
+        key(k).cval(v, std::forward<F>(f));
     }
 
     template <typename T, typename F>
-    void cval(std::string_view k, const std::optional<T>& v, F f)
+    void cval(std::string_view k, const std::optional<T>& v, F&& f)
     {
-        if (v) cval(k, *v, std::move(f));
+        if (v) cval(k, *v, std::forward<F>(f));
     }
 
     SerializerSStream sstream(std::string_view k)
