@@ -114,6 +114,8 @@ public:
 
     Context* context() const;
 
+    BasicDeserializer& _s() { return m_deserializer; }
+
     Type type() const;
 
     DeserializerObject obj();
@@ -177,6 +179,7 @@ public:
     ~DeserializerObject();
 
     using DeserializerNode::context;
+    using DeserializerNode::_s;
     using DeserializerNode::length;
     using DeserializerNode::end;
     using DeserializerNode::throwException;

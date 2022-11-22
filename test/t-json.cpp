@@ -68,6 +68,9 @@ TEST_CASE("simple serialize")
 
     {
         auto obj = j.compact().obj();
+
+        CHECK(&obj._s() == &j.pack->s.value());
+
         {
             auto ar = obj.ar("array");
             for (int i = 1; i < 5; ++i) ar.val(i);
@@ -186,6 +189,7 @@ TEST_CASE("simple deserialize")
         auto d = makeD(R"({"array":[1,2,3,4],"bool":true,"bool2":false,"float":3.1,"int":-3,"unsigned-long-long":900000000000000,"str":"b\n\\g\t\u001bsdf"})");
         CHECK(d.type().is(huse::Type::Object));
         auto obj = d.obj();
+        CHECK(&obj._s() == &d);
         CHECK(obj.type().is(huse::Type::Object));
         {
             auto ar = obj.ar("array");

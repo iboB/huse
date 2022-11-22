@@ -81,6 +81,8 @@ public:
 
     Context* context() const;
 
+    BasicSerializer& _s() { return m_serializer; }
+
     SerializerObject obj();
     SerializerArray ar();
 
@@ -119,6 +121,8 @@ public:
     SerializerObject(BasicSerializer& s, impl::UniqueStack* parent = nullptr);
     ~SerializerObject();
 
+    using SerializerNode::context;
+    using SerializerNode::_s;
     using SerializerNode::throwException;
     using SerializerNode::contextChange;
 
