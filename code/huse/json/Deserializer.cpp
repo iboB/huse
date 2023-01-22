@@ -34,25 +34,32 @@ struct MemIStream
 };
 }
 
-Deserializer Deserializer::fromConstString(std::string_view str, Context* ctx)
-{
-    return Deserializer(
+Deserializer::Deserializer(std::string_view str, Context* ctx)
+    : Deserializer(
         sajson::parse(
             sajson::single_allocation(),
             sajson::string(str.data(), str.length())),
         ctx
-    );
+    )
+{}
+
+Deserializer Deserializer::fromConstString(std::string_view str, Context* ctx)
+{
+    return Deserializer(str, ctx);
 }
+
+Deserializer::Deserializer(char* str, size_t size /*= size_t(-1)*/, Context* ctx)
+    : Deserializer(
+        sajson::parse(
+            sajson::single_allocation(),
+            sajson::mutable_string_view(size == size_t(-1) ? strlen(str) : size, str)),
+        ctx
+    )
+{}
 
 Deserializer Deserializer::fromMutableString(char* str, size_t size /*= size_t(-1)*/, Context* ctx)
 {
-    if (size == size_t(-1)) size = strlen(str);
-    return Deserializer(
-        sajson::parse(
-            sajson::single_allocation(),
-            sajson::mutable_string_view(size, str)),
-        ctx
-    );
+    return Deserializer(str, size, ctx);
 }
 
 struct Deserializer::Impl

@@ -19,6 +19,10 @@ public:
 
     ~Deserializer();
 
+protected:
+    explicit Deserializer(std::string_view str, Context* ctx = nullptr);
+    explicit Deserializer(char* str, size_t size = size_t(-1), Context* ctx = nullptr);
+
 private:
     Deserializer(sajson::document&& sajsonDoc, Context* ctx);
 
