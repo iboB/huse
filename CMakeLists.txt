@@ -32,21 +32,22 @@ option(HUSE_BUILD_EXAMPLES "huse: build examples" ${ICM_DEV_MODE})
 CPMAddPackage(gh:iboB/splat@1.2.1)
 CPMAddPackage(gh:iboB/mscharconv@1.2.3)
 CPMAddPackage(gh:iboB/itlib@1.6.3)
+CPMAddPackage("gh:iboB/dynamix@1.3.9a#0260452df70a29be0d3ac9eb1875879d9812910a")
 
 #######################################
 # subdirs
 
 add_subdirectory(code/huse)
 
-if(ICM_DEV_MODE)
-    add_subdirectory(scratch)
-endif()
+#if(ICM_DEV_MODE)
+#    add_subdirectory(scratch)
+#endif()
 
-if(HUSE_BUILD_EXAMPLES)
-    add_subdirectory(example)
-endif()
+#if(HUSE_BUILD_EXAMPLES)
+#    add_subdirectory(example)
+#endif()
 
-if(HUSE_BUILD_TESTS)
-    enable_testing()
-    add_subdirectory(test)
-endif()
+#if(HUSE_BUILD_TESTS)
+#    enable_testing()
+#    add_subdirectory(test)
+#endif()
