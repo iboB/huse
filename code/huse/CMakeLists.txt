@@ -9,6 +9,8 @@ icm_add_lib(huse HUSE
     Fwd.hpp
 
     Serializer.hpp
+    SerializerInterface.hpp
+    SerializerInterface.cpp
     Deserializer.hpp
     VTableExports.cpp
     Exception.hpp
@@ -26,6 +28,7 @@ add_library(huse::huse ALIAS huse)
 target_include_directories(huse INTERFACE ..)
 target_link_libraries(huse
     PUBLIC
+        dynamix
         splat::splat
     PRIVATE
         msstl::charconv
