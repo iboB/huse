@@ -11,5 +11,5 @@ HUSE_SERIALIZE_MSG(HUSE_API, short, short);
 HUSE_SERIALIZE_MSG(HUSE_API, unsigned short, ushort);
 }
 
-#define huse_BasicInterface husePolySerialize_bool_msg & husePolySerialize_short_msg & husePolySerialize_ushort_msg
+#define huse_BasicInterface
 
