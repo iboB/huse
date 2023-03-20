@@ -26,7 +26,7 @@ HUSE_SERIALIZE_MSG(HUSE_API, std::nullptr_t, nullptr_t); // write null explicitl
 HUSE_SERIALIZE_MSG(HUSE_API, std::nullopt_t, nullopt_t); // discard current value
 
 // helper
-void husePolySerialize(Serializer& s, const char* str) { husePolySerialize(s, std::string_view(str)); }
+inline void husePolySerialize(Serializer& s, const char* str) { husePolySerialize(s, std::string_view(str)); }
 
 // private interface
 
@@ -38,11 +38,10 @@ DYNAMIX_DECLARE_EXPORTED_SIMPLE_MSG(HUSE_API, closeObject_msg, void(Serializer&)
 DYNAMIX_DECLARE_EXPORTED_SIMPLE_MSG(HUSE_API, openArray_msg, void(Serializer&));
 DYNAMIX_DECLARE_EXPORTED_SIMPLE_MSG(HUSE_API, closeArray_msg, void(Serializer&));
 
-DYNAMIX_DECLARE_EXPORTED_SIMPLE_MSG(HUSE_API, throwSerializerException_msg, void(Serializer&, const std::string&));
-[[noreturn]] void throwSerializerException(Serializer& s, const std::string& msg) {
+// optional override
+// has a default implementation
+DYNAMIX_DECLARE_EXPORTED_SIMPLE_MSG(HUSE_API, throwSerializerException_msg, void(const Serializer&, const std::string&));
+[[noreturn]] inline void throwSerializerException(const Serializer& s, const std::string& msg) {
     throwSerializerException_msg::call(s, msg);
 }
 }
-
-#define huse_BasicInterface
-
