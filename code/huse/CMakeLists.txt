@@ -6,6 +6,9 @@ icm_add_lib(huse HUSE
 
     impl/UniqueStack.hpp
 
+    Domain.hpp
+    Domain.cpp
+
     Fwd.hpp
 
     Serializer.hpp
