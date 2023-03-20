@@ -1,7 +1,7 @@
 # Copyright (c) Borislav Stanimirov
 # SPDX-License-Identifier: MIT
 #
-cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
 project(huse)
 
@@ -10,13 +10,14 @@ include(./get_cpm.cmake)
 
 #######################################
 # cmake lib
-CPMAddPackage(gh:iboB/icm@1.3.4)
+CPMAddPackage("gh:iboB/icm@1.4.3b#85297e364a87e1f69d52dd1c740ea1c091c27839")
 
 set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH}
     ${icm_SOURCE_DIR}
 )
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W3")
 include(icm_dev_mode)
 include(icm_add_lib)
 
@@ -29,10 +30,10 @@ option(HUSE_BUILD_EXAMPLES "huse: build examples" ${ICM_DEV_MODE})
 
 #######################################
 # packages
+CPMAddPackage("gh:iboB/dynamix@2.0.0-alpha2a#90a9bc4663f5ae0a5dc0f42d5769cdb7c6989953")
 CPMAddPackage(gh:iboB/splat@1.2.1)
 CPMAddPackage(gh:iboB/mscharconv@1.2.3)
 CPMAddPackage(gh:iboB/itlib@1.6.3)
-CPMAddPackage("gh:iboB/dynamix@1.3.9a#0260452df70a29be0d3ac9eb1875879d9812910a")
 
 #######################################
 # subdirs

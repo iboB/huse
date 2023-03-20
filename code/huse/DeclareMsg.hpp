@@ -2,7 +2,11 @@
 // SPDX-License-Identifier: MIT
 //
 #pragma once
-#include <dynamix/declare_message.hpp>
+#include <dynamix/msg/declare_msg.hpp>
 
-#define HUSE_S_MSG_NAME(tag) I_DYNAMIX_PP_CAT(husePolySerialize_, tag)
-#define HUSE_SERIALIZE_MSG(export, type, tag) DYNAMIX_EXPORTED_MESSAGE_1_OVERLOAD(export, HUSE_S_MSG_NAME(tag), void, husePolySerialize, type, val);
+namespace huse {
+class Serializer;
+}
+
+#define HUSE_S_MSG_NAME(tag) I_DNMX_PP_CAT(husePolySerialize_, tag)
+#define HUSE_SERIALIZE_MSG(export, type, tag) DYNAMIX_DECLARE_EXPORTED_MSG(export, HUSE_S_MSG_NAME(tag), husePolySerialize, void, (::huse::Serializer&, type));

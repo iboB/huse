@@ -3,7 +3,7 @@
 //
 #pragma once
 #include "DeclareMsg.hpp"
-#include <dynamix/define_message.hpp>
+#include "PolyTraits.hpp"
+#include <dynamix/msg/define_msg.hpp>
 
-#define HUSE_DEFINE_SERIALIZE_MSG(tag) DYNAMIX_DEFINE_MESSAGE(HUSE_S_MSG_NAME(tag))
-#define HUSE_DEFINE_SERIALIZE_MSG_IMPL(type, tag) DYNAMIX_DEFINE_MESSAGE_1_WITH_DEFAULT_IMPL(void, HUSE_S_MSG_NAME(tag), type)
+#define HUSE_DEFINE_SERIALIZE_MSG(type, tag) DYNAMIX_DEFINE_MSG(HUSE_S_MSG_NAME(tag), unicast, husePolySerialize, void, (::huse::Serializer&, type))
