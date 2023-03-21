@@ -1,7 +1,6 @@
 // Copyright (c) Borislav Stanimirov
 // SPDX-License-Identifier: MIT
 //
-#include "Context.hpp"
 #include "Serializer.hpp"
 #include "Deserializer.hpp"
 #include "Exception.hpp"
@@ -19,7 +18,6 @@ Deserializer::Deserializer()
     : dynamix::object(dynamix::g::get_domain<DeserializerDomain>())
 {}
 
-Context::~Context() = default;
 Exception::~Exception() = default;
 SerializerException::~SerializerException() = default;
 DeserializerException::~DeserializerException() = default;
