@@ -3,62 +3,24 @@
 //
 #pragma once
 #include "API.h"
+#include "DeserializerInterface.hpp"
+#include "DeserializerObj.hpp"
 
 #include "impl/UniqueStack.hpp"
 
 #include <string_view>
 #include <optional>
-
 #include <iosfwd>
 
 namespace huse
 {
-class Context;
 class DeserializerArray;
 class DeserializerObject;
-class BasicDeserializer;
-
-class DeserializerContextSentry {
-    BasicDeserializer& m_deserializer;
-    Context* m_old;
-public:
-    DeserializerContextSentry(BasicDeserializer& deserializer, Context* newc);
-    ~DeserializerContextSentry();
-
-    DeserializerContextSentry(const DeserializerContextSentry&) = delete;
-    DeserializerContextSentry& operator=(const DeserializerContextSentry&) = delete;
-    DeserializerContextSentry(DeserializerContextSentry&& other) noexcept = delete;
-    DeserializerContextSentry& operator=(DeserializerContextSentry&&) = delete;
-};
-
-struct Type
-{
-public:
-    enum Value : int
-    {
-        True = 0b01,
-        False = 0b10,
-        Boolean = 0b11,
-        Integer = 0b0100,
-        Float = 0b1000,
-        Number = 0b1100,
-        String = 0b10000,
-        Object = 0b100000,
-        Array = 0b1000000,
-        Null = 0b10000000,
-    };
-
-    Type(Value t) : m_t(t) {}
-
-    bool is(Value mask) const { return m_t & mask; }
-private:
-    Value m_t;
-};
 
 class DeserializerSStream : public impl::UniqueStack
 {
 public:
-    DeserializerSStream(BasicDeserializer& d, impl::UniqueStack* parent);
+    DeserializerSStream(Deserializer& d, impl::UniqueStack* parent);
     ~DeserializerSStream();
 
     DeserializerSStream(const DeserializerSStream&) = delete;
@@ -93,28 +55,27 @@ public:
     [[noreturn]] void throwException(const std::string& msg) const;
 
 private:
-    BasicDeserializer& m_deserializer;
+    Deserializer& m_deserializer;
     std::istream* m_stream;
 };
 
 class DeserializerNode : public impl::UniqueStack
 {
 protected:
-    DeserializerNode(BasicDeserializer& d, impl::UniqueStack* parent)
+    DeserializerNode(Deserializer& d, impl::UniqueStack* parent)
         : impl::UniqueStack(parent)
         , m_deserializer(d)
     {}
 
-    BasicDeserializer& m_deserializer;
+    friend class Deserializer;
+    Deserializer& m_deserializer;
 public:
     DeserializerNode(const DeserializerNode&) = delete;
     DeserializerNode& operator=(const DeserializerNode&) = delete;
     DeserializerNode(DeserializerNode&&) = delete;
     DeserializerNode& operator=(DeserializerNode&&) = delete;
 
-    Context* context() const;
-
-    BasicDeserializer& _s() { return m_deserializer; }
+    Deserializer& _s() { return m_deserializer; }
 
     Type type() const;
 
@@ -141,11 +102,6 @@ public:
 
     [[noreturn]] void throwException(const std::string& msg) const;
 
-    DeserializerContextSentry contextChange(Context* newc)
-    {
-        return DeserializerContextSentry(m_deserializer, newc);
-    }
-
 protected:
     // number of elements in compound object
     int length() const;
@@ -154,7 +110,7 @@ protected:
 class DeserializerArray : public DeserializerNode
 {
 public:
-    DeserializerArray(BasicDeserializer& d, impl::UniqueStack* parent = nullptr);
+    DeserializerArray(Deserializer& d, impl::UniqueStack* parent = nullptr);
     ~DeserializerArray();
 
     using DeserializerNode::length;
@@ -175,15 +131,13 @@ public:
 class DeserializerObject : private DeserializerNode
 {
 public:
-    DeserializerObject(BasicDeserializer& d, impl::UniqueStack* parent = nullptr);
+    DeserializerObject(Deserializer& d, impl::UniqueStack* parent = nullptr);
     ~DeserializerObject();
 
-    using DeserializerNode::context;
     using DeserializerNode::_s;
     using DeserializerNode::length;
     using DeserializerNode::end;
     using DeserializerNode::throwException;
-    using DeserializerNode::contextChange;
 
     DeserializerNode& key(std::string_view k);
 
@@ -291,103 +245,19 @@ public:
     Type type() const { return { Type::Object }; }
 };
 
-class HUSE_API BasicDeserializer : public DeserializerNode
-{
-    friend class DeserializerSStream;
-    friend class DeserializerNode;
-    friend class DeserializerArray;
-    friend class DeserializerObject;
-    friend class DeserializerContextSentry;
-public:
-    BasicDeserializer(Context* ctx) : DeserializerNode(*this, nullptr), m_context(ctx) {}
-    virtual ~BasicDeserializer();
-
-protected:
-    // read interface
-    virtual void read(bool& val) = 0;
-    virtual void read(short& val) = 0;
-    virtual void read(unsigned short& val) = 0;
-    virtual void read(int& val) = 0;
-    virtual void read(unsigned int& val) = 0;
-    virtual void read(long& val) = 0;
-    virtual void read(unsigned long& val) = 0;
-    virtual void read(long long& val) = 0;
-    virtual void read(unsigned long long& val) = 0;
-    virtual void read(float& val) = 0;
-    virtual void read(double& val) = 0;
-    virtual void read(std::string_view& val) = 0;
-    virtual void read(std::string& val) = 0;
-
-    // skip a value
-    virtual void skip() = 0;
-
-    // stateful reads
-    virtual std::istream& loadStringStream() = 0;
-    virtual void unloadStringStream() = 0;
-
-    // implementation interface
-    virtual void loadObject() = 0;
-    virtual void unloadObject() = 0;
-
-    virtual void loadArray() = 0;
-    virtual void unloadArray() = 0;
-
-    // number of sub-nodes in current node
-    virtual int curLength() const = 0;
-
-    // throw if no key
-    virtual void loadKey(std::string_view key) = 0;
-
-    // load and resturn true if key exists, otherwise return false
-    // equivalent to (but more optimized than)
-    // if (hasKey(k)) { loadKey(k); return true; } else return false;
-    virtual bool tryLoadKey(std::string_view key) = 0;
-
-    // throw if no index
-    virtual void loadIndex(int index) = 0;
-
-    virtual bool hasPending() const = 0;
-
-    virtual Type pendingType() const = 0;
-
-    // throw if no pending key
-    virtual std::string_view pendingKey() const = 0;
-
-    // return pending key or nullopt if there is none
-    virtual std::optional<std::string_view> optPendingKey() const = 0;
-
-    // throw contextualized exception (default impl throws with no context)
-    [[noreturn]] virtual void throwException(const std::string& msg) const;
-
-    Context* m_context;
-};
-
-inline DeserializerContextSentry::DeserializerContextSentry(BasicDeserializer& deserializer, Context* newc)
-    : m_deserializer(deserializer)
-    , m_old(deserializer.m_context)
-{
-    deserializer.m_context = newc;
-}
-
-inline DeserializerContextSentry::~DeserializerContextSentry()
-{
-    m_deserializer.m_context = m_old;
-}
-
-
-inline DeserializerSStream::DeserializerSStream(BasicDeserializer& d, impl::UniqueStack* parent)
+inline DeserializerSStream::DeserializerSStream(Deserializer& d, impl::UniqueStack* parent)
     : impl::UniqueStack(parent)
     , m_deserializer(d)
-    , m_stream(&d.loadStringStream())
+    , m_stream(&loadStringStream_msg::call(d))
 {}
 
 inline DeserializerSStream::~DeserializerSStream()
 {
-    if (m_stream) m_deserializer.unloadStringStream();
+    if (m_stream) unloadStringStream_msg::call(m_deserializer);
 }
 
 inline void DeserializerSStream::throwException(const std::string& msg) const {
-    m_deserializer.throwException(msg);
+    throwDeserializerException_msg::call(m_deserializer, msg);
 }
 
 inline DeserializerObject DeserializerNode::obj()
@@ -401,42 +271,31 @@ inline DeserializerArray DeserializerNode::ar()
 }
 
 inline void DeserializerNode::throwException(const std::string& msg) const {
-    m_deserializer.throwException(msg);
+    throwDeserializerException_msg::call(m_deserializer, msg);
 }
 
 namespace impl
 {
-struct DeserializerReadHelper : public BasicDeserializer {
-    using BasicDeserializer::read;
-};
-
 template <typename, typename = void>
-struct HasDeserializerRead : std::false_type {};
-
+struct HasPolyDeserialize : std::false_type {};
 template <typename T>
-struct HasDeserializerRead<T, decltype(std::declval<DeserializerReadHelper>().read(std::declval<T&>()))> : std::true_type {};
+struct HasPolyDeserialize<T, decltype(husePolyDeserialize(std::declval<Deserializer&>(), std::declval<T&>()))> : std::true_type {};
 
 template <typename, typename = void>
 struct HasDeserializeMethod : std::false_type {};
-
 template <typename T>
 struct HasDeserializeMethod<T, decltype(std::declval<T>().huseDeserialize(std::declval<DeserializerNode&>()))> : std::true_type {};
-
 template <typename, typename = void>
 struct HasDeserializeFunc : std::false_type {};
-
 template <typename T>
 struct HasDeserializeFunc<T, decltype(huseDeserialize(std::declval<DeserializerNode&>(), std::declval<T&>()))> : std::true_type {};
 
 template <typename, typename = void>
 struct HasDeserializeFlatMethod : std::false_type {};
-
 template <typename T>
 struct HasDeserializeFlatMethod<T, decltype(std::declval<T>().huseDeserializeFlat(std::declval<DeserializerObject&>()))> : std::true_type {};
-
 template <typename, typename = void>
 struct HasDeserializeFlatFunc : std::false_type {};
-
 template <typename T>
 struct HasDeserializeFlatFunc<T, decltype(huseDeserializeFlat(std::declval<DeserializerObject&>(), std::declval<T&>()))> : std::true_type {};
 } // namespace impl
@@ -451,9 +310,9 @@ void DeserializerNode::val(T& v) {
     {
         huseDeserialize(*this, v);
     }
-    else if constexpr (impl::HasDeserializerRead<T>::value)
+    else if constexpr (impl::HasPolyDeserialize<T>::value)
     {
-        m_deserializer.read(v);
+        husePolyDeserialize(m_deserializer, v);
     }
     else
     {
@@ -461,79 +320,74 @@ void DeserializerNode::val(T& v) {
     }
 }
 
-inline Context* DeserializerNode::context() const
-{
-    return m_deserializer.m_context;
-}
-
 inline Type DeserializerNode::type() const
 {
-    return m_deserializer.pendingType();
+    return pendingType_msg::call(m_deserializer);
 }
 
 inline int DeserializerNode::length() const
 {
-    return m_deserializer.curLength();
+    return curLength_msg::call(m_deserializer);
 }
 
 inline void DeserializerNode::skip()
 {
-    m_deserializer.skip();
+    skip_msg::call(m_deserializer);
 }
 
 inline bool DeserializerNode::end() const
 {
-    return !m_deserializer.hasPending();
+    return !hasPending_msg::call(m_deserializer);
 }
 
-inline DeserializerArray::DeserializerArray(BasicDeserializer& d, impl::UniqueStack* parent)
+inline DeserializerArray::DeserializerArray(Deserializer& d, impl::UniqueStack* parent)
     : DeserializerNode(d, parent)
 {
-    m_deserializer.loadArray();
+    loadArray_msg::call(m_deserializer);
 }
 
 inline DeserializerArray::~DeserializerArray()
 {
-    m_deserializer.unloadArray();
+    unloadArray_msg::call(m_deserializer);
 }
 
 inline DeserializerNode& DeserializerArray::index(int index)
 {
-    m_deserializer.loadIndex(index);
+    loadIndex_msg::call(m_deserializer, index);
     return *this;
 }
 
 inline DeserializerArray::Query DeserializerArray::peeknext()
 {
-    if (!m_deserializer.hasPending()) return {};
+    if (!hasPending_msg::call(m_deserializer)) return {};
     return {this};
 }
 
-inline DeserializerObject::DeserializerObject(BasicDeserializer& d, impl::UniqueStack* parent)
+inline DeserializerObject::DeserializerObject(Deserializer& d, impl::UniqueStack* parent)
     : DeserializerNode(d, parent)
 {
-    m_deserializer.loadObject();
+    loadObject_msg::call(m_deserializer);
 }
 inline DeserializerObject::~DeserializerObject()
 {
-    m_deserializer.unloadObject();
+    unloadObject_msg::call(m_deserializer);
 }
 
 inline DeserializerNode& DeserializerObject::key(std::string_view k)
 {
-    m_deserializer.loadKey(k);
+    loadKey_msg::call(m_deserializer, k);
     return *this;
 }
 
 inline DeserializerNode* DeserializerObject::optkey(std::string_view k)
 {
-    if (m_deserializer.tryLoadKey(k)) return this;
+    if (tryLoadKey_msg::call(m_deserializer, k)) return this;
     return nullptr;
 }
 
 inline DeserializerObject::KeyQuery DeserializerObject::peeknext()
 {
-    auto name = m_deserializer.optPendingKey();
+    auto name = optPendingKey_msg::call(m_deserializer);
     if (!name) return {};
     return {*name, this};
 }
@@ -541,7 +395,7 @@ inline DeserializerObject::KeyQuery DeserializerObject::peeknext()
 template <typename Key, typename T>
 void DeserializerObject::nextkeyval(Key& k, T& v)
 {
-    k = Key(m_deserializer.pendingKey());
+    k = Key(pendingKey_msg::call(m_deserializer));
     this->DeserializerNode::val(v);
 }
 
@@ -560,6 +414,14 @@ void DeserializerObject::flatval(T& v)
     {
         cannot_deserialize(v);
     }
+}
+
+inline DeserializerNode Deserializer::node() {
+    return DeserializerNode(*this, nullptr);
+}
+
+inline DeserializerNode Deserializer::root() {
+    return node();
 }
 
 } // namespace huse

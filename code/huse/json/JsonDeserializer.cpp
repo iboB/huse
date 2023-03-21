@@ -1,6 +1,7 @@
 // Copyright (c) Borislav Stanimirov
 // SPDX-License-Identifier: MIT
 //
+#include "JsonDeserializer.hpp"
 
 #include "../DeserializerObj.hpp"
 #include "../DeserializerInterface.hpp"
@@ -41,34 +42,6 @@ struct MemIStream
 };
 }
 
-//Deserializer::Deserializer(std::string_view str, Context* ctx)
-//    : Deserializer(
-//        sajson::parse(
-//            sajson::single_allocation(),
-//            sajson::string(str.data(), str.length())),
-//        ctx
-//    )
-//{}
-//
-//Deserializer Deserializer::fromConstString(std::string_view str, Context* ctx)
-//{
-//    return Deserializer(str, ctx);
-//}
-//
-//Deserializer::Deserializer(char* str, size_t size /*= size_t(-1)*/, Context* ctx)
-//    : Deserializer(
-//        sajson::parse(
-//            sajson::single_allocation(),
-//            sajson::mutable_string_view(size == size_t(-1) ? strlen(str) : size, str)),
-//        ctx
-//    )
-//{}
-//
-//Deserializer Deserializer::fromMutableString(char* str, size_t size /*= size_t(-1)*/, Context* ctx)
-//{
-//    return Deserializer(str, size, ctx);
-//}
-
 struct JsonDeserializer
 {
     sajson::document document;
@@ -93,7 +66,13 @@ struct JsonDeserializer
 
     JsonDeserializer(sajson::document&& doc)
         : document(std::move(doc))
-    {}
+    {
+        if (!document.is_valid()) {
+            // don't use d->throwException because it adds the stack
+            // we certainly don't have a stack here
+            throw DeserializerException(document.get_error_message_as_cstring());
+        }
+    }
 
     ~JsonDeserializer() {
         HUSE_ASSERT_INTERNAL(stack.size() == 0);
@@ -453,50 +432,50 @@ struct JsonDeserializer
 };
 
 DYNAMIX_DEFINE_MIXIN(DeserializerDomain, JsonDeserializer)
-.implements<husePolyDeserialize_bool>()
-.implements<husePolyDeserialize_short>()
-.implements<husePolyDeserialize_ushort>()
-.implements<husePolyDeserialize_int>()
-.implements<husePolyDeserialize_uint>()
-.implements<husePolyDeserialize_long>()
-.implements<husePolyDeserialize_ulong>()
-.implements<husePolyDeserialize_llong>()
-.implements<husePolyDeserialize_ullong>()
-.implements<husePolyDeserialize_float>()
-.implements<husePolyDeserialize_double>()
-.implements<husePolyDeserialize_sv>()
-.implements<husePolyDeserialize_string>()
-.implements_by<skip_msg>([](JsonDeserializer* d) { d->advance(); })
-.implements_by<loadStringStream_msg>([](JsonDeserializer* d) -> std::istream& { return d->loadStringStream(); })
-.implements_by<unloadStringStream_msg>([](JsonDeserializer* d) { d->unloadStringStream(); })
-.implements_by<loadObject_msg>([](JsonDeserializer* d) { d->loadCompound(sajson::TYPE_OBJECT); })
-.implements_by<unloadObject_msg>([](JsonDeserializer* d) { d->unloadCompound(); })
-.implements_by<loadArray_msg>([](JsonDeserializer* d) { d->loadCompound(sajson::TYPE_ARRAY); })
-.implements_by<unloadArray_msg>([](JsonDeserializer* d) { d->unloadCompound(); })
-.implements_by<curLength_msg>([](const JsonDeserializer* d) { return d->curLength(); })
-.implements_by<loadKey_msg>([](JsonDeserializer* d, std::string_view key) { d->loadKey(key); })
-.implements_by<tryLoadKey_msg>([](JsonDeserializer* d, std::string_view key) { return d->tryLoadKey(key); })
-.implements_by<loadIndex_msg>([](JsonDeserializer* d, int index) { d->loadIndex(index); })
-.implements_by<hasPending_msg>([](const JsonDeserializer* d) { return d->hasPending(); })
-.implements_by<pendingType_msg>([](const JsonDeserializer* d) { return d->pendingType(); })
-.implements_by<pendingKey_msg>([](const JsonDeserializer* d) { return const_cast<JsonDeserializer*>(d)->pendingKey(); })
-.implements_by<optPendingKey_msg>([](const JsonDeserializer* d) { return d->optPendingKey(); })
-.implements_by<throwDeserializerException_msg>([](const JsonDeserializer* d, const std::string& msg) { d->throwException(msg); })
+    .implements<husePolyDeserialize_bool>()
+    .implements<husePolyDeserialize_short>()
+    .implements<husePolyDeserialize_ushort>()
+    .implements<husePolyDeserialize_int>()
+    .implements<husePolyDeserialize_uint>()
+    .implements<husePolyDeserialize_long>()
+    .implements<husePolyDeserialize_ulong>()
+    .implements<husePolyDeserialize_llong>()
+    .implements<husePolyDeserialize_ullong>()
+    .implements<husePolyDeserialize_float>()
+    .implements<husePolyDeserialize_double>()
+    .implements<husePolyDeserialize_sv>()
+    .implements<husePolyDeserialize_string>()
+    .implements_by<skip_msg>([](JsonDeserializer* d) { d->advance(); })
+    .implements_by<loadStringStream_msg>([](JsonDeserializer* d) -> std::istream& { return d->loadStringStream(); })
+    .implements_by<unloadStringStream_msg>([](JsonDeserializer* d) { d->unloadStringStream(); })
+    .implements_by<loadObject_msg>([](JsonDeserializer* d) { d->loadCompound(sajson::TYPE_OBJECT); })
+    .implements_by<unloadObject_msg>([](JsonDeserializer* d) { d->unloadCompound(); })
+    .implements_by<loadArray_msg>([](JsonDeserializer* d) { d->loadCompound(sajson::TYPE_ARRAY); })
+    .implements_by<unloadArray_msg>([](JsonDeserializer* d) { d->unloadCompound(); })
+    .implements_by<curLength_msg>([](const JsonDeserializer* d) { return d->curLength(); })
+    .implements_by<loadKey_msg>([](JsonDeserializer* d, std::string_view key) { d->loadKey(key); })
+    .implements_by<tryLoadKey_msg>([](JsonDeserializer* d, std::string_view key) { return d->tryLoadKey(key); })
+    .implements_by<loadIndex_msg>([](JsonDeserializer* d, int index) { d->loadIndex(index); })
+    .implements_by<hasPending_msg>([](const JsonDeserializer* d) { return d->hasPending(); })
+    .implements_by<pendingType_msg>([](const JsonDeserializer* d) { return d->pendingType(); })
+    .implements_by<pendingKey_msg>([](const JsonDeserializer* d) { return const_cast<JsonDeserializer*>(d)->pendingKey(); })
+    .implements_by<optPendingKey_msg>([](const JsonDeserializer* d) { return d->optPendingKey(); })
+    .implements_by<throwDeserializerException_msg>([](const JsonDeserializer* d, const std::string& msg) { d->throwException(msg); })
 ;
 
-/*
-Deserializer::Deserializer(sajson::document&& doc, Context* ctx)
-    : BasicDeserializer(ctx)
-    , d(new Impl{std::move(doc), {}, {}, {}})
-{
-    if (!d->document.is_valid())
-    {
-        // don't use d->throwException because it adds the stack
-        // we certainly don't have a stack here
-        throw DeserializerException(d->document.get_error_message_as_cstring());
-    }
+Deserializer Make_Deserializer(std::string_view str) {
+    Deserializer ret;
+    mutate(ret, dynamix::add<JsonDeserializer>(sajson::parse(
+        sajson::single_allocation(),
+        sajson::string(str.data(), str.length()))));
+    return ret;
 }
-
-*/
+Deserializer Make_Deserializer(char* str, size_t len) {
+    Deserializer ret;
+    mutate(ret, dynamix::add<JsonDeserializer>(sajson::parse(
+        sajson::single_allocation(),
+        sajson::mutable_string_view(len == size_t(-1) ? strlen(str) : len, str))));
+    return ret;
+}
 
 }
