@@ -7,25 +7,24 @@
 
 #include <string_view>
 #include <optional>
+#include <iosfwd>
 
 namespace huse {
-class Serializer;
+HUSE_S_MSG(HUSE_API, bool, bool);
+HUSE_S_MSG(HUSE_API, short, short);
+HUSE_S_MSG(HUSE_API, unsigned short, ushort);
+HUSE_S_MSG(HUSE_API, int, int);
+HUSE_S_MSG(HUSE_API, unsigned int, uint);
+HUSE_S_MSG(HUSE_API, long, long);
+HUSE_S_MSG(HUSE_API, unsigned long, ulong);
+HUSE_S_MSG(HUSE_API, long long, llong);
+HUSE_S_MSG(HUSE_API, unsigned long long, ullong);
+HUSE_S_MSG(HUSE_API, float, float);
+HUSE_S_MSG(HUSE_API, double, double);
+HUSE_S_MSG(HUSE_API, std::string_view, sv);
 
-HUSE_SERIALIZE_MSG(HUSE_API, bool, bool);
-HUSE_SERIALIZE_MSG(HUSE_API, short, short);
-HUSE_SERIALIZE_MSG(HUSE_API, unsigned short, ushort);
-HUSE_SERIALIZE_MSG(HUSE_API, int, int);
-HUSE_SERIALIZE_MSG(HUSE_API, unsigned int, uint);
-HUSE_SERIALIZE_MSG(HUSE_API, long, long);
-HUSE_SERIALIZE_MSG(HUSE_API, unsigned long, ulong);
-HUSE_SERIALIZE_MSG(HUSE_API, long long, llong);
-HUSE_SERIALIZE_MSG(HUSE_API, unsigned long long, ullong);
-HUSE_SERIALIZE_MSG(HUSE_API, float, float);
-HUSE_SERIALIZE_MSG(HUSE_API, double, double);
-HUSE_SERIALIZE_MSG(HUSE_API, std::string_view, sv);
-
-HUSE_SERIALIZE_MSG(HUSE_API, std::nullptr_t, nullptr_t); // write null explicitly
-HUSE_SERIALIZE_MSG(HUSE_API, std::nullopt_t, nullopt_t); // discard current value
+HUSE_S_MSG(HUSE_API, std::nullptr_t, nullptr_t); // write null explicitly
+HUSE_S_MSG(HUSE_API, std::nullopt_t, nullopt_t); // discard current value
 
 // helper
 inline void husePolySerialize(Serializer& s, const char* str) { husePolySerialize(s, std::string_view(str)); }

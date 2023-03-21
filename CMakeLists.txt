@@ -30,7 +30,7 @@ option(HUSE_BUILD_EXAMPLES "huse: build examples" ${ICM_DEV_MODE})
 
 #######################################
 # packages
-CPMAddPackage("gh:iboB/dynamix@2.0.0-alpha2a#90a9bc4663f5ae0a5dc0f42d5769cdb7c6989953")
+CPMAddPackage("gh:iboB/dynamix@2.0.0-alpha2c#9e3f212132a38c8dcf48769c66d614bc84fe55e9")
 CPMAddPackage(gh:iboB/splat@1.2.1)
 CPMAddPackage(gh:iboB/mscharconv@1.2.3)
 CPMAddPackage(gh:iboB/itlib@1.6.3)

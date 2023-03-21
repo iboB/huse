@@ -8,8 +8,8 @@
 #include "../SerializerInterface.hpp"
 #include "../Domain.hpp"
 #include "../Exception.hpp"
-#include "../impl/Assert.hpp"
 #include "../PolyTraits.hpp"
+#include "../impl/Assert.hpp"
 
 #include <msstl/charconv.hpp>
 

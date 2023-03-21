@@ -15,6 +15,8 @@ icm_add_lib(huse HUSE
     SerializerInterface.hpp
     SerializerInterface.cpp
     Deserializer.hpp
+    DeserializerInterface.hpp
+    DeserializerInterface.cpp
     VTableExports.cpp
     Exception.hpp
 
@@ -23,6 +25,7 @@ icm_add_lib(huse HUSE
     json/JsonSerializer.cpp
     json/Deserializer.hpp
     json/Deserializer.cpp
+    json/JsonDeserializer.cpp
     json/_sajson/sajson.hpp
 
     helpers/StdVector.hpp
