@@ -39,15 +39,15 @@ CPMAddPackage(gh:iboB/itlib@1.6.3)
 
 add_subdirectory(code/huse)
 
-#if(ICM_DEV_MODE)
-#    add_subdirectory(scratch)
-#endif()
+if(ICM_DEV_MODE)
+    add_subdirectory(scratch)
+endif()
 
 if(HUSE_BUILD_EXAMPLES)
     add_subdirectory(example)
 endif()
 
-#if(HUSE_BUILD_TESTS)
-#    enable_testing()
-#    add_subdirectory(test)
-#endif()
+if(HUSE_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(test)
+endif()

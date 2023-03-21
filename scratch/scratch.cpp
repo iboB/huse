@@ -11,9 +11,9 @@ int main()
 
     try
     {
-        auto d = huse::json::Deserializer::fromConstString(json);
+        auto d = huse::json::Make_Deserializer(json);
         int i;
-        d.val(i);
+        d.root().val(i);
     }
     catch (std::exception& e)
     {
