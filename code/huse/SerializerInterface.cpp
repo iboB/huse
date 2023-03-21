@@ -3,7 +3,7 @@
 //
 #include "SerializerInterface.hpp"
 #include "DefineMsg.hpp"
-#include "Serializer2.hpp"
+#include "SerializerObj.hpp"
 
 namespace huse {
 HUSE_DEFINE_SERIALIZE_MSG(bool, bool);
@@ -24,6 +24,7 @@ HUSE_DEFINE_SERIALIZE_MSG(std::nullopt_t, nullopt_t);
 DYNAMIX_DEFINE_SIMPLE_MSG(openStringStream_msg, unicast);
 DYNAMIX_DEFINE_SIMPLE_MSG(closeStringStream_msg, unicast);
 
+DYNAMIX_DEFINE_SIMPLE_MSG(pushKey_msg, unicast);
 DYNAMIX_DEFINE_SIMPLE_MSG(openObject_msg, unicast);
 DYNAMIX_DEFINE_SIMPLE_MSG(closeObject_msg, unicast);
 DYNAMIX_DEFINE_SIMPLE_MSG(openArray_msg, unicast);

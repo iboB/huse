@@ -3,6 +3,8 @@
 //
 #pragma once
 #include "API.h"
+#include "SerializerInterface.hpp"
+#include "SerializerObj.hpp"
 
 #include "impl/UniqueStack.hpp"
 
@@ -12,28 +14,14 @@
 
 namespace huse
 {
-class Context;
 class SerializerArray;
 class SerializerObject;
-class BasicSerializer;
-
-class SerializerContextSentry {
-    BasicSerializer& m_serializer;
-    Context* m_old;
-public:
-    SerializerContextSentry(BasicSerializer& serializer, Context* newc);
-    ~SerializerContextSentry();
-
-    SerializerContextSentry(const SerializerContextSentry&) = delete;
-    SerializerContextSentry& operator=(const SerializerContextSentry&) = delete;
-    SerializerContextSentry(SerializerContextSentry&& other) noexcept = delete;
-    SerializerContextSentry& operator=(SerializerContextSentry&&) = delete;
-};
+class Serializer;
 
 class SerializerSStream : public impl::UniqueStack
 {
 public:
-    SerializerSStream(BasicSerializer& s, impl::UniqueStack* parent);
+    SerializerSStream(Serializer& s, impl::UniqueStack* parent);
     ~SerializerSStream();
 
     SerializerSStream(const SerializerSStream&) = delete;
@@ -60,28 +48,27 @@ public:
     [[noreturn]] void throwException(const std::string& msg) const;
 
 private:
-    BasicSerializer& m_serializer;
+    Serializer& m_serializer;
     std::ostream& m_stream;
 };
 
 class SerializerNode : public impl::UniqueStack
 {
 protected:
-    SerializerNode(BasicSerializer& s, impl::UniqueStack* parent)
+    SerializerNode(Serializer& s, impl::UniqueStack* parent)
         : impl::UniqueStack(parent)
         , m_serializer(s)
     {}
 
-    BasicSerializer& m_serializer;
+    friend class Serializer;
+    Serializer& m_serializer;
 public:
     SerializerNode(const SerializerNode&) = delete;
     SerializerNode& operator=(const SerializerNode&) = delete;
     SerializerNode(SerializerNode&&) = delete;
     SerializerNode& operator=(SerializerNode&&) = delete;
 
-    Context* context() const;
-
-    BasicSerializer& _s() { return m_serializer; }
+    Serializer& _s() { return m_serializer; }
 
     SerializerObject obj();
     SerializerArray ar();
@@ -101,30 +88,23 @@ public:
     }
 
     [[noreturn]] void throwException(const std::string& msg) const;
-
-    SerializerContextSentry contextChange(Context* newc)
-    {
-        return SerializerContextSentry(m_serializer, newc);
-    }
 };
 
 class SerializerArray : public SerializerNode
 {
 public:
-    SerializerArray(BasicSerializer& s, impl::UniqueStack* parent = nullptr);
+    SerializerArray(Serializer& s, impl::UniqueStack* parent = nullptr);
     ~SerializerArray();
 };
 
 class SerializerObject : private SerializerNode
 {
 public:
-    SerializerObject(BasicSerializer& s, impl::UniqueStack* parent = nullptr);
+    SerializerObject(Serializer& s, impl::UniqueStack* parent = nullptr);
     ~SerializerObject();
 
-    using SerializerNode::context;
     using SerializerNode::_s;
     using SerializerNode::throwException;
-    using SerializerNode::contextChange;
 
     SerializerNode& key(std::string_view k);
 
@@ -180,88 +160,19 @@ public:
     }
 };
 
-class HUSE_API BasicSerializer : public SerializerNode
-{
-    friend class SerializerSStream;
-    friend class SerializerNode;
-    friend class SerializerArray;
-    friend class SerializerObject;
-    friend class SerializerContextSentry;
-public:
-    BasicSerializer(Context* ctx) : SerializerNode(*this, nullptr), m_context(ctx) {}
-    virtual ~BasicSerializer();
-
-protected:
-    // write interface
-    virtual void write(bool val) = 0;
-    virtual void write(short val) = 0;
-    virtual void write(unsigned short val) = 0;
-    virtual void write(int val) = 0;
-    virtual void write(unsigned int val) = 0;
-    virtual void write(long val) = 0;
-    virtual void write(unsigned long val) = 0;
-    virtual void write(long long val) = 0;
-    virtual void write(unsigned long long val) = 0;
-    virtual void write(float val) = 0;
-    virtual void write(double val) = 0;
-    virtual void write(std::string_view val) = 0;
-
-    // explicit calls
-    virtual void write(std::nullptr_t) = 0; // write null explicitly
-    virtual void write(std::nullopt_t) = 0; // discard current value
-
-    // stateful writes
-    virtual std::ostream& openStringStream() = 0;
-    virtual void closeStringStream() = 0;
-
-    // helpers
-    void write(const char* s) { write(std::string_view(s)); }
-
-    // implementation interface
-    virtual void pushKey(std::string_view k) = 0;
-
-    virtual void openObject() = 0;
-    virtual void closeObject() = 0;
-
-    virtual void openArray() = 0;
-    virtual void closeArray() = 0;
-
-    // throw contextualized exception (default impl throws with no context)
-    [[noreturn]] virtual void throwException(const std::string& msg) const;
-
-    Context* m_context;
-};
-
-inline SerializerContextSentry::SerializerContextSentry(BasicSerializer& serializer, Context* newc)
-    : m_serializer(serializer)
-    , m_old(serializer.m_context)
-{
-    serializer.m_context = newc;
-}
-
-inline SerializerContextSentry::~SerializerContextSentry()
-{
-    m_serializer.m_context = m_old;
-}
-
-inline SerializerSStream::SerializerSStream(BasicSerializer& s, impl::UniqueStack* parent)
+inline SerializerSStream::SerializerSStream(Serializer& s, impl::UniqueStack* parent)
     : impl::UniqueStack(parent)
     , m_serializer(s)
-    , m_stream(s.openStringStream())
+    , m_stream(openStringStream_msg::call(s))
 {}
 
 inline SerializerSStream::~SerializerSStream()
 {
-    m_serializer.closeStringStream();
+    closeStringStream_msg::call(m_serializer);
 }
 
 inline void SerializerSStream::throwException(const std::string& msg) const {
-    m_serializer.throwException(msg);
-}
-
-inline Context* SerializerNode::context() const
-{
-    return m_serializer.m_context;
+    throwSerializerException_msg::call(m_serializer, msg);
 }
 
 inline SerializerObject SerializerNode::obj()
@@ -276,37 +187,26 @@ inline SerializerArray SerializerNode::ar()
 
 namespace impl
 {
-struct SerializerWriteHelper : public BasicSerializer {
-    using BasicSerializer::write;
-};
-
 template <typename, typename = void>
-struct HasSerializerWrite : std::false_type {};
-
+struct HasPolySerialize : std::false_type {};
 template <typename T>
-struct HasSerializerWrite<T, decltype(std::declval<SerializerWriteHelper>().write(std::declval<T>()))> : std::true_type {};
+struct HasPolySerialize<T, decltype(husePolySerialize(std::declval<Serializer&>(), std::declval<T>()))> : std::true_type {};
 
 template <typename, typename = void>
 struct HasSerializeMethod : std::false_type {};
-
 template <typename T>
 struct HasSerializeMethod<T, decltype(std::declval<T>().huseSerialize(std::declval<SerializerNode&>()))> : std::true_type {};
-
 template <typename, typename = void>
 struct HasSerializeFunc : std::false_type {};
-
 template <typename T>
 struct HasSerializeFunc<T, decltype(huseSerialize(std::declval<SerializerNode&>(), std::declval<T>()))> : std::true_type {};
 
 template <typename, typename = void>
 struct HasSerializeFlatMethod : std::false_type {};
-
 template <typename T>
 struct HasSerializeFlatMethod<T, decltype(std::declval<T>().huseSerializeFlat(std::declval<SerializerObject&>()))> : std::true_type {};
-
 template <typename, typename = void>
 struct HasSerializeFlatFunc : std::false_type {};
-
 template <typename T>
 struct HasSerializeFlatFunc<T, decltype(huseSerializeFlat(std::declval<SerializerObject&>(), std::declval<T>()))> : std::true_type {};
 } // namespace impl
@@ -322,10 +222,9 @@ void SerializerNode::val(const T& v)
     {
         huseSerialize(*this, v);
     }
-    // check last to avoid situations where implicit cast is possible and serialize specializations exist for T
-    else if constexpr (impl::HasSerializerWrite<T>::value)
+    else if constexpr (impl::HasPolySerialize<T>::value)
     {
-        m_serializer.write(v);
+        husePolySerialize(m_serializer, v);
     }
     else
     {
@@ -334,34 +233,34 @@ void SerializerNode::val(const T& v)
 }
 
 inline void SerializerNode::throwException(const std::string& msg) const {
-    m_serializer.throwException(msg);
+    throwSerializerException_msg::call(m_serializer, msg);
 }
 
-inline SerializerArray::SerializerArray(BasicSerializer& s, impl::UniqueStack* parent)
+inline SerializerArray::SerializerArray(Serializer& s, impl::UniqueStack* parent)
     : SerializerNode(s, parent)
 {
-    m_serializer.openArray();
+    openArray_msg::call(m_serializer);
 }
 
 inline SerializerArray::~SerializerArray()
 {
-    m_serializer.closeArray();
+    closeArray_msg::call(m_serializer);
 }
 
-inline SerializerObject::SerializerObject(BasicSerializer& s, impl::UniqueStack* parent)
+inline SerializerObject::SerializerObject(Serializer& s, impl::UniqueStack* parent)
     : SerializerNode(s, parent)
 {
-    m_serializer.openObject();
+    openObject_msg::call(m_serializer);
 }
 
 inline SerializerObject::~SerializerObject()
 {
-    m_serializer.closeObject();
+    closeObject_msg::call(m_serializer);
 }
 
 inline SerializerNode& SerializerObject::key(std::string_view k)
 {
-    m_serializer.pushKey(k);
+    pushKey_msg::call(m_serializer, k);
     return *this;
 }
 
@@ -380,6 +279,14 @@ void SerializerObject::flatval(const T& v)
     {
         cannot_serialize(v);
     }
+}
+
+inline SerializerNode Serializer::node() {
+    return SerializerNode(*this, nullptr);
+}
+
+inline SerializerNode Serializer::root() {
+    return node();
 }
 
 } // namespace huse

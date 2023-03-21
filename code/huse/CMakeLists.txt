@@ -19,7 +19,7 @@ icm_add_lib(huse HUSE
     Exception.hpp
 
     json/Serializer.hpp
-    json/Serializer.cpp
+    json/JsonSerializer.hpp
     json/JsonSerializer.cpp
     json/Deserializer.hpp
     json/Deserializer.cpp

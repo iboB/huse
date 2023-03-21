@@ -3,21 +3,16 @@
 //
 #pragma once
 #include "API.h"
-
-#include "impl/UniqueStack.hpp"
-
 #include <dynamix/object.hpp>
 
-#include <string_view>
-#include <optional>
-#include <iosfwd>
-
-namespace huse
-{
-
+namespace huse {
+class SerializerNode;
 class HUSE_API Serializer : public dynamix::object {
 public:
     Serializer();
-};
 
-} // namespace huse
+    // implemented in Serializer.hpp
+    SerializerNode node();
+    SerializerNode root();
+};
+}

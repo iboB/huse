@@ -9,6 +9,8 @@
 #include <optional>
 
 namespace huse {
+class Serializer;
+
 HUSE_SERIALIZE_MSG(HUSE_API, bool, bool);
 HUSE_SERIALIZE_MSG(HUSE_API, short, short);
 HUSE_SERIALIZE_MSG(HUSE_API, unsigned short, ushort);
@@ -32,6 +34,8 @@ inline void husePolySerialize(Serializer& s, const char* str) { husePolySerializ
 
 DYNAMIX_DECLARE_EXPORTED_SIMPLE_MSG(HUSE_API, openStringStream_msg, std::ostream&(Serializer&));
 DYNAMIX_DECLARE_EXPORTED_SIMPLE_MSG(HUSE_API, closeStringStream_msg, void(Serializer&));
+
+DYNAMIX_DECLARE_EXPORTED_SIMPLE_MSG(HUSE_API, pushKey_msg, void(Serializer&, std::string_view k));
 
 DYNAMIX_DECLARE_EXPORTED_SIMPLE_MSG(HUSE_API, openObject_msg, void(Serializer&));
 DYNAMIX_DECLARE_EXPORTED_SIMPLE_MSG(HUSE_API, closeObject_msg, void(Serializer&));

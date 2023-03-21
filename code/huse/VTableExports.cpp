@@ -5,22 +5,21 @@
 #include "Serializer.hpp"
 #include "Deserializer.hpp"
 #include "Exception.hpp"
+#include "Domain.hpp"
 
 // used to export vtables
 
 namespace huse
 {
+Serializer::Serializer()
+    : dynamix::object(dynamix::g::get_domain<SerializerDomain>())
+{}
+
 Context::~Context() = default;
-BasicSerializer::~BasicSerializer() = default;
 BasicDeserializer::~BasicDeserializer() = default;
 Exception::~Exception() = default;
 SerializerException::~SerializerException() = default;
 DeserializerException::~DeserializerException() = default;
-
-void BasicSerializer::throwException(const std::string& msg) const
-{
-    throw SerializerException(msg);
-}
 
 void BasicDeserializer::throwException(const std::string& msg) const
 {

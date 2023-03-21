@@ -4,6 +4,7 @@
 #include "JsonSerializer.hpp"
 #include "Limits.hpp"
 
+#include "../SerializerObj.hpp"
 #include "../SerializerInterface.hpp"
 #include "../Domain.hpp"
 #include "../Exception.hpp"
@@ -13,6 +14,7 @@
 #include <msstl/charconv.hpp>
 
 #include <dynamix/define_mixin.hpp>
+#include <dynamix/mutate.hpp>
 
 #include <cmath>
 #include <exception>
@@ -384,6 +386,9 @@ DYNAMIX_DEFINE_MIXIN(SerializerDomain, JsonSerializer)
     .implements_by<closeStringStream_msg>([](JsonSerializer* s) {
         s->closeStringStream();
     })
+    .implements_by<pushKey_msg>([](JsonSerializer* s, std::string_view key) {
+        s->pushKey(key);
+    })
     .implements_by<openObject_msg>([](JsonSerializer* s) {
         s->openObject();
     })
@@ -401,8 +406,14 @@ DYNAMIX_DEFINE_MIXIN(SerializerDomain, JsonSerializer)
     })
 ;
 
-void Serializer::do_init(const dynamix::mixin_info&, dynamix::mixin_index_t, dynamix::byte_t* new_mixin) {
-    new (new_mixin) JsonSerializer(out, pretty);
+//void Serializer::do_init(const dynamix::mixin_info&, dynamix::mixin_index_t, dynamix::byte_t* new_mixin) {
+//    new (new_mixin) JsonSerializer(out, pretty);
+//}
+
+Serializer Make_Serializer(std::ostream& out, bool pretty) {
+    Serializer ret;
+    mutate(ret, dynamix::add<JsonSerializer>(out, pretty));
+    return ret;
 }
 
 }
