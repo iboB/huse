@@ -15,15 +15,13 @@ Serializer::Serializer()
     : dynamix::object(dynamix::g::get_domain<SerializerDomain>())
 {}
 
+Deserializer::Deserializer()
+    : dynamix::object(dynamix::g::get_domain<DeserializerDomain>())
+{}
+
 Context::~Context() = default;
-BasicDeserializer::~BasicDeserializer() = default;
 Exception::~Exception() = default;
 SerializerException::~SerializerException() = default;
 DeserializerException::~DeserializerException() = default;
-
-void BasicDeserializer::throwException(const std::string& msg) const
-{
-    throw DeserializerException(msg);
-}
 
 }

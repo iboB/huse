@@ -16,7 +16,6 @@ namespace huse
 {
 class SerializerArray;
 class SerializerObject;
-class Serializer;
 
 class SerializerSStream : public impl::UniqueStack
 {

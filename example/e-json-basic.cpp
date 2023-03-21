@@ -95,10 +95,10 @@ int main()
         }
     ])json";
     std::vector<Character> characters;
-    auto d = huse::json::Deserializer::fromMutableString(json.data(), json.length());
+    auto d = huse::json::Make_Deserializer(json.data(), json.length());
 
     // read characters
-    d.val(characters);
+    d.root().val(characters);
 
     // print characters as pretty json
     auto s = huse::json::Make_Serializer(std::cout, true);

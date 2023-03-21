@@ -24,7 +24,6 @@ icm_add_lib(huse HUSE
     json/JsonSerializer.hpp
     json/JsonSerializer.cpp
     json/Deserializer.hpp
-    json/Deserializer.cpp
     json/JsonDeserializer.cpp
     json/_sajson/sajson.hpp
 
