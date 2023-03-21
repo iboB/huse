@@ -4,6 +4,7 @@
 #include "SerializerInterface.hpp"
 #include "DefineMsg.hpp"
 #include "SerializerObj.hpp"
+#include "Exception.hpp"
 
 namespace huse {
 HUSE_DEFINE_S_MSG(bool, bool);
@@ -21,14 +22,17 @@ HUSE_DEFINE_S_MSG(std::string_view, sv);
 HUSE_DEFINE_S_MSG(std::nullptr_t, nullptr_t);
 HUSE_DEFINE_S_MSG(std::nullopt_t, nullopt_t);
 
-DYNAMIX_DEFINE_SIMPLE_MSG(openStringStream_msg, unicast);
-DYNAMIX_DEFINE_SIMPLE_MSG(closeStringStream_msg, unicast);
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(openStringStream_msg, unicast, false, nullptr);
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(closeStringStream_msg, unicast, false, nullptr);
 
-DYNAMIX_DEFINE_SIMPLE_MSG(pushKey_msg, unicast);
-DYNAMIX_DEFINE_SIMPLE_MSG(openObject_msg, unicast);
-DYNAMIX_DEFINE_SIMPLE_MSG(closeObject_msg, unicast);
-DYNAMIX_DEFINE_SIMPLE_MSG(openArray_msg, unicast);
-DYNAMIX_DEFINE_SIMPLE_MSG(closeArray_msg, unicast);
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(pushKey_msg, unicast, false, nullptr);
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(openObject_msg, unicast, false, nullptr);
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(closeObject_msg, unicast, false, nullptr);
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(openArray_msg, unicast, false, nullptr);
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(closeArray_msg, unicast, false, nullptr);
 
-DYNAMIX_DEFINE_SIMPLE_MSG(throwSerializerException_msg, unicast);
+void throwSerializerExceptionDefault(const Serializer&, const std::string& msg) {
+    throw SerializerException(msg);
+}
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(throwSerializerException_msg, unicast, true, throwSerializerExceptionDefault);
 }

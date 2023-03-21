@@ -10,3 +10,4 @@ macro(huse_test test)
 endmacro()
 
 huse_test(json t-json.cpp)
+huse_test(poly t-poly.cpp)

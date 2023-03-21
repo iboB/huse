@@ -11,11 +11,11 @@
 namespace huse
 {
 Serializer::Serializer()
-    : dynamix::object(dynamix::g::get_domain<SerializerDomain>())
+    : dynamix::object(dynamix::g::get_domain<Domain>())
 {}
 
 Deserializer::Deserializer()
-    : dynamix::object(dynamix::g::get_domain<DeserializerDomain>())
+    : dynamix::object(dynamix::g::get_domain<Domain>())
 {}
 
 Exception::~Exception() = default;

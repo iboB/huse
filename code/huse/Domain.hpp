@@ -6,8 +6,6 @@
 #include <dynamix/declare_domain.hpp>
 
 namespace huse {
-struct SerializerDomain;
-DYNAMIX_DECLARE_EXPORTED_DOMAIN(HUSE_API, SerializerDomain);
-struct DeserializerDomain;
-DYNAMIX_DECLARE_EXPORTED_DOMAIN(HUSE_API, DeserializerDomain);
+struct Domain;
+DYNAMIX_DECLARE_EXPORTED_DOMAIN(HUSE_API, Domain);
 }
