@@ -17,7 +17,6 @@ set(CMAKE_MODULE_PATH
     ${icm_SOURCE_DIR}
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W3")
 include(icm_dev_mode)
 include(icm_add_lib)
 
