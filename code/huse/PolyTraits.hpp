@@ -6,4 +6,5 @@
 
 namespace huse {
 DYNAMIX_MAKE_FUNC_TRAITS(husePolySerialize);
+DYNAMIX_MAKE_FUNC_TRAITS(husePolyDeserialize);
 }
