@@ -15,8 +15,9 @@
 namespace huse
 {
 
-class Serializer : public dynamix::object {
+class HUSE_API Serializer : public dynamix::object {
 public:
+    Serializer();
 };
 
 } // namespace huse

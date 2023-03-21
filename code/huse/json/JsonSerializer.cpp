@@ -1,12 +1,18 @@
 // Copyright (c) Borislav Stanimirov
 // SPDX-License-Identifier: MIT
 //
-//#include "Serializer.hpp"
+#include "JsonSerializer.hpp"
+#include "Limits.hpp"
+
 #include "../SerializerInterface.hpp"
+#include "../Domain.hpp"
 #include "../Exception.hpp"
 #include "../impl/Assert.hpp"
+#include "../PolyTraits.hpp"
 
 #include <msstl/charconv.hpp>
+
+#include <dynamix/define_mixin.hpp>
 
 #include <cmath>
 #include <exception>
@@ -14,16 +20,11 @@
 #include <ostream>
 #include <type_traits>
 
-namespace huse
+namespace huse::json
 {
 
 namespace
 {
-// json imposed limits (max integer which can be stored in a double)
-static inline constexpr int64_t Max_Int64 = 9007199254740992ll;
-static inline constexpr int64_t Min_Int64 = -9007199254740992ll;
-static inline constexpr uint64_t Max_Uint64 = 9007199254740992ull;
-
 std::optional<std::string_view> escapeUtf8Byte(char c)
 {
     auto u = uint8_t(c);
@@ -177,18 +178,18 @@ struct JsonSerializer
         out.sputn(p, end - p);
     }
 
-    void write(bool val)
+    void husePolySerialize(bool val)
     {
         static constexpr std::string_view t = "true", f = "false";
         writeRawJson(val ? t : f);
     }
 
-    void write(std::nullptr_t) { writeRawJson("null"); }
+    void husePolySerialize(std::nullptr_t) { writeRawJson("null"); }
 
-    void write(short val) { writeSmallInteger(val); }
-    void write(unsigned short val) { writeSmallInteger(val); }
-    void write(int val) { writeSmallInteger(val); }
-    void write(unsigned int val) { writeSmallInteger(val); }
+    void husePolySerialize(short val) { writeSmallInteger(val); }
+    void husePolySerialize(unsigned short val) { writeSmallInteger(val); }
+    void husePolySerialize(int val) { writeSmallInteger(val); }
+    void husePolySerialize(unsigned int val) { writeSmallInteger(val); }
 
     template <typename T>
     void writePotentiallyBigIntegerValue(T val)
@@ -226,10 +227,10 @@ struct JsonSerializer
     }
 
     // some values may not fit json's numbers
-    void write(long val) { writePotentiallyBigIntegerValue(val); }
-    void write(unsigned long val) { writePotentiallyBigIntegerValue(val); }
-    void write(long long val) { writePotentiallyBigIntegerValue(val); }
-    void write(unsigned long long val) { writePotentiallyBigIntegerValue(val); }
+    void husePolySerialize(long val) { writePotentiallyBigIntegerValue(val); }
+    void husePolySerialize(unsigned long val) { writePotentiallyBigIntegerValue(val); }
+    void husePolySerialize(long long val) { writePotentiallyBigIntegerValue(val); }
+    void husePolySerialize(unsigned long long val) { writePotentiallyBigIntegerValue(val); }
 
     template <typename T>
     void writeFloatValue(T val)
@@ -246,8 +247,8 @@ struct JsonSerializer
         }
     }
 
-    void write(float val) { writeFloatValue(val); }
-    void write(double val) { writeFloatValue(val); }
+    void husePolySerialize(float val) { writeFloatValue(val); }
+    void husePolySerialize(double val) { writeFloatValue(val); }
 
     void writeQuotedEscapedUTF8String(std::string_view str)
     {
@@ -257,13 +258,13 @@ struct JsonSerializer
         out.sputc('"');
     }
 
-    void write(std::string_view val)
+    void husePolySerialize(std::string_view val)
     {
         prepareWriteVal();
         writeQuotedEscapedUTF8String(val);
     }
 
-    void write(std::nullopt_t)
+    void husePolySerialize(std::nullopt_t)
     {
         m_pendingKey.reset();
     }
@@ -361,5 +362,47 @@ struct JsonSerializer
     std::aligned_storage_t<sizeof(JsonOStream), alignof(JsonOStream)> m_stringStreamBuffer;
     JsonOStream* m_stringStream = nullptr;
 };
+
+DYNAMIX_DEFINE_MIXIN(SerializerDomain, JsonSerializer)
+    .implements<husePolySerialize_bool>()
+    .implements<husePolySerialize_short>()
+    .implements<husePolySerialize_ushort>()
+    .implements<husePolySerialize_int>()
+    .implements<husePolySerialize_uint>()
+    .implements<husePolySerialize_long>()
+    .implements<husePolySerialize_ulong>()
+    .implements<husePolySerialize_llong>()
+    .implements<husePolySerialize_ullong>()
+    .implements<husePolySerialize_float>()
+    .implements<husePolySerialize_double>()
+    .implements<husePolySerialize_sv>()
+    .implements<husePolySerialize_nullptr_t>()
+    .implements<husePolySerialize_nullopt_t>()
+    .implements_by<openStringStream_msg>([](JsonSerializer* s) -> std::ostream& {
+        return s->openStringStream();
+    })
+    .implements_by<closeStringStream_msg>([](JsonSerializer* s) {
+        s->closeStringStream();
+    })
+    .implements_by<openObject_msg>([](JsonSerializer* s) {
+        s->openObject();
+    })
+    .implements_by<closeObject_msg>([](JsonSerializer* s) {
+        s->closeObject();
+    })
+    .implements_by<openArray_msg>([](JsonSerializer* s) {
+        s->openArray();
+    })
+    .implements_by<closeArray_msg>([](JsonSerializer* s) {
+        s->closeArray();
+    })
+    .implements_by<throwSerializerException_msg>([](const JsonSerializer* s, const std::string& str) {
+        s->throwException(str);
+    })
+;
+
+void Serializer::do_init(const dynamix::mixin_info&, dynamix::mixin_index_t, dynamix::byte_t* new_mixin) {
+    new (new_mixin) JsonSerializer(out, pretty);
+}
 
 }
