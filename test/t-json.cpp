@@ -870,7 +870,7 @@ TEST_CASE("context-based i/o")
     CHECK(orig.a == cc2.a);
     CHECK(orig.b == cc2.b);
 
-   {
+    {
         auto ar = j.compact().ar();
         ar.val(orig);
         auto ctxc = ar.contextChange(&c);

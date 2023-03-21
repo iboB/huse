@@ -44,9 +44,9 @@ add_subdirectory(code/huse)
 #    add_subdirectory(scratch)
 #endif()
 
-#if(HUSE_BUILD_EXAMPLES)
-#    add_subdirectory(example)
-#endif()
+if(HUSE_BUILD_EXAMPLES)
+    add_subdirectory(example)
+endif()
 
 #if(HUSE_BUILD_TESTS)
 #    enable_testing()

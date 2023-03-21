@@ -101,8 +101,8 @@ int main()
     d.val(characters);
 
     // print characters as pretty json
-    huse::json::Serializer s(std::cout, true);
-    s.val(characters);
+    auto s = huse::json::Make_Serializer(std::cout, true);
+    s.root().val(characters);
 
     std::cout << '\n';
     return 0;
