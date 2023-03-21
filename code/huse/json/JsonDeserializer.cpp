@@ -431,7 +431,7 @@ struct JsonDeserializer
     }
 };
 
-DYNAMIX_DEFINE_MIXIN(DeserializerDomain, JsonDeserializer)
+DYNAMIX_DEFINE_MIXIN(Domain, JsonDeserializer)
     .implements<husePolyDeserialize_bool>()
     .implements<husePolyDeserialize_short>()
     .implements<husePolyDeserialize_ushort>()

@@ -4,6 +4,7 @@
 #include "DeserializerInterface.hpp"
 #include "DefineMsg.hpp"
 #include "DeserializerObj.hpp"
+#include "Exception.hpp"
 
 namespace huse {
 HUSE_DEFINE_D_MSG(bool, bool);
@@ -20,22 +21,25 @@ HUSE_DEFINE_D_MSG(double, double);
 HUSE_DEFINE_D_MSG(std::string_view, sv);
 HUSE_DEFINE_D_MSG(std::string, string);
 
-DYNAMIX_DEFINE_SIMPLE_MSG(skip_msg, unicast);
-DYNAMIX_DEFINE_SIMPLE_MSG(loadStringStream_msg, unicast);
-DYNAMIX_DEFINE_SIMPLE_MSG(unloadStringStream_msg, unicast);
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(skip_msg, unicast, false, nullptr);
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(loadStringStream_msg, unicast, false, nullptr);
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(unloadStringStream_msg, unicast, false, nullptr);
 
-DYNAMIX_DEFINE_SIMPLE_MSG(loadObject_msg, unicast);
-DYNAMIX_DEFINE_SIMPLE_MSG(unloadObject_msg, unicast);
-DYNAMIX_DEFINE_SIMPLE_MSG(loadArray_msg, unicast);
-DYNAMIX_DEFINE_SIMPLE_MSG(unloadArray_msg, unicast);
-DYNAMIX_DEFINE_SIMPLE_MSG(curLength_msg, unicast);
-DYNAMIX_DEFINE_SIMPLE_MSG(loadKey_msg, unicast);
-DYNAMIX_DEFINE_SIMPLE_MSG(tryLoadKey_msg, unicast);
-DYNAMIX_DEFINE_SIMPLE_MSG(loadIndex_msg, unicast);
-DYNAMIX_DEFINE_SIMPLE_MSG(hasPending_msg, unicast);
-DYNAMIX_DEFINE_SIMPLE_MSG(pendingType_msg, unicast);
-DYNAMIX_DEFINE_SIMPLE_MSG(pendingKey_msg, unicast);
-DYNAMIX_DEFINE_SIMPLE_MSG(optPendingKey_msg, unicast);
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(loadObject_msg, unicast, false, nullptr);
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(unloadObject_msg, unicast, false, nullptr);
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(loadArray_msg, unicast, false, nullptr);
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(unloadArray_msg, unicast, false, nullptr);
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(curLength_msg, unicast, false, nullptr);
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(loadKey_msg, unicast, false, nullptr);
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(tryLoadKey_msg, unicast, false, nullptr);
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(loadIndex_msg, unicast, false, nullptr);
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(hasPending_msg, unicast, false, nullptr);
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(pendingType_msg, unicast, false, nullptr);
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(pendingKey_msg, unicast, false, nullptr);
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(optPendingKey_msg, unicast, false, nullptr);
 
-DYNAMIX_DEFINE_SIMPLE_MSG(throwDeserializerException_msg, unicast);
+void throwDeserializerExceptionDefault(const Deserializer&, const std::string& msg) {
+    throw DeserializerException(msg);
+}
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(throwDeserializerException_msg, unicast, true, throwDeserializerExceptionDefault);
 }

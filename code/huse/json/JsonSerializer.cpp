@@ -365,7 +365,7 @@ struct JsonSerializer
     JsonOStream* m_stringStream = nullptr;
 };
 
-DYNAMIX_DEFINE_MIXIN(SerializerDomain, JsonSerializer)
+DYNAMIX_DEFINE_MIXIN(Domain, JsonSerializer)
     .implements<husePolySerialize_bool>()
     .implements<husePolySerialize_short>()
     .implements<husePolySerialize_ushort>()
