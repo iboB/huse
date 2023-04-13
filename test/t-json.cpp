@@ -204,9 +204,9 @@ TEST_CASE("simple deserialize")
             int i;
             ar.index(2).val(i);
             CHECK(i == 3);
-            double d;
-            ar.index(0).val(d);
-            CHECK(d == 1.0);
+            double dbl;
+            ar.index(0).val(dbl);
+            CHECK(dbl == 1.0);
             unsigned ii;
             ar.val(ii);
             CHECK(ii == 2);
@@ -419,7 +419,6 @@ TEST_CASE("deserializer exceptions")
         auto d = makeD(json);
         auto root = d.root();
         auto o = root.obj();
-        bool b;
         o.val("b", b);
         std::string_view key;
         CHECK_THROWS_D(o.nextkeyval(key, b), "root.[3] : out of range");
@@ -434,7 +433,6 @@ TEST_CASE("deserializer exceptions")
             n.val(out);
             if (out > 2) n.throwException("val too big");
         };
-        float f;
         CHECK_NOTHROW(io.cval("x", f, rf));
         CHECK(f == 1);
         CHECK_THROWS_D(io.cval("y", f, rf), R"(root."ar".[1]."y" : val too big)");

@@ -90,7 +90,7 @@ struct JsonRedirectStreambuf : public std::streambuf
         }
         else
         {
-            m_redirectTarget.sputc(ch);
+            m_redirectTarget.sputc(char(ch));
         }
 
         return ch;
