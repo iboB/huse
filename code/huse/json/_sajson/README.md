@@ -12,3 +12,4 @@ Copyright &copy; 2012-2021 Chad Austin
 * Disable &lt;string&gt; include
 * Fixed unused arg warnings
 * Disable MSVC warning for non-standard extension with empty array
+* Fixed some benign int to char conversion warnings

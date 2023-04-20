@@ -2390,17 +2390,17 @@ private:
 
     void write_utf8(unsigned codepoint, char*& end) {
         if (codepoint < 0x80) {
-            *end++ = codepoint;
+            *end++ = codepoint & 0xFF;
         } else if (codepoint < 0x800) {
-            *end++ = 0xC0 | (codepoint >> 6);
+            *end++ = 0xC0 | ((codepoint >> 6) & 0xFF);
             *end++ = 0x80 | (codepoint & 0x3F);
         } else if (codepoint < 0x10000) {
-            *end++ = 0xE0 | (codepoint >> 12);
+            *end++ = 0xE0 | ((codepoint >> 12) & 0xFF);
             *end++ = 0x80 | ((codepoint >> 6) & 0x3F);
             *end++ = 0x80 | (codepoint & 0x3F);
         } else {
             assert(codepoint < 0x200000);
-            *end++ = 0xF0 | (codepoint >> 18);
+            *end++ = 0xF0 | ((codepoint >> 18) & 0xFF);
             *end++ = 0x80 | ((codepoint >> 12) & 0x3F);
             *end++ = 0x80 | ((codepoint >> 6) & 0x3F);
             *end++ = 0x80 | (codepoint & 0x3F);
