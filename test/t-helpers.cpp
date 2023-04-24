@@ -83,7 +83,7 @@ TEST_CASE("istr") {
     const auto ic = cclone(i, huse::IntAsString{}, R"({"t":"551122"})");
     CHECK(ic == i);
 
-    const uint64_t u64 = std::numeric_limits<uint64_t>::max();
+    const int64_t u64 = std::numeric_limits<int64_t>::min();
     const auto u64c = cclone(u64, huse::IntAsString{});
     CHECK(u64c == u64);
 
