@@ -3,13 +3,12 @@
 //
 #pragma once
 #include "../API.h"
+#include "../SerializerObj.hpp"
 #include <dynamix/declare_mixin.hpp>
 #include <iosfwd>
 // #include <dynamix/common_mixin_init.hpp>
 
-namespace huse {
-class Serializer;
-namespace json {
+namespace huse::json {
 DYNAMIX_DECLARE_EXPORTED_MIXIN(HUSE_API, struct JsonSerializer);
 
 //struct HUSE_API Serializer : public dynamix::common_mixin_init<JsonSerializer> {
@@ -20,5 +19,4 @@ DYNAMIX_DECLARE_EXPORTED_MIXIN(HUSE_API, struct JsonSerializer);
 //};
 
 HUSE_API Serializer Make_Serializer(std::ostream& out, bool pretty = false);
-}
 }

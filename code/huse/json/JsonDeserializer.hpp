@@ -3,14 +3,13 @@
 //
 #pragma once
 #include "../API.h"
+#include "../DeserializerObj.hpp"
 #include <dynamix/declare_mixin.hpp>
 #include <string_view>
 #include <cstddef>
 // #include <dynamix/common_mixin_init.hpp>
 
-namespace huse {
-class Deserializer;
-namespace json {
+namespace huse::json {
 DYNAMIX_DECLARE_EXPORTED_MIXIN(HUSE_API, struct JsonDeserializer);
 
 //struct HUSE_API Deserializer : public dynamix::common_mixin_init<JsonDeserializer> {
@@ -22,5 +21,4 @@ DYNAMIX_DECLARE_EXPORTED_MIXIN(HUSE_API, struct JsonDeserializer);
 
 HUSE_API Deserializer Make_Deserializer(std::string_view str);
 HUSE_API Deserializer Make_Deserializer(char* mutableString, size_t len = size_t(-1));
-}
 }

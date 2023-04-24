@@ -3,15 +3,12 @@
 //
 #pragma once
 
-namespace huse
-{
+namespace huse {
 
 // an identity function for cval useful in a template context
-struct Identity
-{
+struct Identity {
     template <typename Node, typename Val>
-    void operator(Node& node, Val& val)
-    {
+    void operator()(Node& node, Val& val) const {
         node.val(val);
     }
 };

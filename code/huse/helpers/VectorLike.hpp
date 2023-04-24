@@ -5,15 +5,12 @@
 #include "../Serializer.hpp"
 #include "../Deserializer.hpp"
 
-namespace huse
-{
+namespace huse {
 
 // a serialization functor for vector-like objects
-struct VectorLike
-{
+struct VectorLike{
     template <typename Vec>
-    void operator()(SerializerNode& n, const Vec& vec)
-    {
+    void operator()(SerializerNode& n, const Vec& vec) const  {
         auto ar = n.ar();
         for (auto& val : vec)
         {
@@ -22,8 +19,7 @@ struct VectorLike
     }
 
     template <typename Vec>
-    void operator()(DeserializerNode& n, Vec& vec)
-    {
+    void operator()(DeserializerNode& n, Vec& vec) const {
         auto ar = n.ar();
         auto len = ar.length();
         vec.resize(size_t(len));

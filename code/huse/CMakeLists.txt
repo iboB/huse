@@ -36,7 +36,7 @@ target_link_libraries(huse
     PUBLIC
         dynamix
         splat::splat
-    PRIVATE
         msstl::charconv
+    PRIVATE
         itlib::itlib
 )

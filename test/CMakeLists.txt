@@ -11,3 +11,4 @@ endmacro()
 
 huse_test(json t-json.cpp)
 huse_test(poly t-poly.cpp)
+huse_test(helpers t-helpers.cpp)
