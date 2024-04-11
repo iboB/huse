@@ -5,10 +5,18 @@
 #include "../Serializer.hpp"
 #include "../Deserializer.hpp"
 
-#include <msstl/charconv.hpp>
-#include <msstl/util.hpp>
+#include "../impl/Charconv.hpp"
 
 namespace huse {
+namespace impl {
+template <typename T>
+bool int_from_string(std::string_view str, T& out, int base = 10) {
+    auto end = str.data() + str.length();
+    auto ret = HUSE_CHARCONV_NAMESPACE::from_chars(str.data(), end, out, base);
+    if (ret.ec != std::errc{}) return false;
+    return ret.ptr == end;
+}
+}
 
 // serialize integers as strings
 
@@ -20,7 +28,7 @@ struct IntAsStringOpt {
 
     void operator()(SerializerNode& n, Int i) const {
         char buf[21] = {0};
-        auto res = msstl::to_chars(buf, buf + sizeof(buf), i);
+        auto res = HUSE_CHARCONV_NAMESPACE::to_chars(buf, buf + sizeof(buf), i);
         n.val(std::string_view(buf, res.ptr - buf));
     }
 
@@ -30,7 +38,7 @@ struct IntAsStringOpt {
         if (val.empty() && emptyStringVal) {
             i = *emptyStringVal;
         }
-        else if (!msstl::util::from_string(val, i)) {
+        else if (!impl::int_from_string(val, i)) {
             throwDeserializerException(n._s(), "not an integer");
         }
     }

@@ -10,8 +10,7 @@
 #include "../Exception.hpp"
 #include "../PolyTraits.hpp"
 #include "../impl/Assert.hpp"
-
-#include <msstl/charconv.hpp>
+#include "../impl/Charconv.hpp"
 
 #include <dynamix/define_mixin.hpp>
 #include <dynamix/mutate.hpp>
@@ -240,7 +239,7 @@ struct JsonSerializer
         if (std::isfinite(val))
         {
             char out[25]; // max length of double
-            auto result = msstl::to_chars(out, out + sizeof(out), val);
+            auto result = HUSE_CHARCONV_NAMESPACE::to_chars(out, out + sizeof(out), val);
             writeRawJson(std::string_view(out, result.ptr - out));
         }
         else

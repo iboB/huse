@@ -36,7 +36,16 @@ target_link_libraries(huse
     PUBLIC
         dynamix
         splat::splat
-        msstl::charconv
     PRIVATE
         itlib::itlib
 )
+
+include(icm_check_charconv_fp_to_chars)
+if(NOT haveCharconvFpToChars)
+    message("huse: no charconv floating point support detected. Using mscharconv")
+    CPMAddPackage(gh:iboB/mscharconv@1.2.3)
+    target_link_libraries(huse PUBLIC msstl::charconv)
+    target_compile_definitions(huse PUBLIC -DHUSE_USE_MSCHARCONV=1)
+else()
+    message("huse: detected charconv floating point support")
+endif()

@@ -10,7 +10,7 @@ include(./get_cpm.cmake)
 
 #######################################
 # cmake lib
-CPMAddPackage(gh:iboB/icm@1.4.4)
+CPMAddPackage(gh:iboB/icm@1.5.1)
 
 set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH}
@@ -32,7 +32,6 @@ option(HUSE_BUILD_EXAMPLES "huse: build examples" ${ICM_DEV_MODE})
 CPMAddPackage(gh:iboB/dynamix@2.0.2)
 CPMAddPackage(gh:iboB/splat@1.3.2)
 CPMAddPackage(gh:iboB/itlib@1.10.3)
-CPMAddPackage(gh:iboB/mscharconv@1.2.3)
 
 #######################################
 # subdirs
