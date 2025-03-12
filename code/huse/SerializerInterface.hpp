@@ -8,6 +8,7 @@
 #include <string_view>
 #include <optional>
 #include <iosfwd>
+#include <string>
 
 namespace huse {
 HUSE_S_MSG(HUSE_API, bool, bool);
