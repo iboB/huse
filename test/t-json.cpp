@@ -454,12 +454,14 @@ TEST_CASE("string i/o")
         "\"quoted string\"",
         "windows newline\r\n",
         "something\b\t\ff\tu\nn\rk\fy\nor other\t\t\t",
+        (const char*)(
         u8"\u0417\u0434\u0440\u0430\u0432\u0435\u0439\u002c\u0020\u0441\u0432\u044f"
         u8"\u0442\u0021\u000d\u000a\u662f\u6307\u5728\u96fb\u8166\u87a2\u5e55\u986f"
         u8"\u793a\u000d\u000a\u03a0\u03c1\u03cc\u03b3\u03c1\u03b1\u03bc\u03bc\u03b1"
         u8"\u0020\u0022\u0068\u0065\u006c\u006c\u006f\u0020\u0077\u006f\u0072\u006c"
         u8"\u0064\u0022\u000d\u000a\u30cf\u30ed\u30fc\u30fb\u30ef\u30fc\u30eb\u30c9"
-        u8"\U0001f34c",
+        u8"\U0001f34c"
+        ),
     };
 
     JsonSerializeTester j;
