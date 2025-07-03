@@ -31,7 +31,7 @@ option(HUSE_BUILD_EXAMPLES "huse: build examples" ${ICM_DEV_MODE})
 # packages
 CPMAddPackage(gh:iboB/splat@1.3.3)
 CPMAddPackage(gh:iboB/itlib@1.11.7)
-CPMAddPackage(gh:iboB/dynamix@2.0.3)
+CPMAddPackage(gh:iboB/dynamix@2.0.4)
 
 #######################################
 # subdirs
