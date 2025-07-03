@@ -360,7 +360,9 @@ struct JsonSerializer
     const bool m_pretty;
     uint32_t m_depth = 0; // used to indent if pretty
 
-    std::aligned_storage_t<sizeof(JsonOStream), alignof(JsonOStream)> m_stringStreamBuffer;
+    union {
+        JsonOStream m_stringStreamBuffer;
+    };
     JsonOStream* m_stringStream = nullptr;
 };
 
