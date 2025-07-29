@@ -24,7 +24,7 @@ struct JsonSerializerPack
 
     JsonSerializerPack(bool pretty = false)
     {
-        s.emplace(huse::json::Make_Serializer(sout, pretty));
+        s.emplace(huse::json::Make_SerializerObj(sout, pretty));
     }
 
     std::string str()
@@ -38,15 +38,15 @@ struct JsonSerializeTester
 {
     std::optional<JsonSerializerPack> pack;
 
-    huse::Serializer& make(bool pretty)
+    huse::SerializerNode make(bool pretty)
     {
         HUSE_ASSERT_INTERNAL(!pack);
         pack.emplace(pretty);
-        return *pack->s;
+        return pack->s->node();
     }
 
-    huse::Serializer& compact() { return make(false); }
-    huse::Serializer& pretty() { return make(true); }
+    huse::SerializerNode compact() { return make(false); }
+    huse::SerializerNode pretty() { return make(true); }
 
     std::string str()
     {
@@ -60,14 +60,14 @@ TEST_CASE("simple serialize")
 {
     JsonSerializeTester j;
 
-    j.compact().root().val(5);
+    j.compact().val(5);
     CHECK(j.str() == "5");
 
-    j.compact().root().val(nullptr);
+    j.compact().val(nullptr);
     CHECK(j.str() == "null");
 
     {
-        auto root = j.compact().root();
+        auto root = j.compact();
         auto obj = root.obj();
 
         CHECK(&obj._s() == &j.pack->s.value());
@@ -88,11 +88,11 @@ TEST_CASE("simple serialize")
     }
     CHECK(j.str() == R"({"array":[1,2,3,4],"bool":true,"bool2":false,"float":3.1,"int":-3,"unsigned-long-long":900000000000000,"str":"b\n\\g\t\u001bsdf"})");
 
-    j.compact().root().obj().obj("i1").obj("i2").obj("i3").val("deep", true);
+    j.compact().obj().obj("i1").obj("i2").obj("i3").val("deep", true);
     CHECK(j.str() == R"({"i1":{"i2":{"i3":{"deep":true}}}})");
 
     {
-        auto root = j.pretty().root();
+        auto root = j.pretty();
         auto obj = root.obj();
         {
             obj.val("pretty", true);
@@ -118,11 +118,11 @@ TEST_CASE("serializer stream")
 {
     JsonSerializeTester j;
 
-    j.compact().root().sstream() << "xx " << 123;
+    j.compact().sstream() << "xx " << 123;
     CHECK(j.str() == R"("xx 123")");
 
     {
-        auto root = j.compact().root();
+        auto root = j.compact();
         auto s = root.sstream();
         s << -5;
         s.get().put(' ');
@@ -131,7 +131,7 @@ TEST_CASE("serializer stream")
     CHECK(j.str() == R"("-5 abc")");
 
     {
-        auto root = j.compact().root();
+        auto root = j.compact();
         auto s = root.sstream();
         s << "b\n\\g";
         s.get().put('\t');
@@ -145,7 +145,7 @@ TEST_CASE("serializer exceptions")
 {
     {
         CHECK_THROWS_WITH_AS(
-            JsonSerializerPack().s->root().val(1ull << 55),
+            JsonSerializerPack().s->node().val(1ull << 55),
             "Integer value is bigger than maximum allowed for JSON",
             huse::SerializerException
         );
@@ -153,7 +153,7 @@ TEST_CASE("serializer exceptions")
 
     {
         CHECK_THROWS_WITH_AS(
-            JsonSerializerPack().s->root().val(-(1ll << 55)),
+            JsonSerializerPack().s->node().val(-(1ll << 55)),
             "Integer value is bigger than maximum allowed for JSON",
             huse::SerializerException
         );
@@ -161,7 +161,7 @@ TEST_CASE("serializer exceptions")
 
     {
         CHECK_THROWS_WITH_AS(
-            JsonSerializerPack().s->root().val(std::numeric_limits<float>::infinity()),
+            JsonSerializerPack().s->node().val(std::numeric_limits<float>::infinity()),
             "Floating point value is not finite. Not supported by JSON",
             huse::SerializerException
         );
@@ -169,14 +169,14 @@ TEST_CASE("serializer exceptions")
 
     {
         CHECK_THROWS_WITH_AS(
-            JsonSerializerPack().s->root().val(std::numeric_limits<double>::quiet_NaN()),
+            JsonSerializerPack().s->node().val(std::numeric_limits<double>::quiet_NaN()),
             "Floating point value is not finite. Not supported by JSON",
             huse::SerializerException
         );
     }
 }
 
-huse::Deserializer makeD(std::string_view str)
+huse::DeserializerRoot makeD(std::string_view str)
 {
     return huse::json::Make_Deserializer(str);
 }
@@ -185,17 +185,15 @@ TEST_CASE("simple deserialize")
 {
     {
         auto d = makeD("[]");
-        auto root = d.root();
-        auto ar = root.ar();
+        auto ar = d.ar();
         CHECK(ar.length() == 0);
     }
 
     {
         auto d = makeD(R"({"array":[1,2,3,4],"bool":true,"bool2":false,"float":3.1,"int":-3,"unsigned-long-long":900000000000000,"str":"b\n\\g\t\u001bsdf"})");
-        auto root = d.root();
-        CHECK(root.type().is(huse::Type::Object));
-        auto obj = root.obj();
-        CHECK(&obj._s() == &d);
+        CHECK(d.type().is(huse::Type::Object));
+        auto obj = d.obj();
+        CHECK(&obj._s() == &d._s());
         CHECK(obj.type().is(huse::Type::Object));
         {
             auto ar = obj.ar("array");
@@ -274,8 +272,7 @@ TEST_CASE("simple deserialize")
 TEST_CASE("stream deserialize")
 {
     auto d = makeD(R"({"string":"aa bbb c"})");
-    auto root = d.root();
-    auto o = root.obj();
+    auto o = d.obj();
     CHECK(!o.optsstream("asdf"));
     CHECK(!!o.optsstream("string"));
 
@@ -305,8 +302,7 @@ TEST_CASE("deserialize iteration")
 {
     {
         auto d = makeD(R"({"a": 1, "b": 2, "c": 3, "d": 4})");
-        auto root = d.root();
-        auto obj = root.obj();
+        auto obj = d.obj();
         CHECK(obj.length() == 4);
         auto q = obj.peeknext();
         CHECK(q.name == "a");
@@ -331,8 +327,7 @@ TEST_CASE("deserialize iteration")
 
     {
         auto d = makeD(R"([10, true, "xx"])");
-        auto root = d.root();
-        auto ar = root.ar();
+        auto ar = d.ar();
         CHECK(ar.length() == 3);
         auto q = ar.peeknext();
         CHECK(q);
@@ -369,68 +364,65 @@ TEST_CASE("deserializer exceptions")
     std::string_view str;
     {
         auto d = makeD(json);
-        CHECK_THROWS_D(d.root().val(b), "root : not a boolean");
+        CHECK_THROWS_D(d.val(b), "root : not a boolean");
     }
     {
         auto d = makeD(json);
-        CHECK_THROWS_D(d.root().val(i32), "root : not an integer");
+        CHECK_THROWS_D(d.val(i32), "root : not an integer");
     }
     {
         auto d = makeD(json);
-        CHECK_THROWS_D(d.root().val(i64), "root : not an integer");
+        CHECK_THROWS_D(d.val(i64), "root : not an integer");
     }
     {
         auto d = makeD(json);
-        CHECK_THROWS_D(d.root().obj().ar("ar").val(i64), R"(root."ar".[0] : not an integer)");
+        CHECK_THROWS_D(d.obj().ar("ar").val(i64), R"(root."ar".[0] : not an integer)");
     }
     {
         auto d = makeD(json);
-        CHECK_THROWS_D(d.root().obj().ar("ar").index(2).val(u32), R"(root."ar".[2] : negative integer)");
+        CHECK_THROWS_D(d.obj().ar("ar").index(2).val(u32), R"(root."ar".[2] : negative integer)");
     }
     {
         auto d = makeD(json);
-        CHECK_THROWS_D(d.root().val(f), "root : not a number");
+        CHECK_THROWS_D(d.val(f), "root : not a number");
     }
     {
         auto d = makeD(json);
-        CHECK_THROWS_D(d.root().val(str), "root : not a string");
+        CHECK_THROWS_D(d.val(str), "root : not a string");
     }
     {
         auto d = makeD(json);
-        CHECK_THROWS_D(d.root().ar(), "root : not an array");
+        CHECK_THROWS_D(d.ar(), "root : not an array");
     }
     {
         auto d = makeD(json);
-        CHECK_THROWS_D(d.root().obj().obj("ar"), R"(root."ar" : not an object)");
+        CHECK_THROWS_D(d.obj().obj("ar"), R"(root."ar" : not an object)");
     }
     {
         auto d = makeD(json);
-        CHECK_THROWS_D(d.root().obj().ar("ar").index(5), R"(root."ar".[5] : out of range)");
+        CHECK_THROWS_D(d.obj().ar("ar").index(5), R"(root."ar".[5] : out of range)");
     }
     {
         auto d = makeD(json);
-        CHECK_THROWS_D(d.root().obj().key("zzz"), R"(root."zzz" : out of range)");
+        CHECK_THROWS_D(d.obj().key("zzz"), R"(root."zzz" : out of range)");
     }
     {
         auto d = makeD(json);
-        auto root = d.root();
-        auto o = root.obj();
+        auto o = d.obj();
         auto a = o.ar("ar");
         a.index(2).val(i32);
         CHECK_THROWS_D(a.val(str), R"(root."ar".[3] : out of range)");
     }
     {
         auto d = makeD(json);
-        auto root = d.root();
-        auto o = root.obj();
+        auto o = d.obj();
         o.val("b", b);
         std::string_view key;
         CHECK_THROWS_D(o.nextkeyval(key, b), "root.[3] : out of range");
     }
     {
         auto d = makeD(json);
-        auto root = d.root();
-        auto o = root.obj();
+        auto o = d.obj();
         auto a = o.ar("ar");
         auto io = a.index(1).obj();
         auto rf = [](huse::DeserializerNode& n, float& out) {
@@ -469,12 +461,12 @@ TEST_CASE("string i/o")
     };
 
     JsonSerializeTester j;
-    j.compact().root().val(vec);
+    j.compact().val(vec);
 
     auto json = j.str();
 
     std::vector<std::string> copy;
-    makeD(json).root().val(copy);
+    makeD(json).val(copy);
 
     REQUIRE(vec.size() == copy.size());
     for (size_t i=0; i<vec.size(); ++i)
@@ -517,7 +509,7 @@ TEST_CASE("limit i/o")
 
     JsonSerializeTester j;
     {
-        auto root = j.compact().root();
+        auto root = j.compact();
         serializeBI(root, bi);
     }
 
@@ -527,8 +519,7 @@ TEST_CASE("limit i/o")
     BigIntegers cc;
     {
         auto d = makeD(json);
-        auto root = d.root();
-        serializeBI(root, cc);
+        serializeBI(d, cc);
     }
 
     CHECK(memcmp(&bi, &cc, sizeof(BigIntegers)) == 0);
@@ -615,19 +606,19 @@ TEST_CASE("struct i/o")
     const ComplexTest src = {{334, std::string("hello"), 4.4f}, 7};
 
     JsonSerializeTester j;
-    j.pretty().root().val(src);
+    j.pretty().val(src);
 
     ComplexTest cc;
 
     {
         auto d = makeD(j.str());
-        d.root().val(cc);
+        d.val(cc);
     }
 
     CHECK(src == cc);
 
     {
-        auto root = j.pretty().root();
+        auto root = j.pretty();
         auto o = root.obj();
         o.val("something", 43);
         o.flatval(src.a);
@@ -637,8 +628,7 @@ TEST_CASE("struct i/o")
     int icc;
     {
         auto d = makeD(j.str());
-        auto root = d.root();
-        auto o = root.obj();
+        auto o = d.obj();
         o.flatval(scc);
         o.val("something", icc);
     }
@@ -656,12 +646,12 @@ TEST_CASE("std::vector i/o")
     };
 
     JsonSerializeTester j;
-    j.pretty().root().val(src);
+    j.pretty().val(src);
 
     std::vector<ComplexTest> cc;
     {
         auto d = makeD(j.str());
-        d.root().val(cc);
+        d.val(cc);
     }
     CHECK(src == cc);
 }
@@ -742,7 +732,7 @@ TEST_CASE("custom serialization i/o")
     CustomSerialization cs = {10'000'000'000'000'000'000ull, 1234ull, {25, "xxx"}};
 
     JsonSerializeTester j;
-    j.compact().root().val(cs);
+    j.compact().val(cs);
 
     const auto json = j.str();
     CHECK(json == R"({"a64":"10000000000000000000","b64":1234,"vi":{"a":25,"b":"xxx"}})");
@@ -750,7 +740,7 @@ TEST_CASE("custom serialization i/o")
     CustomSerialization cc;
     {
         auto d = makeD(json);
-        d.root().val(cc);
+        d.val(cc);
     }
 
     CHECK(cs == cc);
@@ -799,14 +789,14 @@ TEST_CASE("stream i/o")
 {
     MultipleValuesAsString mvs = {"xyz", {34, 88}};
     JsonSerializeTester j;
-    j.compact().root().val(mvs);
+    j.compact().val(mvs);
 
     auto json = j.str();
 
     MultipleValuesAsString cc;
     {
         auto d = makeD(json);
-        d.root().val(cc);
+        d.val(cc);
     }
 
     CHECK(mvs.a == cc.a);

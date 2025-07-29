@@ -40,7 +40,7 @@ struct JsonSerializeTester {
         std::optional<huse::Serializer> s;
 
         Pack() {
-            s.emplace(huse::json::Make_Serializer(sout));
+            s.emplace(huse::json::Make_SerializerObj(sout));
         }
 
         std::string str() {
@@ -51,10 +51,10 @@ struct JsonSerializeTester {
 
     std::optional<Pack> pack;
 
-    huse::Serializer& make() {
+    huse::SerializerNode make() {
         HUSE_ASSERT_INTERNAL(!pack);
         pack.emplace();
-        return *pack->s;
+        return pack->s->node();
     }
 
     std::string str() {
@@ -70,20 +70,20 @@ TEST_CASE("poly i/o")
     static_assert(huse::impl::HasPolyDeserialize<PolySerializable>::value);
     PolySerializable orig = {72, "xyz"};
     JsonSerializeTester j;
-    j.make().root().val(orig);
+    j.make().val(orig);
 
     auto json = j.str();
     CHECK(json == R"({"a":72,"b":"xyz"})");
 
     PolySerializable cc;
-    huse::json::Make_Deserializer(json).root().val(cc);
+    huse::json::Make_Deserializer(json).val(cc);
 
     CHECK(orig.a == cc.a);
     CHECK(orig.b == cc.b);
 
     j.make();
     mutate(*j.pack->s, dynamix::add<SDEx>());
-    j.pack->s->root().val(orig);
+    j.pack->s->node().val(orig);
 
     json = j.str();
     CHECK(json == R"({"aa":7200,"bb":"xyz_"})");
@@ -91,8 +91,8 @@ TEST_CASE("poly i/o")
     PolySerializable cc2;
     {
         auto d = huse::json::Make_Deserializer(json);
-        mutate(d, dynamix::add<SDEx>());
-        d.root().val(cc2);
+        mutate(d._s(), dynamix::add<SDEx>());
+        d.val(cc2);
     }
 
     CHECK(orig.a == cc2.a);

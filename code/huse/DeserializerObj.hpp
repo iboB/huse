@@ -14,7 +14,6 @@ public:
 
     // implemented in Deserializer.hpp
     DeserializerNode node();
-    DeserializerNode root();
 
     static Deserializer* of(void* mixin) {
         return static_cast<Deserializer*>(dynamix::object_of(mixin));

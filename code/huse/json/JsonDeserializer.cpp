@@ -472,14 +472,14 @@ DYNAMIX_DEFINE_MIXIN(Domain, JsonDeserializer)
     .implements_by<throwDeserializerException_msg>([](const JsonDeserializer* d, const std::string& msg) { d->throwException(msg); })
 ;
 
-Deserializer Make_Deserializer(std::string_view str) {
+Deserializer Make_DeserializerObj(std::string_view str) {
     Deserializer ret;
     mutate(ret, dynamix::add<JsonDeserializer>(sajson::parse(
         sajson::single_allocation(),
         sajson::string(str.data(), str.length()))));
     return ret;
 }
-Deserializer Make_Deserializer(char* str, size_t len) {
+Deserializer Make_DeserializerObj(char* str, size_t len) {
     Deserializer ret;
     mutate(ret, dynamix::add<JsonDeserializer>(sajson::parse(
         sajson::single_allocation(),

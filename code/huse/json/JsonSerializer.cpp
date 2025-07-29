@@ -411,7 +411,7 @@ DYNAMIX_DEFINE_MIXIN(Domain, JsonSerializer)
 //    new (new_mixin) JsonSerializer(out, pretty);
 //}
 
-Serializer Make_Serializer(std::ostream& out, bool pretty) {
+Serializer Make_SerializerObj(std::ostream& out, bool pretty) {
     Serializer ret;
     mutate(ret, dynamix::add<JsonSerializer>(out, pretty));
     return ret;

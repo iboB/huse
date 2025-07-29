@@ -67,7 +67,6 @@ protected:
         : impl::UniqueStack(parent)
         , m_deserializer(d)
     {}
-
     friend class Deserializer;
     Deserializer& m_deserializer;
 public:
@@ -419,12 +418,17 @@ void DeserializerObject::flatval(T& v)
     }
 }
 
+class DeserializerRoot : public DeserializerNode {
+    Deserializer m_deserializerObject;
+public:
+    explicit DeserializerRoot(Deserializer&& d)
+        : DeserializerNode(m_deserializerObject, nullptr)
+        , m_deserializerObject(std::move(d))
+    {}
+};
+
 inline DeserializerNode Deserializer::node() {
     return DeserializerNode(*this, nullptr);
-}
-
-inline DeserializerNode Deserializer::root() {
-    return node();
 }
 
 } // namespace huse

@@ -13,7 +13,7 @@ int main()
     {
         auto d = huse::json::Make_Deserializer(json);
         int i;
-        d.root().val(i);
+        d.val(i);
     }
     catch (std::exception& e)
     {

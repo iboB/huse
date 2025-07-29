@@ -41,7 +41,7 @@ T cclone(const T& val, C c, std::optional<std::string> check = std::nullopt) {
     std::stringstream sout;
     {
         auto s = huse::json::Make_Serializer(sout, !check.has_value());
-        s.root().val(wrap);
+        s.val(wrap);
     }
 
     auto json = sout.str();
@@ -51,7 +51,7 @@ T cclone(const T& val, C c, std::optional<std::string> check = std::nullopt) {
 
     ObjWrap<T, C> ret(c);
     auto d = huse::json::Make_Deserializer(json.data(), json.length());
-    d.root().val(ret);
+    d.val(ret);
     return ret.t;
 }
 
@@ -92,12 +92,12 @@ TEST_CASE("istr") {
 
     {
         ObjWrap<int, huse::IntAsString> w({});
-        CHECK_THROWS_WITH_AS(d.root().val(w), R"(root."t" : not an integer)", huse::DeserializerException);
+        CHECK_THROWS_WITH_AS(d.val(w), R"(root."t" : not an integer)", huse::DeserializerException);
     }
 
     {
         ObjWrap<int, huse::IntAsStringOpt<int>> w(huse::IntAsStringOpt<int>{73});
-        d.root().val(w);
+        d.val(w);
         CHECK(w.t == 73);
     }
 }

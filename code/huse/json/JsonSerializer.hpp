@@ -3,7 +3,7 @@
 //
 #pragma once
 #include "../API.h"
-#include "../SerializerObj.hpp"
+#include "../Serializer.hpp"
 #include <dynamix/declare_mixin.hpp>
 #include <iosfwd>
 // #include <dynamix/common_mixin_init.hpp>
@@ -18,5 +18,10 @@ DYNAMIX_DECLARE_EXPORTED_MIXIN(HUSE_API, struct JsonSerializer);
 //    virtual void do_init(const dynamix::mixin_info&, dynamix::mixin_index_t, dynamix::byte_t* new_mixin) final override;
 //};
 
-HUSE_API Serializer Make_Serializer(std::ostream& out, bool pretty = false);
+HUSE_API Serializer Make_SerializerObj(std::ostream& out, bool pretty = false);
+
+inline SerializerRoot Make_Serializer(std::ostream& out, bool pretty = false) {
+    return SerializerRoot(Make_SerializerObj(out, pretty));
+}
+
 }

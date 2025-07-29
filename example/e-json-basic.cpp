@@ -98,11 +98,11 @@ int main()
     auto d = huse::json::Make_Deserializer(json.data(), json.length());
 
     // read characters
-    d.root().val(characters);
+    d.val(characters);
 
     // print characters as pretty json
     auto s = huse::json::Make_Serializer(std::cout, true);
-    s.root().val(characters);
+    s.val(characters);
 
     std::cout << '\n';
     return 0;

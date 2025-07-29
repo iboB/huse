@@ -280,12 +280,17 @@ void SerializerObject::flatval(const T& v)
     }
 }
 
+class SerializerRoot : public SerializerNode {
+    Serializer m_serializerObj;
+public:
+    SerializerRoot(Serializer&& s)
+        : SerializerNode(m_serializerObj, nullptr)
+        , m_serializerObj(std::move(s))
+    {}
+};
+
 inline SerializerNode Serializer::node() {
     return SerializerNode(*this, nullptr);
-}
-
-inline SerializerNode Serializer::root() {
-    return node();
 }
 
 } // namespace huse

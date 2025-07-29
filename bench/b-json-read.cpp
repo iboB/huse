@@ -26,12 +26,11 @@ void bench_huse(const char* path, picobench::state& s) {
     auto d = huse::json::Make_Deserializer(content);
     s.stop_timer();
 
-    auto r = d.root();
-    if (r.type().is(huse::Type::Object)) {
-        s.set_result(r.obj().length());
+    if (d.type().is(huse::Type::Object)) {
+        s.set_result(d.obj().length());
     }
-    else if (r.type().is(huse::Type::Array)) {
-        s.set_result(r.ar().length());
+    else if (d.type().is(huse::Type::Array)) {
+        s.set_result(d.ar().length());
     }
 }
 

@@ -14,7 +14,6 @@ public:
 
     // implemented in Serializer.hpp
     SerializerNode node();
-    SerializerNode root();
 
     static Serializer* of(void* mixin) {
         return static_cast<Serializer*>(dynamix::object_of(mixin));
