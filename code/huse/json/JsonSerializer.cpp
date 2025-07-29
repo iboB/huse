@@ -379,8 +379,8 @@ DYNAMIX_DEFINE_MIXIN(Domain, JsonSerializer)
     .implements<husePolySerialize_float>()
     .implements<husePolySerialize_double>()
     .implements<husePolySerialize_sv>()
-    .implements<husePolySerialize_nullptr_t>()
-    .implements<husePolySerialize_nullopt_t>()
+    .implements<husePolySerialize_null>()
+    .implements<husePolySerialize_discard>()
     .implements_by<openStringStream_msg>([](JsonSerializer* s) -> std::ostream& {
         return s->openStringStream();
     })

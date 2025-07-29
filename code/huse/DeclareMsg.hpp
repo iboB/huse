@@ -19,8 +19,8 @@ template <typename Msg> struct DYNAMIX_FUNC_TRAITS_NAME(husePolyDeserialize);
 
 #define HUSE_D_MSG_NAME(tag) I_DNMX_PP_CAT(husePolyDeserialize_, tag)
 #define HUSE_D_MSG(export, type, tag) DYNAMIX_DECLARE_EXPORTED_MSG_EX(export, HUSE_D_MSG_NAME(tag), ::huse::DYNAMIX_FUNC_TRAITS_NAME(husePolyDeserialize), \
-    husePolyDeserialize, void, (::huse::Deserializer&, type&));
+    husePolyDeserialize, void, (::huse::Deserializer&, type));
 
 #define HUSE_SD_MSG(export, type, tag) \
     HUSE_S_MSG(export, const type&, tag) \
-    HUSE_D_MSG(export, type, tag)
+    HUSE_D_MSG(export, type&, tag)

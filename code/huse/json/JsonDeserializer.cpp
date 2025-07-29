@@ -429,6 +429,13 @@ struct JsonDeserializer
     void husePolyDeserialize(std::string& val) {
         readString(val);
     }
+    void husePolyDeserialize(std::nullptr_t) {
+        auto t = r().get_type();
+        if (t != sajson::TYPE_NULL) throwException("not null");
+    }
+    void husePolyDeserialize(std::nullopt_t) {
+        advance();
+    }
 };
 
 DYNAMIX_DEFINE_MIXIN(Domain, JsonDeserializer)
@@ -445,6 +452,8 @@ DYNAMIX_DEFINE_MIXIN(Domain, JsonDeserializer)
     .implements<husePolyDeserialize_double>()
     .implements<husePolyDeserialize_sv>()
     .implements<husePolyDeserialize_string>()
+    .implements<husePolyDeserialize_null>()
+    .implements<husePolyDeserialize_discard>()
     .implements_by<skip_msg>([](JsonDeserializer* d) { d->advance(); })
     .implements_by<loadStringStream_msg>([](JsonDeserializer* d) -> std::istream& { return d->loadStringStream(); })
     .implements_by<unloadStringStream_msg>([](JsonDeserializer* d) { d->unloadStringStream(); })

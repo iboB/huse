@@ -129,4 +129,4 @@ DYNAMIX_DEFINE_MIXIN(huse::Domain, SDEx)
 ;
 
 HUSE_DEFINE_S_MSG_EX(const PolySerializable&, PolySerializable, true, (PolySerializable::serializeT<huse::Serializer, const PolySerializable>));
-HUSE_DEFINE_D_MSG_EX(PolySerializable, PolySerializable, true, (PolySerializable::serializeT<huse::Deserializer, PolySerializable>));
+HUSE_DEFINE_D_MSG_EX(PolySerializable&, PolySerializable, true, (PolySerializable::serializeT<huse::Deserializer, PolySerializable>));

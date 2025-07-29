@@ -19,8 +19,8 @@ HUSE_DEFINE_S_MSG(unsigned long long, ullong);
 HUSE_DEFINE_S_MSG(float, float);
 HUSE_DEFINE_S_MSG(double, double);
 HUSE_DEFINE_S_MSG(std::string_view, sv);
-HUSE_DEFINE_S_MSG(std::nullptr_t, nullptr_t);
-HUSE_DEFINE_S_MSG(std::nullopt_t, nullopt_t);
+HUSE_DEFINE_S_MSG(std::nullptr_t, null);
+HUSE_DEFINE_S_MSG(std::nullopt_t, discard);
 
 DYNAMIX_DEFINE_SIMPLE_MSG_EX(openStringStream_msg, unicast, false, nullptr);
 DYNAMIX_DEFINE_SIMPLE_MSG_EX(closeStringStream_msg, unicast, false, nullptr);

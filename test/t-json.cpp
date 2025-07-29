@@ -201,8 +201,12 @@ TEST_CASE("simple deserialize")
             auto ar = obj.ar("array");
             CHECK(ar.type().is(huse::Type::Array));
             CHECK(ar.length() == 4);
+
+            ar.val(std::nullopt); // skip 0
+            ar.val(std::nullopt); // skip 1
+
             int i;
-            ar.index(2).val(i);
+            ar.val(i);
             CHECK(i == 3);
             double dbl;
             ar.index(0).val(dbl);

@@ -24,8 +24,8 @@ HUSE_S_MSG(HUSE_API, float, float);
 HUSE_S_MSG(HUSE_API, double, double);
 HUSE_S_MSG(HUSE_API, std::string_view, sv);
 
-HUSE_S_MSG(HUSE_API, std::nullptr_t, nullptr_t); // write null explicitly
-HUSE_S_MSG(HUSE_API, std::nullopt_t, nullopt_t); // discard current value
+HUSE_S_MSG(HUSE_API, std::nullptr_t, null); // write null explicitly
+HUSE_S_MSG(HUSE_API, std::nullopt_t, discard); // discard current value
 
 // helper
 inline void husePolySerialize(Serializer& s, const char* str) { husePolySerialize(s, std::string_view(str)); }

@@ -22,7 +22,7 @@ void bench_huse(const char* path, picobench::state& s) {
     auto content = readFile(path);
 
     s.start_timer();
-    auto d = huse::json::Make_Deserializer(content.data(), content.size());
+    auto d = huse::json::Make_Deserializer(content);
     s.stop_timer();
 
     s.set_result(d.root().obj().length());
@@ -31,8 +31,10 @@ void bench_huse(const char* path, picobench::state& s) {
 void bench_boost(const char* path, picobench::state& s) {
     auto content = readFile(path);
 
+    boost::json::monotonic_resource mr(5 * content.size());
+
     s.start_timer();
-    auto jv = boost::json::parse(content);
+    auto jv = boost::json::parse(content, &mr);
     s.stop_timer();
 
     s.set_result(jv.as_object().size());
@@ -53,13 +55,13 @@ int main(int argc, char* argv[]) {
     picobench::local_runner r;
 
     r.add_benchmark("huse", [](picobench::state& s) {
-        bench_huse(JSON_TEST_DATA_FILE_canada, s);
+        bench_huse(JSON_TEST_DATA_FILE_mesh, s);
     });
     r.add_benchmark("boost", [](picobench::state& s) {
-        bench_boost(JSON_TEST_DATA_FILE_canada, s);
+        bench_boost(JSON_TEST_DATA_FILE_mesh, s);
     });
     r.add_benchmark("simdjson", [](picobench::state& s) {
-        bench_simdjson(JSON_TEST_DATA_FILE_canada, s);
+        bench_simdjson(JSON_TEST_DATA_FILE_mesh, s);
     });
 
     r.set_compare_results_across_samples(true);

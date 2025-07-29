@@ -12,19 +12,22 @@
 #include <string>
 
 namespace huse {
-HUSE_D_MSG(HUSE_API, bool, bool);
-HUSE_D_MSG(HUSE_API, short, short);
-HUSE_D_MSG(HUSE_API, unsigned short, ushort);
-HUSE_D_MSG(HUSE_API, int, int);
-HUSE_D_MSG(HUSE_API, unsigned int, uint);
-HUSE_D_MSG(HUSE_API, long, long);
-HUSE_D_MSG(HUSE_API, unsigned long, ulong);
-HUSE_D_MSG(HUSE_API, long long, llong);
-HUSE_D_MSG(HUSE_API, unsigned long long, ullong);
-HUSE_D_MSG(HUSE_API, float, float);
-HUSE_D_MSG(HUSE_API, double, double);
-HUSE_D_MSG(HUSE_API, std::string_view, sv);
-HUSE_D_MSG(HUSE_API, std::string, string);
+HUSE_D_MSG(HUSE_API, bool&, bool);
+HUSE_D_MSG(HUSE_API, short&, short);
+HUSE_D_MSG(HUSE_API, unsigned short&, ushort);
+HUSE_D_MSG(HUSE_API, int&, int);
+HUSE_D_MSG(HUSE_API, unsigned int&, uint);
+HUSE_D_MSG(HUSE_API, long&, long);
+HUSE_D_MSG(HUSE_API, unsigned long&, ulong);
+HUSE_D_MSG(HUSE_API, long long&, llong);
+HUSE_D_MSG(HUSE_API, unsigned long long&, ullong);
+HUSE_D_MSG(HUSE_API, float&, float);
+HUSE_D_MSG(HUSE_API, double&, double);
+HUSE_D_MSG(HUSE_API, std::string_view&, sv);
+HUSE_D_MSG(HUSE_API, std::string&, string);
+
+HUSE_D_MSG(HUSE_API, std::nullptr_t, null);
+HUSE_D_MSG(HUSE_API, std::nullopt_t, discard);
 
 // private interface
 

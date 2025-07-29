@@ -7,19 +7,22 @@
 #include "Exception.hpp"
 
 namespace huse {
-HUSE_DEFINE_D_MSG(bool, bool);
-HUSE_DEFINE_D_MSG(short, short);
-HUSE_DEFINE_D_MSG(unsigned short, ushort);
-HUSE_DEFINE_D_MSG(int, int);
-HUSE_DEFINE_D_MSG(unsigned int, uint);
-HUSE_DEFINE_D_MSG(long, long);
-HUSE_DEFINE_D_MSG(unsigned long, ulong);
-HUSE_DEFINE_D_MSG(long long, llong);
-HUSE_DEFINE_D_MSG(unsigned long long, ullong);
-HUSE_DEFINE_D_MSG(float, float);
-HUSE_DEFINE_D_MSG(double, double);
-HUSE_DEFINE_D_MSG(std::string_view, sv);
-HUSE_DEFINE_D_MSG(std::string, string);
+HUSE_DEFINE_D_MSG(bool&, bool);
+HUSE_DEFINE_D_MSG(short&, short);
+HUSE_DEFINE_D_MSG(unsigned short&, ushort);
+HUSE_DEFINE_D_MSG(int&, int);
+HUSE_DEFINE_D_MSG(unsigned int&, uint);
+HUSE_DEFINE_D_MSG(long&, long);
+HUSE_DEFINE_D_MSG(unsigned long&, ulong);
+HUSE_DEFINE_D_MSG(long long&, llong);
+HUSE_DEFINE_D_MSG(unsigned long long&, ullong);
+HUSE_DEFINE_D_MSG(float&, float);
+HUSE_DEFINE_D_MSG(double&, double);
+HUSE_DEFINE_D_MSG(std::string_view&, sv);
+HUSE_DEFINE_D_MSG(std::string&, string);
+
+HUSE_DEFINE_D_MSG(std::nullptr_t, null);
+HUSE_DEFINE_D_MSG(std::nullopt_t, discard);
 
 DYNAMIX_DEFINE_SIMPLE_MSG_EX(skip_msg, unicast, false, nullptr);
 DYNAMIX_DEFINE_SIMPLE_MSG_EX(loadStringStream_msg, unicast, false, nullptr);
