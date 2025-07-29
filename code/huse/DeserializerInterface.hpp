@@ -6,6 +6,7 @@
 #include "DeclareMsg.hpp"
 #include "Type.hpp"
 
+#include <splat/unreachable.h>
 #include <string_view>
 #include <optional>
 #include <iosfwd>
@@ -73,6 +74,7 @@ DYNAMIX_DECLARE_EXPORTED_SIMPLE_MSG(HUSE_API, optPendingKey_msg, std::optional<s
 DYNAMIX_DECLARE_EXPORTED_SIMPLE_MSG(HUSE_API, throwDeserializerException_msg, void(const Deserializer&, const std::string&));
 [[noreturn]] inline void throwDeserializerException(const Deserializer& d, const std::string& msg) {
     throwDeserializerException_msg::call(d, msg);
+    SPLAT_UNREACHABLE();
 }
 
 }

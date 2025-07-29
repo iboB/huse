@@ -8,6 +8,7 @@
 
 #include "impl/UniqueStack.hpp"
 
+#include <splat/unreachable.h>
 #include <string_view>
 #include <optional>
 #include <iosfwd>
@@ -258,6 +259,7 @@ inline DeserializerSStream::~DeserializerSStream()
 
 inline void DeserializerSStream::throwException(const std::string& msg) const {
     throwDeserializerException_msg::call(m_deserializer, msg);
+    SPLAT_UNREACHABLE();
 }
 
 inline DeserializerObject DeserializerNode::obj()
@@ -272,6 +274,7 @@ inline DeserializerArray DeserializerNode::ar()
 
 inline void DeserializerNode::throwException(const std::string& msg) const {
     throwDeserializerException_msg::call(m_deserializer, msg);
+    SPLAT_UNREACHABLE();
 }
 
 namespace impl
