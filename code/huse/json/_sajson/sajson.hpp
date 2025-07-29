@@ -686,13 +686,11 @@ private:
         , payload(payload_)
         , text(text_) {}
 
-    void assert_tag(tag expected) const { assert(expected == value_tag); }
+    inline void assert_tag([[maybe_unused]] tag expected) const { assert(expected == value_tag); }
 
-    void assert_tag_2(tag e1, tag e2) const {
+    inline void assert_tag_2([[maybe_unused]] tag e1, [[maybe_unused]]  tag e2) const {
         assert(e1 == value_tag || e2 == value_tag);
     }
-
-    void assert_in_bounds(size_t i) const { assert(i < get_length()); }
 
     tag value_tag;
     const size_t* payload;
