@@ -26,6 +26,7 @@ include(icm_add_lib)
 option(BUILD_SHARED_LIBS "${PROJECT_NAME}: build shared libraries" ON)
 option(HUSE_BUILD_TESTS "huse: build tests" ${ICM_DEV_MODE})
 option(HUSE_BUILD_EXAMPLES "huse: build examples" ${ICM_DEV_MODE})
+option(HUSE_BUILD_BENCH "huse: build benchmarks" ${ICM_DEV_MODE})
 
 #######################################
 # packages
@@ -49,4 +50,8 @@ endif()
 if(HUSE_BUILD_TESTS)
     enable_testing()
     add_subdirectory(test)
+endif()
+
+if(HUSE_BUILD_BENCH)
+    add_subdirectory(bench)
 endif()
