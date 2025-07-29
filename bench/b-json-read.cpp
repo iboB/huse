@@ -6,6 +6,7 @@
 #include <json-test-data.h>
 #include <fstream>
 
+#define PICOBENCH_STD_FUNCTION_BENCHMARKS
 #define PICOBENCH_IMPLEMENT
 #include <picobench/picobench.hpp>
 
@@ -25,7 +26,13 @@ void bench_huse(const char* path, picobench::state& s) {
     auto d = huse::json::Make_Deserializer(content);
     s.stop_timer();
 
-    s.set_result(d.root().obj().length());
+    auto r = d.root();
+    if (r.type().is(huse::Type::Object)) {
+        s.set_result(r.obj().length());
+    }
+    else if (r.type().is(huse::Type::Array)) {
+        s.set_result(r.ar().length());
+    }
 }
 
 void bench_boost(const char* path, picobench::state& s) {
@@ -37,7 +44,12 @@ void bench_boost(const char* path, picobench::state& s) {
     auto jv = boost::json::parse(content, &mr);
     s.stop_timer();
 
-    s.set_result(jv.as_object().size());
+    if (jv.is_object()) {
+        s.set_result(jv.as_object().size());
+    }
+    else if (jv.is_array()) {
+        s.set_result(jv.as_array().size());
+    }
 }
 
 void bench_simdjson(const char* path, picobench::state& s) {
@@ -45,24 +57,35 @@ void bench_simdjson(const char* path, picobench::state& s) {
     s.start_timer();
     simdjson::pad(content);
     simdjson::dom::parser parser;
-    auto doc = parser.parse(content);
+    auto jv = parser.parse(content);
     s.stop_timer();
 
-    s.set_result(doc.get_object().size());
+    if (jv.is_object()) {
+        s.set_result(jv.get_object().size());
+    }
+    else if (jv.is_array()) {
+        s.set_result(jv.get_array().size());
+    }
 }
 
 int main(int argc, char* argv[]) {
     picobench::local_runner r;
 
-    r.add_benchmark("huse", [](picobench::state& s) {
-        bench_huse(JSON_TEST_DATA_FILE_mesh, s);
-    });
-    r.add_benchmark("boost", [](picobench::state& s) {
-        bench_boost(JSON_TEST_DATA_FILE_mesh, s);
-    });
-    r.add_benchmark("simdjson", [](picobench::state& s) {
-        bench_simdjson(JSON_TEST_DATA_FILE_mesh, s);
-    });
+    std::string_view files[] = { JSON_TEST_DATA_FILES };
+
+    for (auto f : files) {
+        auto fname = f.substr(sizeof(JSON_TEST_DATA_DIR));
+        r.set_suite(fname.data());
+        r.add_benchmark("huse", [=](picobench::state& s) {
+            bench_huse(f.data(), s);
+        });
+        r.add_benchmark("boost", [=](picobench::state& s) {
+            bench_boost(f.data(), s);
+        });
+        r.add_benchmark("simdjson", [=](picobench::state& s) {
+            bench_simdjson(f.data(), s);
+        });
+    }
 
     r.set_compare_results_across_samples(true);
     r.set_compare_results_across_benchmarks(true);
