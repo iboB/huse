@@ -129,6 +129,9 @@ public:
     }
 
     template <typename T>
+    void keyval(std::string_view k, const T& v) { val(k, v); } // compatibility with deserializer
+
+    template <typename T>
     void optval(std::string_view k, const T& v) { val(k, v); } // compatibility with deserializer
 
     template <typename T>

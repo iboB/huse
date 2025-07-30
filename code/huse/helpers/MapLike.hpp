@@ -36,7 +36,7 @@ struct MapLike {
             const int len = obj.length();
             for (int i = 0; i < len; ++i) {
                 KvPair val;
-                obj.nextkeyval(val.first, val.second);
+                obj.keyval(val.first, val.second);
                 map.emplace(std::move(val));
             }
         }

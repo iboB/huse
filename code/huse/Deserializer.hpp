@@ -239,7 +239,7 @@ public:
     KeyQuery peeknext();
 
     template <typename Key, typename T>
-    void nextkeyval(Key& k, T& v);
+    void keyval(Key& k, T& v);
 
     // intentionally hiding parent
     Type type() const { return { Type::Object }; }
@@ -395,7 +395,7 @@ inline DeserializerObject::KeyQuery DeserializerObject::peeknext()
 }
 
 template <typename Key, typename T>
-void DeserializerObject::nextkeyval(Key& k, T& v)
+void DeserializerObject::keyval(Key& k, T& v)
 {
     k = Key(pendingKey_msg::call(m_deserializer));
     this->DeserializerNode::val(v);

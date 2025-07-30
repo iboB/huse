@@ -263,7 +263,7 @@ TEST_CASE("simple deserialize")
 
         std::string key;
         int i2 = 0;
-        obj.nextkeyval(key, i2);
+        obj.keyval(key, i2);
         CHECK(key == "int");
         CHECK(i2 == -3);
     }
@@ -313,16 +313,16 @@ TEST_CASE("deserialize iteration")
         q->val(n);
         CHECK(n == 2);
         std::string_view ksv;
-        obj.nextkeyval(ksv, n);
+        obj.keyval(ksv, n);
         CHECK(ksv == "c");
         CHECK(n == 3);
         std::string kstr;
-        obj.nextkeyval(kstr, n);
+        obj.keyval(kstr, n);
         CHECK(kstr == "d");
         CHECK(n == 4);
         CHECK(obj.end());
         CHECK(!obj.peeknext());
-        CHECK_THROWS_D(obj.nextkeyval(ksv, n), "root.[4] : out of range");
+        CHECK_THROWS_D(obj.keyval(ksv, n), "root.[4] : out of range");
     }
 
     {
@@ -418,7 +418,7 @@ TEST_CASE("deserializer exceptions")
         auto o = d.obj();
         o.val("b", b);
         std::string_view key;
-        CHECK_THROWS_D(o.nextkeyval(key, b), "root.[3] : out of range");
+        CHECK_THROWS_D(o.keyval(key, b), "root.[3] : out of range");
     }
     {
         auto d = makeD(json);
