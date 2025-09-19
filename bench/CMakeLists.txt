@@ -3,7 +3,7 @@
 #
 CPMAddPackage(gh:iboB/picobench@2.08)
 CPMAddPackage(gh:simdjson/simdjson@3.13.0)
-CPMAddPackage(gh:iboB/json-test-data@1.0.0)
+CPMAddPackage(gh:iboB/json-test-data@1.1.0)
 
 if(NOT TARGET Boost::boost)
     CPMAddPackage(
@@ -41,3 +41,4 @@ macro(huse_benchmark name)
 endmacro()
 
 huse_benchmark(json-read)
+huse_benchmark(json-parse)

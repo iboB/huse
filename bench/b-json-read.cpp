@@ -1,8 +1,11 @@
-#include <splat/warnings.h>
+// Copyright (c) Borislav Stanimirov
+// SPDX-License-Identifier: MIT
+//
 #include <huse/json/JsonDeserializer.hpp>
 #include <huse/Deserializer.hpp>
 #include <boost/json.hpp>
 #include <simdjson.h>
+
 #include <json-test-data.h>
 #include <fstream>
 
@@ -70,7 +73,7 @@ void bench_simdjson(const char* path, picobench::state& s) {
 int main(int argc, char* argv[]) {
     picobench::local_runner r;
 
-    std::string_view files[] = { JSON_TEST_DATA_FILES };
+    std::string_view files[] = { JSON_TEST_DATA_JSON_FILES };
 
     for (auto f : files) {
         auto fname = f.substr(sizeof(JSON_TEST_DATA_DIR));
