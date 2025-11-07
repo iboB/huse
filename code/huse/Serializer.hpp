@@ -132,13 +132,19 @@ public:
     void keyval(std::string_view k, const T& v) { val(k, v); } // compatibility with deserializer
 
     template <typename T>
-    void optval(std::string_view k, const T& v) { val(k, v); } // compatibility with deserializer
+    bool optval(std::string_view k, const T& v) { val(k, v); return true; } // compatibility with deserializer
 
     template <typename T>
-    void optval(std::string_view k, const std::optional<T>& v, const T& d)
+    bool optval(std::string_view k, const std::optional<T>& v, const T& d)
     {
-        if (v) val(k, *v);
-        else val(k, d);
+        if (v) {
+            val(k, *v);
+            return true;
+        }
+        else {
+            val(k, d);
+            return false;
+        }
     }
 
     template <typename T>

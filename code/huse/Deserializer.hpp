@@ -172,24 +172,28 @@ public:
     }
 
     template <typename T>
-    void optval(std::string_view k, T& v)
+    bool optval(std::string_view k, T& v)
     {
         if (auto open = optkey(k))
         {
             open->val(v);
+            return true;
         }
+        return false;
     }
 
     template <typename T>
-    void optval(std::string_view k, std::optional<T>& v, const T& d)
+    bool optval(std::string_view k, std::optional<T>& v, const T& d)
     {
         if (auto open = optkey(k))
         {
             open->val(v.emplace());
+            return true;
         }
         else
         {
             v.reset(d);
+            return false;
         }
     }
 

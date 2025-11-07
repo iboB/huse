@@ -217,7 +217,7 @@ TEST_CASE("simple deserialize")
             CHECK(i16 == 4);
         }
         bool b;
-        obj.val("bool", b);
+        CHECK(obj.optval("bool", b));
         CHECK(b);
 
         auto q = obj.peeknext();
@@ -239,6 +239,7 @@ TEST_CASE("simple deserialize")
         CHECK(f == 3.1f);
 
         int i;
+        CHECK_FALSE(obj.optval("no-such-int", i));
         obj.val("int", i);
         CHECK(i == -3);
 
