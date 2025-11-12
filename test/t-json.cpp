@@ -274,8 +274,6 @@ TEST_CASE("stream deserialize")
 {
     auto d = makeD(R"({"string":"aa bbb c"})");
     auto o = d.obj();
-    CHECK(!o.optsstream("asdf"));
-    CHECK(!!o.optsstream("string"));
 
     {
         std::string a, b, c;
@@ -287,13 +285,12 @@ TEST_CASE("stream deserialize")
 
     {
         std::string a, b, c;
-        auto s = o.optsstream("string");
-        REQUIRE(!!s);
-        *s >> a >> b >> c;
+        auto s = o.sstream("string");
+        s >> a >> b >> c;
         CHECK(a == "aa");
         CHECK(b == "bbb");
         CHECK(c == "c");
-        CHECK(s->get().eof());
+        CHECK(s.get().eof());
     }
 }
 

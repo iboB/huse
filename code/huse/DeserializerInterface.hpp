@@ -35,10 +35,6 @@ HUSE_D_MSG(HUSE_API, std::nullopt_t, discard);
 // skip a value
 DYNAMIX_DECLARE_EXPORTED_SIMPLE_MSG(HUSE_API, skip_msg, void(Deserializer&));
 
-// stateful reads
-DYNAMIX_DECLARE_EXPORTED_SIMPLE_MSG(HUSE_API, loadStringStream_msg, std::istream&(Deserializer&));
-DYNAMIX_DECLARE_EXPORTED_SIMPLE_MSG(HUSE_API, unloadStringStream_msg, void(Deserializer&));
-
 // implementation interface
 DYNAMIX_DECLARE_EXPORTED_SIMPLE_MSG(HUSE_API, loadObject_msg, void(Deserializer&));
 DYNAMIX_DECLARE_EXPORTED_SIMPLE_MSG(HUSE_API, unloadObject_msg, void(Deserializer&));

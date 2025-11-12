@@ -7,10 +7,11 @@
 #include "DeserializerInterface.hpp"
 #include "DeserializerObj.hpp"
 
+#include <itlib/mem_streambuf.hpp>
 #include <splat/unreachable.h>
 #include <string_view>
 #include <optional>
-#include <iosfwd>
+#include <istream>
 
 namespace huse
 {
@@ -20,42 +21,38 @@ class DeserializerObject;
 class DeserializerSStream
 {
 public:
-    explicit DeserializerSStream(Deserializer& d);
-    ~DeserializerSStream();
+    explicit DeserializerSStream(Deserializer& d, std::string_view str)
+        : m_deserializer(d)
+        , m_streambuf(str.data(), str.size())
+        , m_stream(&m_streambuf)
+    {}
 
     DeserializerSStream(const DeserializerSStream&) = delete;
     DeserializerSStream& operator=(const DeserializerSStream&) = delete;
 
-    // can't delete this too, as we need it to be inside std::optional
-    DeserializerSStream(DeserializerSStream&& other) noexcept
-        : m_deserializer(other.m_deserializer)
-        , m_stream(other.m_stream)
-    {
-        other.m_stream = nullptr;
-    }
-    DeserializerSStream& operator=(DeserializerSStream&&) = delete;
-
     template <typename T>
     DeserializerSStream& operator>>(T& t)
     {
-        *m_stream >> t;
+        m_stream >> t;
         return *this;
     }
 
     template <typename T>
     DeserializerSStream& operator&(T& t)
     {
-        *m_stream >> t;
+        m_stream >> t;
         return *this;
     }
 
-    std::istream& get() { return *m_stream; }
+    std::istream& get() { return m_stream; }
 
     [[noreturn]] void throwException(const std::string& msg) const;
 
 private:
     Deserializer& m_deserializer;
-    std::istream* m_stream;
+
+    itlib::mem_istreambuf<char> m_streambuf;
+    std::istream m_stream;
 };
 
 class DeserializerNode
@@ -90,7 +87,9 @@ public:
 
     DeserializerSStream sstream()
     {
-        return DeserializerSStream(m_deserializer);
+        std::string_view str;
+        val(str);
+        return DeserializerSStream(m_deserializer, str);
     }
 
     void skip();
@@ -221,15 +220,6 @@ public:
         return key(k).sstream();
     }
 
-    std::optional<DeserializerSStream> optsstream(std::string_view k)
-    {
-        if (auto open = optkey(k))
-        {
-            return open->sstream();
-        }
-        return std::nullopt;
-    }
-
     struct KeyQuery
     {
         std::string_view name;
@@ -245,16 +235,6 @@ public:
     // intentionally hiding parent
     Type type() const { return { Type::Object }; }
 };
-
-inline DeserializerSStream::DeserializerSStream(Deserializer& d)
-    : m_deserializer(d)
-    , m_stream(&loadStringStream_msg::call(d))
-{}
-
-inline DeserializerSStream::~DeserializerSStream()
-{
-    if (m_stream) unloadStringStream_msg::call(m_deserializer);
-}
 
 inline void DeserializerSStream::throwException(const std::string& msg) const {
     throwDeserializerException_msg::call(m_deserializer, msg);

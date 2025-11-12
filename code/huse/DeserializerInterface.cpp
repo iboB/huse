@@ -25,8 +25,6 @@ HUSE_DEFINE_D_MSG(std::nullptr_t, null);
 HUSE_DEFINE_D_MSG(std::nullopt_t, discard);
 
 DYNAMIX_DEFINE_SIMPLE_MSG_EX(skip_msg, unicast, false, nullptr);
-DYNAMIX_DEFINE_SIMPLE_MSG_EX(loadStringStream_msg, unicast, false, nullptr);
-DYNAMIX_DEFINE_SIMPLE_MSG_EX(unloadStringStream_msg, unicast, false, nullptr);
 
 DYNAMIX_DEFINE_SIMPLE_MSG_EX(loadObject_msg, unicast, false, nullptr);
 DYNAMIX_DEFINE_SIMPLE_MSG_EX(unloadObject_msg, unicast, false, nullptr);

@@ -12,8 +12,6 @@
 
 #include "_sajson/sajson.hpp"
 
-#include <itlib/mem_streambuf.hpp>
-
 #include <dynamix/define_mixin.hpp>
 #include <dynamix/mutate.hpp>
 
@@ -29,17 +27,6 @@ namespace
 {
 constexpr std::string_view Not_Integer = "not an integer";
 constexpr std::string_view Out_of_Range = "out of range";
-
-struct MemIStream
-{
-    MemIStream(std::string_view str)
-        : streambuf(str.data(), str.size())
-        , stream(&streambuf)
-    {}
-
-    itlib::mem_istreambuf<char> streambuf;
-    std::istream stream;
-};
 }
 
 struct JsonDeserializer
@@ -61,8 +48,6 @@ struct JsonDeserializer
     std::vector<StackElement> stack;
 
     Value current; // only valid after advance
-
-    std::optional<MemIStream> m_stringStream;
 
     JsonDeserializer(sajson::document&& doc)
         : document(std::move(doc))
@@ -366,21 +351,6 @@ struct JsonDeserializer
         throw DeserializerException(sout.str());
     }
 
-    std::istream& loadStringStream()
-    {
-        std::string_view cur;
-        readString(cur);
-        HUSE_ASSERT_INTERNAL(!m_stringStream);
-        m_stringStream.emplace(cur);
-        return m_stringStream->stream;
-    }
-
-    void unloadStringStream()
-    {
-        assert(!!m_stringStream);
-        m_stringStream.reset();
-    }
-
     void husePolyDeserialize(bool& val) {
         auto t = r().get_type();
         if (t == sajson::TYPE_TRUE) val = true;
@@ -455,8 +425,6 @@ DYNAMIX_DEFINE_MIXIN(Domain, JsonDeserializer)
     .implements<husePolyDeserialize_null>()
     .implements<husePolyDeserialize_discard>()
     .implements_by<skip_msg>([](JsonDeserializer* d) { d->advance(); })
-    .implements_by<loadStringStream_msg>([](JsonDeserializer* d) -> std::istream& { return d->loadStringStream(); })
-    .implements_by<unloadStringStream_msg>([](JsonDeserializer* d) { d->unloadStringStream(); })
     .implements_by<loadObject_msg>([](JsonDeserializer* d) { d->loadCompound(sajson::TYPE_OBJECT); })
     .implements_by<unloadObject_msg>([](JsonDeserializer* d) { d->unloadCompound(); })
     .implements_by<loadArray_msg>([](JsonDeserializer* d) { d->loadCompound(sajson::TYPE_ARRAY); })
