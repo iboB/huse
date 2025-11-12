@@ -1697,7 +1697,6 @@ private:
             bool s
                 = stack.push(make_element(current_structure_tag, ROOT_MARKER));
             if (SAJSON_UNLIKELY(!s)) {
-                printf("oom 3\n");
                 return oom(p, "stack.push object");
             }
             goto object_close_or_element;
