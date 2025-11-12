@@ -9,10 +9,13 @@ namespace huse {
 struct Type {
 public:
     enum Value : uint8_t {
-        Null   = 0,
-        String = 1,
-        Object = 2,
-        Array  = 3,
+        Null,
+        String,
+        Object,
+        Array,
+        Blob,
+
+        Custom,
 
         True =  0b01'0000,
         False = 0b10'0000,
@@ -20,6 +23,7 @@ public:
         Integer = 0b0100'0000,
         Float   = 0b1000'0000,
     };
+    static_assert(Custom < True, "Non-masked types should be below masked types");
 
     static inline constexpr uint8_t Boolean_Mask = True | False;
     static inline constexpr uint8_t Number_Mask = Integer | Float;
