@@ -3,6 +3,7 @@
 //
 #pragma once
 #include "API.h"
+#include "impl/RawDValue.hpp"
 #include "DeserializerInterface.hpp"
 #include "DeserializerObj.hpp"
 
