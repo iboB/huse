@@ -191,13 +191,13 @@ TEST_CASE("simple deserialize")
 
     {
         auto d = makeD(R"({"array":[1,2,3,4],"bool":true,"bool2":false,"float":3.1,"int":-3,"unsigned-long-long":900000000000000,"str":"b\n\\g\t\u001bsdf"})");
-        CHECK(d.type().is(huse::Type::Object));
+        CHECK(d.type().isObject());
         auto obj = d.obj();
         CHECK(&obj._s() == &d._s());
-        CHECK(obj.type().is(huse::Type::Object));
+        CHECK(obj.type().isObject());
         {
             auto ar = obj.ar("array");
-            CHECK(ar.type().is(huse::Type::Array));
+            CHECK(ar.type().isArray());
             CHECK(ar.length() == 4);
 
             ar.val(std::nullopt); // skip 0
@@ -223,8 +223,8 @@ TEST_CASE("simple deserialize")
         auto q = obj.peeknext();
         CHECK(!!q);
         CHECK(q.name == "bool2");
-        CHECK(q.node->type().is(huse::Type::Boolean));
-        CHECK(q.node->type().is(huse::Type::False));
+        CHECK(q.node->type().isBoolean());
+        CHECK(q.node->type().isFalse());
         q->val(b);
         CHECK(!b);
 
@@ -248,17 +248,17 @@ TEST_CASE("simple deserialize")
         CHECK(ull == 900000000000000);
 
         auto& inode = obj.key("int");
-        CHECK(inode.type().is(huse::Type::Integer));
-        CHECK(inode.type().is(huse::Type::Number));
-        CHECK(!inode.type().is(huse::Type::Float));
+        CHECK(inode.type().isInteger());
+        CHECK(inode.type().isNumber());
+        CHECK(!inode.type().isFloat());
 
         auto& fnode = obj.key("float");
-        CHECK(fnode.type().is(huse::Type::Float));
-        CHECK(fnode.type().is(huse::Type::Number));
+        CHECK(fnode.type().isFloat());
+        CHECK(fnode.type().isNumber());
 
-        CHECK(obj.key("str").type().is(huse::Type::String));
+        CHECK(obj.key("str").type().isString());
 
-        CHECK(obj.key("array").type().is(huse::Type::Array));
+        CHECK(obj.key("array").type().isArray());
 
         obj.val("float", f);
 
@@ -332,7 +332,7 @@ TEST_CASE("deserialize iteration")
         CHECK(ar.length() == 3);
         auto q = ar.peeknext();
         CHECK(q);
-        CHECK(q->type().is(huse::Type::Number));
+        CHECK(q->type().isNumber());
         int n;
         q->val(n);
         CHECK(n == 10);
@@ -665,7 +665,7 @@ void serializeInt64AsMaybeString(huse::SerializerNode& n, uint64_t i)
 
 void serializeInt64AsMaybeString(huse::DeserializerNode& n, uint64_t& i)
 {
-    if (n.type().is(huse::Type::Number)) n.val(i);
+    if (n.type().isNumber()) n.val(i);
     else
     {
         std::string_view str;
