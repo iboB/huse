@@ -7,8 +7,6 @@
 #include "DeserializerInterface.hpp"
 #include "DeserializerObj.hpp"
 
-#include "impl/UniqueStack.hpp"
-
 #include <splat/unreachable.h>
 #include <string_view>
 #include <optional>
@@ -19,10 +17,10 @@ namespace huse
 class DeserializerArray;
 class DeserializerObject;
 
-class DeserializerSStream : public impl::UniqueStack
+class DeserializerSStream
 {
 public:
-    DeserializerSStream(Deserializer& d, impl::UniqueStack* parent);
+    explicit DeserializerSStream(Deserializer& d);
     ~DeserializerSStream();
 
     DeserializerSStream(const DeserializerSStream&) = delete;
@@ -30,8 +28,7 @@ public:
 
     // can't delete this too, as we need it to be inside std::optional
     DeserializerSStream(DeserializerSStream&& other) noexcept
-        : impl::UniqueStack(std::move(other))
-        , m_deserializer(other.m_deserializer)
+        : m_deserializer(other.m_deserializer)
         , m_stream(other.m_stream)
     {
         other.m_stream = nullptr;
@@ -61,12 +58,11 @@ private:
     std::istream* m_stream;
 };
 
-class DeserializerNode : public impl::UniqueStack
+class DeserializerNode
 {
 protected:
-    DeserializerNode(Deserializer& d, impl::UniqueStack* parent)
-        : impl::UniqueStack(parent)
-        , m_deserializer(d)
+    DeserializerNode(Deserializer& d)
+        : m_deserializer(d)
     {}
     friend class Deserializer;
     Deserializer& m_deserializer;
@@ -94,7 +90,7 @@ public:
 
     DeserializerSStream sstream()
     {
-        return DeserializerSStream(m_deserializer, this);
+        return DeserializerSStream(m_deserializer);
     }
 
     void skip();
@@ -111,7 +107,7 @@ protected:
 class DeserializerArray : public DeserializerNode
 {
 public:
-    DeserializerArray(Deserializer& d, impl::UniqueStack* parent = nullptr);
+    explicit DeserializerArray(Deserializer& d);
     ~DeserializerArray();
 
     using DeserializerNode::length;
@@ -132,7 +128,7 @@ public:
 class DeserializerObject : private DeserializerNode
 {
 public:
-    DeserializerObject(Deserializer& d, impl::UniqueStack* parent = nullptr);
+    explicit DeserializerObject(Deserializer& d);
     ~DeserializerObject();
 
     using DeserializerNode::_s;
@@ -250,9 +246,8 @@ public:
     Type type() const { return { Type::Object }; }
 };
 
-inline DeserializerSStream::DeserializerSStream(Deserializer& d, impl::UniqueStack* parent)
-    : impl::UniqueStack(parent)
-    , m_deserializer(d)
+inline DeserializerSStream::DeserializerSStream(Deserializer& d)
+    : m_deserializer(d)
     , m_stream(&loadStringStream_msg::call(d))
 {}
 
@@ -268,12 +263,12 @@ inline void DeserializerSStream::throwException(const std::string& msg) const {
 
 inline DeserializerObject DeserializerNode::obj()
 {
-    return DeserializerObject(m_deserializer, this);
+    return DeserializerObject(m_deserializer);
 }
 
 inline DeserializerArray DeserializerNode::ar()
 {
-    return DeserializerArray(m_deserializer, this);
+    return DeserializerArray(m_deserializer);
 }
 
 inline void DeserializerNode::throwException(const std::string& msg) const {
@@ -347,8 +342,8 @@ inline bool DeserializerNode::end() const
     return !hasPending_msg::call(m_deserializer);
 }
 
-inline DeserializerArray::DeserializerArray(Deserializer& d, impl::UniqueStack* parent)
-    : DeserializerNode(d, parent)
+inline DeserializerArray::DeserializerArray(Deserializer& d)
+    : DeserializerNode(d)
 {
     loadArray_msg::call(m_deserializer);
 }
@@ -370,8 +365,8 @@ inline DeserializerArray::Query DeserializerArray::peeknext()
     return {this};
 }
 
-inline DeserializerObject::DeserializerObject(Deserializer& d, impl::UniqueStack* parent)
-    : DeserializerNode(d, parent)
+inline DeserializerObject::DeserializerObject(Deserializer& d)
+    : DeserializerNode(d)
 {
     loadObject_msg::call(m_deserializer);
 }
@@ -427,13 +422,13 @@ class DeserializerRoot : public DeserializerNode {
     Deserializer m_deserializerObject;
 public:
     explicit DeserializerRoot(Deserializer&& d)
-        : DeserializerNode(m_deserializerObject, nullptr)
+        : DeserializerNode(m_deserializerObject)
         , m_deserializerObject(std::move(d))
     {}
 };
 
 inline DeserializerNode Deserializer::node() {
-    return DeserializerNode(*this, nullptr);
+    return DeserializerNode(*this);
 }
 
 } // namespace huse
