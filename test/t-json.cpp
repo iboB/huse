@@ -247,12 +247,12 @@ TEST_CASE("simple deserialize")
         obj.val("unsigned-long-long", ull);
         CHECK(ull == 900000000000000);
 
-        auto& inode = obj.key("int");
+        auto inode = obj.key("int");
         CHECK(inode.type().isInteger());
         CHECK(inode.type().isNumber());
         CHECK(!inode.type().isFloat());
 
-        auto& fnode = obj.key("float");
+        auto fnode = obj.key("float");
         CHECK(fnode.type().isFloat());
         CHECK(fnode.type().isNumber());
 
@@ -302,10 +302,12 @@ TEST_CASE("deserialize iteration")
         auto d = makeD(R"({"a": 1, "b": 2, "c": 3, "d": 4})");
         auto obj = d.obj();
         CHECK(obj.length() == 4);
+        {
+            auto q = obj.peeknext();
+            CHECK(q.name == "a");
+        }
+        obj.skip();
         auto q = obj.peeknext();
-        CHECK(q.name == "a");
-        q->skip();
-        q = obj.peeknext();
         CHECK(q.name == "b");
         int n;
         q->val(n);

@@ -43,4 +43,6 @@ void throwDeserializerExceptionDefault(const Deserializer&, const std::string& m
     throw DeserializerException(msg);
 }
 DYNAMIX_DEFINE_SIMPLE_MSG_EX(throwDeserializerException_msg, unicast, true, throwDeserializerExceptionDefault);
+
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(root_msg, unicast, false, nullptr);
 }

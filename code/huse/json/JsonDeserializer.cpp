@@ -438,6 +438,7 @@ DYNAMIX_DEFINE_MIXIN(Domain, JsonDeserializer)
     .implements_by<pendingKey_msg>([](const JsonDeserializer* d) { return const_cast<JsonDeserializer*>(d)->pendingKey(); })
     .implements_by<optPendingKey_msg>([](const JsonDeserializer* d) { return d->optPendingKey(); })
     .implements_by<throwDeserializerException_msg>([](const JsonDeserializer* d, const std::string& msg) { d->throwException(msg); })
+    .implements_by<root_msg>([](JsonDeserializer* d) { return d->document.get_root(); })
 ;
 
 Deserializer Make_DeserializerObj(std::string_view str) {
