@@ -186,8 +186,14 @@ public:
     }
 
     std::optional<DeserializerNode> optkey(std::string_view k) {
-        auto index = int(m_value.find_object_key(k));
+        auto index = /*iile*/[&]() {
+            if (!done() && m_value.get_object_key(m_index) == k) {
+                return m_index;
+            }
+            return int(m_value.find_object_key(k));
+        }();
         if (index >= size()) {
+            m_index = index;
             return std::nullopt;
         }
         m_index = index + 1;
