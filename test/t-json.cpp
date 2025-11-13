@@ -322,6 +322,14 @@ TEST_CASE("deserialize iteration")
         CHECK(obj.done());
         CHECK(!obj.optkeyval());
         CHECK_THROWS_D(obj.keyval(ksv, n), "no more keys in object");
+
+        std::vector<std::pair<std::string, int>> pairs;
+        for (auto [key, val] : obj) {
+            int i;
+            val.val(i);
+            pairs.emplace_back(key, i);
+        }
+        CHECK(pairs == std::vector<std::pair<std::string, int>>{{"a", 1}, {"b", 2}, {"c", 3}, {"d", 4}});
     }
 
     {
@@ -341,6 +349,21 @@ TEST_CASE("deserialize iteration")
         CHECK(ar.done());
         CHECK(!ar.optval());
         CHECK_THROWS_D(ar.val(n), "array index out of bounds");
+
+        std::vector<huse::DeserializerNode> nodes;
+        for (auto node : ar) {
+            nodes.push_back(node);
+        }
+        REQUIRE(nodes.size() == 3);
+        n = 0;
+        bool b = false;
+        s = {};
+        nodes[0].val(n);
+        CHECK(n == 10);
+        nodes[1].val(b);
+        CHECK(b);
+        nodes[2].val(s);
+        CHECK(s == "xx");
     }
 }
 

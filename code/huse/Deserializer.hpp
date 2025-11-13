@@ -162,6 +162,35 @@ public:
 
     // intentionally hiding parent
     Type type() const { return { Type::Array }; }
+
+    class iterator {
+        int m_index = 0;
+        const DeserializerArray* m_array = nullptr;
+    public:
+        iterator() = default;
+        explicit iterator(const DeserializerArray& a, int index)
+            : m_index(index)
+            , m_array(&a)
+        {}
+
+        DeserializerNode operator*() const {
+            return DeserializerNode(m_array->m_deserializer, m_array->m_value.get_array_element(m_index));
+        }
+
+        iterator& operator++() {
+            ++m_index;
+            return *this;
+        }
+
+        bool operator==(const iterator& other) const = default;
+        bool operator!=(const iterator& other) const = default;
+    };
+    iterator begin() const {
+        return iterator(*this, 0);
+    }
+    iterator end() const {
+        return iterator(*this, size());
+    }
 };
 
 class DeserializerObject : public DeserializerNode
@@ -318,6 +347,39 @@ public:
 
     // intentionally hiding parent
     Type type() const { return { Type::Object }; }
+
+    class iterator {
+        int m_index = 0;
+        const DeserializerObject* m_object = nullptr;
+    public:
+        iterator() = default;
+        explicit iterator(const DeserializerObject& o, int index)
+            : m_index(index)
+            , m_object(&o)
+        {}
+
+        std::pair<std::string_view, DeserializerNode> operator*() const {
+            auto& val = m_object->m_value;
+            return {
+                val.get_object_key(m_index),
+                DeserializerNode(m_object->m_deserializer, val.get_object_value(m_index))
+            };
+        }
+
+        iterator& operator++() {
+            ++m_index;
+            return *this;
+        }
+
+        bool operator==(const iterator& other) const = default;
+        bool operator!=(const iterator& other) const = default;
+    };
+    iterator begin() const {
+        return iterator(*this, 0);
+    }
+    iterator end() const {
+        return iterator(*this, size());
+    }
 };
 
 inline DeserializerObject DeserializerNode::obj()
