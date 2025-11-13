@@ -309,7 +309,7 @@ std::ostream& JsonSerializer::openStringStream() {
     if (!m_stringStream) {
         m_stringStream = std::make_unique<std::optional<JsonOStream>>();
     }
-    HUSE_ASSERT_INTERNAL(!m_stringStream);
+    HUSE_ASSERT_INTERNAL(!*m_stringStream);
     m_stringStream->emplace(m_out);
     return (*m_stringStream)->stream;
 }
