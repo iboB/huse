@@ -53,8 +53,7 @@ private:
     std::istream m_stream;
 };
 
-class DeserializerNode
-{
+class DeserializerNode {
 protected:
     friend class Deserializer;
     Deserializer& m_deserializer;
@@ -94,13 +93,15 @@ public:
 
 protected:
     // number of elements in compound object
-    int length() const {
+    int size() const {
         return int(m_value.get_length());
     }
 };
 
-class DeserializerArray : public DeserializerNode
-{
+class DeserializerValue : public DeserializerNode {
+};
+
+class DeserializerArray : public DeserializerNode {
     int m_index = 0;
 public:
     explicit DeserializerArray(Deserializer& d, const impl::RawDValue& value)
@@ -111,48 +112,56 @@ public:
         }
     }
 
-    using DeserializerNode::length;
-    DeserializerNode index(int index) {
-        if (index < 0 || index >= length()) {
-            throwException("array index out of bounds");
-        }
-        m_index = index + 1;
-        return DeserializerNode(m_deserializer, m_value.get_array_element(index));
-    }
+    using DeserializerNode::size;
 
     DeserializerObject obj();
     DeserializerArray ar();
 
+    std::optional<DeserializerNode> optval() {
+        if (done()) {
+            return std::nullopt;
+        }
+        auto ret = DeserializerNode(m_deserializer, m_value.get_array_element(m_index));
+        ++m_index;
+        return ret;
+    }
+
+    DeserializerNode val() {
+        auto v = optval();
+        if (!v) {
+            throwException("array index out of bounds");
+        }
+        return *v;
+    }
+
+    DeserializerNode index(int index) {
+        m_index = index;
+        return val();
+    }
+
     template <typename T>
     void val(T& v) {
-        index(m_index).val(v);
+        val().val(v);
     }
 
     template <typename T, typename F>
     void cval(T& v, F&& f) {
-        f(index(m_index), v);
+        f(val(), v);
     }
 
     DeserializerSStream sstream() {
-        return index(m_index).sstream();
+        return val().sstream();
     }
 
     void skip() {
         ++m_index;
     }
-    bool end() const {
-        return m_index >= length();
+    bool done() const {
+        return m_index >= size();
     }
 
     // intentionally hiding parent
     Type type() const { return { Type::Array }; }
-
-    std::optional<DeserializerNode> peeknext() {
-        if (end()) {
-            return std::nullopt;
-        }
-        return DeserializerNode(m_deserializer, m_value.get_array_element(m_index));
-    }
 };
 
 class DeserializerObject : public DeserializerNode
@@ -167,24 +176,30 @@ public:
         }
     }
 
-    using DeserializerNode::_s;
-    using DeserializerNode::length;
-    using DeserializerNode::throwException;
+    using DeserializerNode::size;
 
     void skip() {
         ++m_index;
     }
-    bool end() const {
-        return m_index >= length();
+    bool done() const {
+        return m_index >= size();
     }
 
-    DeserializerNode key(std::string_view k) {
+    std::optional<DeserializerNode> optkey(std::string_view k) {
         auto index = int(m_value.find_object_key(k));
-        if (index >= length()) {
-            throwException("key not found: " + std::string(k));
+        if (index >= size()) {
+            return std::nullopt;
         }
         m_index = index + 1;
         return DeserializerNode(m_deserializer, m_value.get_object_value(index));
+    }
+
+    DeserializerNode key(std::string_view k) {
+        auto ret = optkey(k);
+        if (!ret) {
+            throwException("key not found in object");
+        }
+        return *ret;
     }
 
     DeserializerObject obj(std::string_view k) {
@@ -192,15 +207,6 @@ public:
     }
     DeserializerArray ar(std::string_view k) {
         return key(k).ar();
-    }
-
-    std::optional<DeserializerNode> optkey(std::string_view k) {
-        auto index = int(m_value.find_object_key(k));
-        if (index >= length()) {
-            return std::nullopt;
-        }
-        m_index = index + 1;
-        return DeserializerNode(m_deserializer, m_value.get_object_value(index));
     }
 
     template <typename T>
@@ -252,56 +258,56 @@ public:
     void flatval(T& v);
 
     template <typename T, typename F>
-    void cval(std::string_view k, T& v, F&& f)
-    {
+    void cval(std::string_view k, T& v, F&& f) {
         key(k).cval(v, std::forward<F>(f));
     }
 
     template <typename T, typename F>
-    void cval(std::string_view k, std::optional<T>& v, F&& f)
-    {
-        if (auto open = optkey(k))
-        {
+    void cval(std::string_view k, std::optional<T>& v, F&& f) {
+        if (auto open = optkey(k)) {
             open->cval(v.emplace(), std::forward<F>(f));
         }
-        else
-        {
+        else {
             v.reset();
         }
     }
 
-    DeserializerSStream sstream(std::string_view k)
-    {
+    DeserializerSStream sstream(std::string_view k) {
         return key(k).sstream();
     }
 
-    struct KeyQuery
-    {
-        std::string_view name;
-        std::optional<DeserializerNode> node;
-        explicit operator bool() const { return !!node; }
-        DeserializerNode* operator->() { return &(*node); }
-    };
-    KeyQuery peeknext() {
-        if (end()) {
-            return {};
+    std::optional<std::pair<std::string_view, DeserializerNode>> optkeyval() {
+        if (done()) {
+            return std::nullopt;
         }
-        KeyQuery ret;
-        ret.name = m_value.get_object_key(m_index);
-        ret.node.emplace(m_deserializer, m_value.get_object_value(m_index));
+        auto key = m_value.get_object_key(m_index);
+        auto val = DeserializerNode(m_deserializer, m_value.get_object_value(m_index));
+        ++m_index;
+        return std::make_pair(key, val);
+    }
 
-        return ret;
+    std::pair<std::string_view, DeserializerNode> keyval() {
+        auto r = optkeyval();
+        if (!r) {
+            throwException("no more keys in object");
+        }
+        return *r;
     }
 
     template <typename Key, typename T>
     void keyval(Key& k, T& v) {
-        auto p = peeknext();
-        if (!p) {
-            throwException("no more keys in object");
-        }
-        ++m_index;
-        k = Key(p.name);
-        p->val(v);
+        auto p = keyval();
+        k = Key(p.first);
+        p.second.val(v);
+    }
+
+    template <typename Key, typename T>
+    bool optkeyval(Key& k, T& v) {
+        auto p = optkeyval();
+        if (!p) return false;
+        k = Key(p->first);
+        p->second.val(v);
+        return true;
     }
 
     // intentionally hiding parent

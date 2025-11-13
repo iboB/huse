@@ -53,7 +53,7 @@ result_t check_setSubscriptions(huse::DeserializerObject& d) {
     if (!node) return 0;
     result_t res = 0;
     auto obj = node->obj();
-    const int len = obj.length();
+    const int len = obj.size();
     for (int i = 0; i < len; ++i) {
         std::string_view key, value;
         obj.keyval(key, value);
@@ -78,9 +78,9 @@ result_t check_setRequestBatch(huse::DeserializerObject& d) {
 
     auto reqs = obj.obj("requests");
     while (true) {
-        auto n = reqs.peeknext();
+        auto n = reqs.optkeyval();
         if (!n) break;
-        auto req = n->obj();
+        auto req = n->second.obj();
         vec v;
         req.val("min", v);
         res += v.sum();
@@ -129,7 +129,7 @@ result_t check_setInteraction(huse::DeserializerObject& d) {
     res += id + seq;
 
     auto structures = obj.ar("structures");
-    for (int i = 0; i < structures.length(); ++i) {
+    for (int i = 0; i < structures.size(); ++i) {
         std::string_view sid;
         structures.val(sid);
         res += hash(sid);

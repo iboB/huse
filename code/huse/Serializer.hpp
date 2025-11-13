@@ -129,12 +129,6 @@ public:
     }
 
     template <typename T>
-    void keyval(std::string_view k, const T& v) { val(k, v); } // compatibility with deserializer
-
-    template <typename T>
-    bool optval(std::string_view k, const T& v) { val(k, v); return true; } // compatibility with deserializer
-
-    template <typename T>
     bool optval(std::string_view k, const std::optional<T>& v, const T& d)
     {
         if (v) {
@@ -166,6 +160,13 @@ public:
     {
         return key(k).sstream();
     }
+
+    /////////////////
+    // compatibility with deserializer
+    template <typename T> bool optval(std::string_view k, const T& v) { val(k, v); return true; }
+    template <typename T> void keyval(std::string_view k, const T& v) { val(k, v); }
+    template <typename T> bool optkeyval(std::string_view k, const T& v) { val(k, v); return true; }
+    /////////////////
 };
 
 inline SerializerSStream::SerializerSStream(Serializer& s, impl::UniqueStack* parent)
