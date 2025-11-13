@@ -9,10 +9,6 @@
 #include <huse/Domain.hpp>
 #include <huse/PolyTraits.hpp>
 
-#include <dynamix/declare_mixin.hpp>
-#include <dynamix/define_mixin.hpp>
-#include <dynamix/mutate.hpp>
-
 #include <sstream>
 
 #include <doctest/doctest.h>

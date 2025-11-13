@@ -20,15 +20,13 @@ TEST_SUITE_BEGIN("json");
 struct JsonSerializerPack
 {
     std::ostringstream sout;
-    std::optional<huse::Serializer> s;
+    std::shared_ptr<huse::Serializer> s;
 
-    JsonSerializerPack(bool pretty = false)
-    {
-        s.emplace(huse::json::Make_SerializerObj(sout, pretty));
+    JsonSerializerPack(bool pretty = false) {
+        s = huse::json::Make_SerializerPtr(sout, pretty);
     }
 
-    std::string str()
-    {
+    std::string str() {
         s.reset();
         return sout.str();
     }
@@ -70,7 +68,7 @@ TEST_CASE("simple serialize")
         auto root = j.compact();
         auto obj = root.obj();
 
-        CHECK(&obj._s() == &j.pack->s.value());
+        CHECK(&obj._s() == j.pack->s.get());
 
         {
             auto ar = obj.ar("array");

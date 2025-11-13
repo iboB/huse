@@ -3,22 +3,59 @@
 //
 #pragma once
 #include "API.h"
-#include "SerializerInterface.hpp"
-#include "SerializerObj.hpp"
-
 #include "impl/UniqueStack.hpp"
 
 #include <string_view>
+#include <string>
 #include <optional>
 #include <iosfwd>
+#include <memory>
 
 namespace huse
 {
+class SerializerNode;
 class SerializerArray;
 class SerializerObject;
 
-class SerializerSStream : public impl::UniqueStack
-{
+
+class HUSE_API Serializer {
+public:
+    virtual ~Serializer();
+
+    virtual void writeValue(bool) = 0;
+    virtual void writeValue(short) = 0;
+    virtual void writeValue(unsigned short) = 0;
+    virtual void writeValue(int) = 0;
+    virtual void writeValue(unsigned int) = 0;
+    virtual void writeValue(long) = 0;
+    virtual void writeValue(unsigned long) = 0;
+    virtual void writeValue(long long) = 0;
+    virtual void writeValue(unsigned long long) = 0;
+    virtual void writeValue(float) = 0;
+    virtual void writeValue(double) = 0;
+    virtual void writeValue(std::string_view) = 0;
+    virtual void writeValue(std::nullptr_t) = 0; // write null explicitly
+    virtual void writeValue(std::nullopt_t) = 0; // discard current value
+
+    // helper for string literals
+    void writeValue(const char* str) { writeValue(std::string_view(str)); }
+
+    virtual std::ostream& openStringStream() = 0;
+    virtual void closeStringStream() = 0;
+
+    virtual void pushKey(std::string_view key) = 0;
+
+    virtual void openObject() = 0;
+    virtual void closeObject() = 0;
+    virtual void openArray() = 0;
+    virtual void closeArray() = 0;
+
+    void throwException(const std::string& msg);
+
+    SerializerNode node();
+};
+
+class SerializerSStream : public impl::UniqueStack {
 public:
     SerializerSStream(Serializer& s, impl::UniqueStack* parent);
     ~SerializerSStream();
@@ -29,15 +66,13 @@ public:
     SerializerSStream& operator=(SerializerSStream&&) = delete;
 
     template <typename T>
-    SerializerSStream& operator<<(const T& t)
-    {
+    SerializerSStream& operator<<(const T& t) {
         m_stream << t;
         return *this;
     }
 
     template <typename T>
-    SerializerSStream& operator&(const T& t)
-    {
+    SerializerSStream& operator&(const T& t) {
         m_stream << t;
         return *this;
     }
@@ -51,8 +86,7 @@ private:
     std::ostream& m_stream;
 };
 
-class SerializerNode : public impl::UniqueStack
-{
+class SerializerNode : public impl::UniqueStack {
 protected:
     SerializerNode(Serializer& s, impl::UniqueStack* parent)
         : impl::UniqueStack(parent)
@@ -76,28 +110,24 @@ public:
     void val(const T& v);
 
     template <typename T, typename F>
-    void cval(const T& v, F&& f)
-    {
+    void cval(const T& v, F&& f) {
         f(*this, v);
     }
 
-    SerializerSStream sstream()
-    {
+    SerializerSStream sstream() {
         return SerializerSStream(m_serializer, this);
     }
 
     [[noreturn]] void throwException(const std::string& msg) const;
 };
 
-class SerializerArray : public SerializerNode
-{
+class SerializerArray : public SerializerNode {
 public:
     SerializerArray(Serializer& s, impl::UniqueStack* parent = nullptr);
     ~SerializerArray();
 };
 
-class SerializerObject : private SerializerNode
-{
+class SerializerObject : private SerializerNode {
 public:
     SerializerObject(Serializer& s, impl::UniqueStack* parent = nullptr);
     ~SerializerObject();
@@ -107,30 +137,25 @@ public:
 
     SerializerNode& key(std::string_view k);
 
-    SerializerObject obj(std::string_view k)
-    {
+    SerializerObject obj(std::string_view k) {
         return key(k).obj();
     }
-    SerializerArray ar(std::string_view k)
-    {
+    SerializerArray ar(std::string_view k) {
         return key(k).ar();
     }
 
     template <typename T>
-    void val(std::string_view k, const T& v)
-    {
+    void val(std::string_view k, const T& v) {
         key(k).val(v);
     }
 
     template <typename T>
-    void val(std::string_view k, const std::optional<T>& v)
-    {
+    void val(std::string_view k, const std::optional<T>& v) {
         if (v) val(k, *v);
     }
 
     template <typename T>
-    bool optval(std::string_view k, const std::optional<T>& v, const T& d)
-    {
+    bool optval(std::string_view k, const std::optional<T>& v, const T& d) {
         if (v) {
             val(k, *v);
             return true;
@@ -145,19 +170,16 @@ public:
     void flatval(const T& v);
 
     template <typename T, typename F>
-    void cval(std::string_view k, const T& v, F&& f)
-    {
+    void cval(std::string_view k, const T& v, F&& f) {
         key(k).cval(v, std::forward<F>(f));
     }
 
     template <typename T, typename F>
-    void cval(std::string_view k, const std::optional<T>& v, F&& f)
-    {
+    void cval(std::string_view k, const std::optional<T>& v, F&& f) {
         if (v) cval(k, *v, std::forward<F>(f));
     }
 
-    SerializerSStream sstream(std::string_view k)
-    {
+    SerializerSStream sstream(std::string_view k) {
         return key(k).sstream();
     }
 
@@ -172,34 +194,36 @@ public:
 inline SerializerSStream::SerializerSStream(Serializer& s, impl::UniqueStack* parent)
     : impl::UniqueStack(parent)
     , m_serializer(s)
-    , m_stream(openStringStream_msg::call(s))
+    , m_stream(s.openStringStream())
 {}
 
-inline SerializerSStream::~SerializerSStream()
-{
-    closeStringStream_msg::call(m_serializer);
+inline SerializerSStream::~SerializerSStream() {
+    m_serializer.closeStringStream();
 }
 
 inline void SerializerSStream::throwException(const std::string& msg) const {
-    throwSerializerException_msg::call(m_serializer, msg);
+    m_serializer.throwException(msg);
 }
 
-inline SerializerObject SerializerNode::obj()
-{
+inline SerializerObject SerializerNode::obj() {
     return SerializerObject(m_serializer, this);
 }
 
-inline SerializerArray SerializerNode::ar()
-{
+inline SerializerArray SerializerNode::ar() {
     return SerializerArray(m_serializer, this);
 }
 
 namespace impl
 {
+//template <typename, typename = void>
+//struct HasPolySerialize : std::false_type {};
+//template <typename T>
+//struct HasPolySerialize<T, decltype(husePolySerialize(std::declval<Serializer&>(), std::declval<T>()))> : std::true_type {};
+
 template <typename, typename = void>
-struct HasPolySerialize : std::false_type {};
+struct HasWriteValue : std::false_type {};
 template <typename T>
-struct HasPolySerialize<T, decltype(husePolySerialize(std::declval<Serializer&>(), std::declval<T>()))> : std::true_type {};
+struct HasWriteValue<T, decltype(std::declval<Serializer&>().writeValue(std::declval<T>()))> : std::true_type {};
 
 template <typename, typename = void>
 struct HasSerializeMethod : std::false_type {};
@@ -221,80 +245,71 @@ struct HasSerializeFlatFunc<T, decltype(huseSerializeFlat(std::declval<Serialize
 } // namespace impl
 
 template <typename T>
-void SerializerNode::val(const T& v)
-{
-    if constexpr (impl::HasSerializeMethod<T>::value)
-    {
+void SerializerNode::val(const T& v) {
+    if constexpr (impl::HasWriteValue<T>::value) {
+        m_serializer.writeValue(v);
+    }
+    else if constexpr (impl::HasSerializeMethod<T>::value) {
         v.huseSerialize(*this);
     }
-    else if constexpr (impl::HasSerializeFunc<T>::value)
-    {
+    else if constexpr (impl::HasSerializeFunc<T>::value) {
         huseSerialize(*this, v);
     }
-    else if constexpr (impl::HasPolySerialize<T>::value)
-    {
-        husePolySerialize(m_serializer, v);
-    }
-    else
-    {
+    //else if constexpr (impl::HasPolySerialize<T>::value) {
+    //    husePolySerialize(m_serializer, v);
+    //}
+    else {
         cannot_serialize(v);
     }
 }
 
 inline void SerializerNode::throwException(const std::string& msg) const {
-    throwSerializerException_msg::call(m_serializer, msg);
+    m_serializer.throwException(msg);
 }
 
 inline SerializerArray::SerializerArray(Serializer& s, impl::UniqueStack* parent)
     : SerializerNode(s, parent)
 {
-    openArray_msg::call(m_serializer);
+    m_serializer.openArray();
 }
 
-inline SerializerArray::~SerializerArray()
-{
-    closeArray_msg::call(m_serializer);
+inline SerializerArray::~SerializerArray() {
+    m_serializer.closeArray();
 }
 
 inline SerializerObject::SerializerObject(Serializer& s, impl::UniqueStack* parent)
     : SerializerNode(s, parent)
 {
-    openObject_msg::call(m_serializer);
+    m_serializer.openObject();
 }
 
-inline SerializerObject::~SerializerObject()
-{
-    closeObject_msg::call(m_serializer);
+inline SerializerObject::~SerializerObject() {
+    m_serializer.closeObject();
 }
 
-inline SerializerNode& SerializerObject::key(std::string_view k)
-{
-    pushKey_msg::call(m_serializer, k);
+inline SerializerNode& SerializerObject::key(std::string_view k) {
+    m_serializer.pushKey(k);
     return *this;
 }
 
 template <typename T>
-void SerializerObject::flatval(const T& v)
-{
-    if constexpr (impl::HasSerializeFlatMethod<T>::value)
-    {
+void SerializerObject::flatval(const T& v) {
+    if constexpr (impl::HasSerializeFlatMethod<T>::value) {
         v.huseSerializeFlat(*this);
     }
-    else if constexpr (impl::HasSerializeFlatFunc<T>::value)
-    {
+    else if constexpr (impl::HasSerializeFlatFunc<T>::value) {
         huseSerializeFlat(*this, v);
     }
-    else
-    {
+    else {
         cannot_serialize(v);
     }
 }
 
 class SerializerRoot : public SerializerNode {
-    Serializer m_serializerObj;
+    std::shared_ptr<Serializer> m_serializerObj;
 public:
-    SerializerRoot(Serializer&& s)
-        : SerializerNode(m_serializerObj, nullptr)
+    SerializerRoot(std::shared_ptr<Serializer> s)
+        : SerializerNode(*s, this)
         , m_serializerObj(std::move(s))
     {}
 };

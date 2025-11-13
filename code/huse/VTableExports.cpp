@@ -10,11 +10,12 @@
 
 namespace huse
 {
-Serializer::Serializer()
-    : dynamix::object(dynamix::g::get_domain<Domain>())
-{}
+Serializer::~Serializer() = default;
+void Serializer::throwException(const std::string& msg) {
+    throw SerializerException(msg);
+}
 
-Deserializer::~Deserializer() {}
+Deserializer::~Deserializer() = default;
 
 Exception::~Exception() = default;
 SerializerException::~SerializerException() = default;
