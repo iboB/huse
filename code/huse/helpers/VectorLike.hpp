@@ -21,7 +21,7 @@ struct VectorLike{
     template <typename Vec>
     void operator()(DeserializerNode& n, Vec& vec) const {
         auto ar = n.ar();
-        auto len = ar.length();
+        auto len = ar.size();
         vec.resize(size_t(len));
         for (auto& val : vec)
         {

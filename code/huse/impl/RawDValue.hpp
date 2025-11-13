@@ -3,7 +3,10 @@
 //
 #pragma once
 #include "../Type.hpp"
+#include "../Exception.hpp"
 #include <splat/unreachable.h>
+#include <cmath>
+#include <optional>
 #include <cassert>
 #include <cstddef>
 #include <cstring>
@@ -231,6 +234,22 @@ public:
         SPLAT_UNREACHABLE();
     }
 
+    Type htype() const
+    {
+        switch (value_tag)
+        {
+        case tag::integer: return { Type::Integer };
+        case tag::double_: return { Type::Float };
+        case tag::null:    return { Type::Null };
+        case tag::false_:   return { Type::False };
+        case tag::true_:    return { Type::True };
+        case tag::string:  return { Type::String };
+        case tag::array:   return { Type::Array };
+        case tag::object:  return { Type::Object };
+        }
+        SPLAT_UNREACHABLE();
+    }
+
     bool is_boolean() const {
         return value_tag == tag::false_ || value_tag == tag::true_;
     }
@@ -270,10 +289,10 @@ public:
     /// Returns the nth key of an object.  Calling with an out-of-bound
     /// index is undefined behavior.
     /// Only legal if get_type() is TYPE_OBJECT.
-    string get_object_key(size_t index) const {
+    std::string_view get_object_key(size_t index) const {
         assert_tag(tag::object);
         const size_t* s = payload + 1 + index * 3;
-        return string(text + s[0], s[1] - s[0]);
+        return std::string_view(text + s[0], s[1] - s[0]);
     }
 
     /// Returns the nth value of an object.  Calling with an out-of-bound
@@ -328,6 +347,10 @@ public:
             }
         }
         return length;
+    }
+
+    size_t find_object_key(std::string_view key) const {
+        return find_object_key(string(key.data(), key.length()));
     }
 
     /// If a numeric value was parsed as a 32-bit integer, returns it.
@@ -421,6 +444,121 @@ public:
     /// \cond INTERNAL
     const size_t* _internal_get_payload() const { return payload; }
     /// \endcond
+
+    //////////////////////////////////////////
+    static inline constexpr std::string_view Not_Integer = "not an integer";
+    static inline constexpr std::string_view Out_of_Range = "out of range";
+
+    template <typename Target, typename Source>
+    Target signedCheck(Source s)
+    {
+        if constexpr (std::is_unsigned_v<Target>)
+        {
+            if (s < 0) throwException("negative integer");
+        }
+        return Target(s);
+    }
+
+    template <typename T>
+    void readInt(T& val)
+    {
+        if (get_type() != TYPE_INTEGER) throwException(Not_Integer);
+        val = signedCheck<T>(get_integer_value());
+    }
+
+    template <typename T>
+    void readLargeInt(T& val)
+    {
+        if (get_type() == TYPE_INTEGER)
+        {
+            val = signedCheck<T>(get_integer_value());
+        }
+        else if (get_type() == TYPE_DOUBLE)
+        {
+            auto d = get_double_value();
+            double tmp;
+            if (std::modf(d, &tmp) != 0) throwException(Not_Integer);
+            val = signedCheck<T>(std::floor(d));
+        }
+        else
+        {
+            throwException(Not_Integer);
+        }
+    }
+
+    template <typename T>
+    void readFloat(T& val)
+    {
+        if (get_type() == TYPE_INTEGER) val = T(get_integer_value());
+        else if (get_type() == TYPE_DOUBLE) val = T(get_double_value());
+        else throwException("not a number");
+    }
+
+    template <typename S>
+    void readString(S& val)
+    {
+        if (get_type() != TYPE_STRING) throwException("not a string");
+        val = { as_cstring(), get_string_length() };
+    }
+
+    [[noreturn]] void throwException(std::string_view msg) const {
+        throw DeserializerException(std::string(msg));
+    }
+
+    void getValue(bool& val) {
+        auto t = get_type();
+        if (t == TYPE_TRUE) val = true;
+        else if (t == TYPE_FALSE) val = false;
+        else throwException("not a boolean");
+    }
+    void getValue(short& val) {
+        readInt(val);
+    }
+    void getValue(unsigned short& val) {
+        readInt(val);
+    }
+    void getValue(int& val) {
+        readInt(val);
+    }
+    void getValue(unsigned int& val) {
+        readLargeInt(val);
+    }
+    void getValue(long& val) {
+        if constexpr (sizeof(long) == 4) {
+            // gcc and clang have long equal intptr_t, msvc has long at 4 bytes
+            readInt(val);
+        }
+        else {
+            readLargeInt(val);
+        }
+    }
+    void getValue(unsigned long& val) {
+        readLargeInt(val);
+    }
+    void getValue(long long& val) {
+        readLargeInt(val);
+    }
+    void getValue(unsigned long long& val) {
+        readLargeInt(val);
+    }
+    void getValue(float& val) {
+        readFloat(val);
+    }
+    void getValue(double& val) {
+        readFloat(val);
+    }
+    void getValue(std::string_view& val) {
+        readString(val);
+    }
+    void getValue(std::string& val) {
+        readString(val);
+    }
+    void getValue(std::nullptr_t) {
+        auto t = get_type();
+        if (t != TYPE_NULL) throwException("not null");
+    }
+    void getValue(std::nullopt_t) {}
+    /////////////////
 
 private:
     using tag = internal::tag;

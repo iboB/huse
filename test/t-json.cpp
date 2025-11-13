@@ -186,7 +186,7 @@ TEST_CASE("simple deserialize")
     {
         auto d = makeD("[]");
         auto ar = d.ar();
-        CHECK(ar.length() == 0);
+        CHECK(ar.size() == 0);
     }
 
     {
@@ -198,7 +198,7 @@ TEST_CASE("simple deserialize")
         {
             auto ar = obj.ar("array");
             CHECK(ar.type().isArray());
-            CHECK(ar.length() == 4);
+            CHECK(ar.size() == 4);
 
             ar.val(std::nullopt); // skip 0
             ar.val(std::nullopt); // skip 1
@@ -220,19 +220,19 @@ TEST_CASE("simple deserialize")
         CHECK(obj.optval("bool", b));
         CHECK(b);
 
-        auto q = obj.peeknext();
+        auto q = obj.optkeyval();
         CHECK(!!q);
-        CHECK(q.name == "bool2");
-        CHECK(q.node->type().isBoolean());
-        CHECK(q.node->type().isFalse());
-        q->val(b);
+        CHECK(q->first == "bool2");
+        CHECK(q->second.type().isBoolean());
+        CHECK(q->second.type().isFalse());
+        q->second.val(b);
         CHECK(!b);
 
         std::string str;
         obj.val("str", str);
         CHECK(str == "b\n\\g\t\033sdf");
 
-        CHECK(!obj.peeknext());
+        CHECK(!obj.optkeyval());
 
         float f;
         obj.val("float", f);
@@ -247,12 +247,12 @@ TEST_CASE("simple deserialize")
         obj.val("unsigned-long-long", ull);
         CHECK(ull == 900000000000000);
 
-        auto& inode = obj.key("int");
+        auto inode = obj.key("int");
         CHECK(inode.type().isInteger());
         CHECK(inode.type().isNumber());
         CHECK(!inode.type().isFloat());
 
-        auto& fnode = obj.key("float");
+        auto fnode = obj.key("float");
         CHECK(fnode.type().isFloat());
         CHECK(fnode.type().isNumber());
 
@@ -301,14 +301,15 @@ TEST_CASE("deserialize iteration")
     {
         auto d = makeD(R"({"a": 1, "b": 2, "c": 3, "d": 4})");
         auto obj = d.obj();
-        CHECK(obj.length() == 4);
-        auto q = obj.peeknext();
-        CHECK(q.name == "a");
-        q->skip();
-        q = obj.peeknext();
-        CHECK(q.name == "b");
+        CHECK(obj.size() == 4);
+        {
+            auto q = obj.keyval();
+            CHECK(q.first == "a");
+        }
+        auto q = obj.keyval();
+        CHECK(q.first == "b");
         int n;
-        q->val(n);
+        q.second.val(n);
         CHECK(n == 2);
         std::string_view ksv;
         obj.keyval(ksv, n);
@@ -318,17 +319,17 @@ TEST_CASE("deserialize iteration")
         obj.keyval(kstr, n);
         CHECK(kstr == "d");
         CHECK(n == 4);
-        CHECK(obj.end());
-        CHECK(!obj.peeknext());
-        CHECK_THROWS_D(obj.keyval(ksv, n), "root.[4] : out of range");
+        CHECK(obj.done());
+        CHECK(!obj.optkeyval());
+        CHECK_THROWS_D(obj.keyval(ksv, n), "no more keys in object");
     }
 
     {
         auto d = makeD(R"([10, true, "xx"])");
         auto ar = d.ar();
-        CHECK(ar.length() == 3);
-        auto q = ar.peeknext();
-        CHECK(q);
+        CHECK(ar.size() == 3);
+        auto q = ar.optval();
+        REQUIRE(q);
         CHECK(q->type().isNumber());
         int n;
         q->val(n);
@@ -337,9 +338,9 @@ TEST_CASE("deserialize iteration")
         std::string_view s;
         ar.val(s);
         CHECK(s == "xx");
-        CHECK(ar.end());
-        CHECK(!ar.peeknext());
-        CHECK_THROWS_D(ar.val(n), "root.[3] : out of range");
+        CHECK(ar.done());
+        CHECK(!ar.optval());
+        CHECK_THROWS_D(ar.val(n), "array index out of bounds");
     }
 }
 
@@ -362,61 +363,61 @@ TEST_CASE("deserializer exceptions")
     std::string_view str;
     {
         auto d = makeD(json);
-        CHECK_THROWS_D(d.val(b), "root : not a boolean");
+        CHECK_THROWS_D(d.val(b), "not a boolean");
     }
     {
         auto d = makeD(json);
-        CHECK_THROWS_D(d.val(i32), "root : not an integer");
+        CHECK_THROWS_D(d.val(i32), "not an integer");
     }
     {
         auto d = makeD(json);
-        CHECK_THROWS_D(d.val(i64), "root : not an integer");
+        CHECK_THROWS_D(d.val(i64), "not an integer");
     }
     {
         auto d = makeD(json);
-        CHECK_THROWS_D(d.obj().ar("ar").val(i64), R"(root."ar".[0] : not an integer)");
+        CHECK_THROWS_D(d.obj().ar("ar").val(i64), R"(not an integer)");
     }
     {
         auto d = makeD(json);
-        CHECK_THROWS_D(d.obj().ar("ar").index(2).val(u32), R"(root."ar".[2] : negative integer)");
+        CHECK_THROWS_D(d.obj().ar("ar").index(2).val(u32), R"(negative integer)");
     }
     {
         auto d = makeD(json);
-        CHECK_THROWS_D(d.val(f), "root : not a number");
+        CHECK_THROWS_D(d.val(f), "not a number");
     }
     {
         auto d = makeD(json);
-        CHECK_THROWS_D(d.val(str), "root : not a string");
+        CHECK_THROWS_D(d.val(str), "not a string");
     }
     {
         auto d = makeD(json);
-        CHECK_THROWS_D(d.ar(), "root : not an array");
+        CHECK_THROWS_D(d.ar(), "not an array");
     }
     {
         auto d = makeD(json);
-        CHECK_THROWS_D(d.obj().obj("ar"), R"(root."ar" : not an object)");
+        CHECK_THROWS_D(d.obj().obj("ar"), R"(not an object)");
     }
     {
         auto d = makeD(json);
-        CHECK_THROWS_D(d.obj().ar("ar").index(5), R"(root."ar".[5] : out of range)");
+        CHECK_THROWS_D(d.obj().ar("ar").index(5), R"(array index out of bounds)");
     }
     {
         auto d = makeD(json);
-        CHECK_THROWS_D(d.obj().key("zzz"), R"(root."zzz" : out of range)");
+        CHECK_THROWS_D(d.obj().key("zzz"), R"(key not found in object)");
     }
     {
         auto d = makeD(json);
         auto o = d.obj();
         auto a = o.ar("ar");
         a.index(2).val(i32);
-        CHECK_THROWS_D(a.val(str), R"(root."ar".[3] : out of range)");
+        CHECK_THROWS_D(a.val(str), R"(array index out of bounds)");
     }
     {
         auto d = makeD(json);
         auto o = d.obj();
         o.val("b", b);
         std::string_view key;
-        CHECK_THROWS_D(o.keyval(key, b), "root.[3] : out of range");
+        CHECK_THROWS_D(o.keyval(key, b), "no more keys in object");
     }
     {
         auto d = makeD(json);
@@ -429,7 +430,7 @@ TEST_CASE("deserializer exceptions")
         };
         CHECK_NOTHROW(io.cval("x", f, rf));
         CHECK(f == 1);
-        CHECK_THROWS_D(io.cval("y", f, rf), R"(root."ar".[1]."y" : val too big)");
+        CHECK_THROWS_D(io.cval("y", f, rf), R"(val too big)");
     }
 }
 

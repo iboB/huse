@@ -46,8 +46,6 @@ public:
 
     std::istream& get() { return m_stream; }
 
-    [[noreturn]] void throwException(const std::string& msg) const;
-
 private:
     Deserializer& m_deserializer;
 
@@ -55,23 +53,22 @@ private:
     std::istream m_stream;
 };
 
-class DeserializerNode
-{
+class DeserializerNode {
 protected:
-    DeserializerNode(Deserializer& d)
-        : m_deserializer(d)
-    {}
     friend class Deserializer;
     Deserializer& m_deserializer;
+    impl::RawDValue m_value;
 public:
-    DeserializerNode(const DeserializerNode&) = delete;
-    DeserializerNode& operator=(const DeserializerNode&) = delete;
-    DeserializerNode(DeserializerNode&&) = delete;
-    DeserializerNode& operator=(DeserializerNode&&) = delete;
+    explicit DeserializerNode(Deserializer& d, const impl::RawDValue& value)
+        : m_deserializer(d)
+        , m_value(value)
+    {}
 
     Deserializer& _s() { return m_deserializer; }
 
-    Type type() const;
+    Type type() const {
+        return m_value.htype();
+    }
 
     DeserializerObject obj();
     DeserializerArray ar();
@@ -92,61 +89,125 @@ public:
         return DeserializerSStream(m_deserializer, str);
     }
 
-    void skip();
-
-    bool end() const;
-
-    [[noreturn]] void throwException(const std::string& msg) const;
+    [[noreturn]] void throwException(std::string_view msg) const;
 
 protected:
     // number of elements in compound object
-    int length() const;
+    int size() const {
+        return int(m_value.get_length());
+    }
 };
 
-class DeserializerArray : public DeserializerNode
-{
-public:
-    explicit DeserializerArray(Deserializer& d);
-    ~DeserializerArray();
+class DeserializerValue : public DeserializerNode {
+};
 
-    using DeserializerNode::length;
-    DeserializerNode& index(int index);
+class DeserializerArray : public DeserializerNode {
+    int m_index = 0;
+public:
+    explicit DeserializerArray(Deserializer& d, const impl::RawDValue& value)
+        : DeserializerNode(d, value)
+    {
+        if (!value.htype().isArray()) {
+            throwException("not an array");
+        }
+    }
+
+    using DeserializerNode::size;
+
+    DeserializerObject obj();
+    DeserializerArray ar();
+
+    std::optional<DeserializerNode> optval() {
+        if (done()) {
+            return std::nullopt;
+        }
+        auto ret = DeserializerNode(m_deserializer, m_value.get_array_element(m_index));
+        ++m_index;
+        return ret;
+    }
+
+    DeserializerNode val() {
+        auto v = optval();
+        if (!v) {
+            throwException("array index out of bounds");
+        }
+        return *v;
+    }
+
+    DeserializerNode index(int index) {
+        m_index = index;
+        return val();
+    }
+
+    template <typename T>
+    void val(T& v) {
+        val().val(v);
+    }
+
+    template <typename T, typename F>
+    void cval(T& v, F&& f) {
+        f(val(), v);
+    }
+
+    DeserializerSStream sstream() {
+        return val().sstream();
+    }
+
+    void skip() {
+        ++m_index;
+    }
+    bool done() const {
+        return m_index >= size();
+    }
 
     // intentionally hiding parent
     Type type() const { return { Type::Array }; }
-
-    struct Query
-    {
-        DeserializerNode* node = nullptr;
-        explicit operator bool() const { return node; }
-        DeserializerNode* operator->() { return node; }
-    };
-    Query peeknext();
 };
 
-class DeserializerObject : private DeserializerNode
+class DeserializerObject : public DeserializerNode
 {
+    int m_index = 0;
 public:
-    explicit DeserializerObject(Deserializer& d);
-    ~DeserializerObject();
-
-    using DeserializerNode::_s;
-    using DeserializerNode::length;
-    using DeserializerNode::end;
-    using DeserializerNode::throwException;
-
-    DeserializerNode& key(std::string_view k);
-
-    DeserializerObject obj(std::string_view k)
+    explicit DeserializerObject(Deserializer& d, const impl::RawDValue& value)
+        : DeserializerNode(d, value)
     {
+        if (!value.htype().isObject()) {
+            throwException("not an object");
+        }
+    }
+
+    using DeserializerNode::size;
+
+    void skip() {
+        ++m_index;
+    }
+    bool done() const {
+        return m_index >= size();
+    }
+
+    std::optional<DeserializerNode> optkey(std::string_view k) {
+        auto index = int(m_value.find_object_key(k));
+        if (index >= size()) {
+            return std::nullopt;
+        }
+        m_index = index + 1;
+        return DeserializerNode(m_deserializer, m_value.get_object_value(index));
+    }
+
+    DeserializerNode key(std::string_view k) {
+        auto ret = optkey(k);
+        if (!ret) {
+            throwException("key not found in object");
+        }
+        return *ret;
+    }
+
+    DeserializerObject obj(std::string_view k) {
         return key(k).obj();
     }
-    DeserializerArray ar(std::string_view k)
-    {
+    DeserializerArray ar(std::string_view k) {
         return key(k).ar();
     }
-
-    DeserializerNode* optkey(std::string_view k);
 
     template <typename T>
     void val(std::string_view k, T& v)
@@ -197,71 +258,95 @@ public:
     void flatval(T& v);
 
     template <typename T, typename F>
-    void cval(std::string_view k, T& v, F&& f)
-    {
+    void cval(std::string_view k, T& v, F&& f) {
         key(k).cval(v, std::forward<F>(f));
     }
 
     template <typename T, typename F>
-    void cval(std::string_view k, std::optional<T>& v, F&& f)
-    {
-        if (auto open = optkey(k))
-        {
+    void cval(std::string_view k, std::optional<T>& v, F&& f) {
+        if (auto open = optkey(k)) {
             open->cval(v.emplace(), std::forward<F>(f));
         }
-        else
-        {
+        else {
             v.reset();
         }
     }
 
-    DeserializerSStream sstream(std::string_view k)
-    {
+    DeserializerSStream sstream(std::string_view k) {
         return key(k).sstream();
     }
 
-    struct KeyQuery
-    {
-        std::string_view name;
-        DeserializerNode* node = nullptr;
-        explicit operator bool() const { return node; }
-        DeserializerNode* operator->() { return node; }
-    };
-    KeyQuery peeknext();
+    std::optional<std::pair<std::string_view, DeserializerNode>> optkeyval() {
+        if (done()) {
+            return std::nullopt;
+        }
+        auto key = m_value.get_object_key(m_index);
+        auto val = DeserializerNode(m_deserializer, m_value.get_object_value(m_index));
+        ++m_index;
+        return std::make_pair(key, val);
+    }
+
+    std::pair<std::string_view, DeserializerNode> keyval() {
+        auto r = optkeyval();
+        if (!r) {
+            throwException("no more keys in object");
+        }
+        return *r;
+    }
 
     template <typename Key, typename T>
-    void keyval(Key& k, T& v);
+    void keyval(Key& k, T& v) {
+        auto p = keyval();
+        k = Key(p.first);
+        p.second.val(v);
+    }
+
+    template <typename Key, typename T>
+    bool optkeyval(Key& k, T& v) {
+        auto p = optkeyval();
+        if (!p) return false;
+        k = Key(p->first);
+        p->second.val(v);
+        return true;
+    }
 
     // intentionally hiding parent
     Type type() const { return { Type::Object }; }
 };
 
-inline void DeserializerSStream::throwException(const std::string& msg) const {
-    throwDeserializerException_msg::call(m_deserializer, msg);
-    SPLAT_UNREACHABLE();
-}
-
 inline DeserializerObject DeserializerNode::obj()
 {
-    return DeserializerObject(m_deserializer);
+    return DeserializerObject(m_deserializer, m_value);
 }
 
 inline DeserializerArray DeserializerNode::ar()
 {
-    return DeserializerArray(m_deserializer);
+    return DeserializerArray(m_deserializer, m_value);
 }
 
-inline void DeserializerNode::throwException(const std::string& msg) const {
-    throwDeserializerException_msg::call(m_deserializer, msg);
+inline DeserializerObject DeserializerArray::obj() {
+    return index(m_index).obj();
+}
+inline DeserializerArray DeserializerArray::ar() {
+    return index(m_index).ar();
+}
+
+inline void DeserializerNode::throwException(std::string_view msg) const {
+    m_value.throwException(msg);
     SPLAT_UNREACHABLE();
 }
 
 namespace impl
 {
+//template <typename, typename = void>
+//struct HasPolyDeserialize : std::false_type {};
+//template <typename T>
+//struct HasPolyDeserialize<T, decltype(husePolyDeserialize(std::declval<Deserializer&>(), std::declval<T&>()))> : std::true_type {};
+
 template <typename, typename = void>
-struct HasPolyDeserialize : std::false_type {};
+struct HasGetValue : std::false_type {};
 template <typename T>
-struct HasPolyDeserialize<T, decltype(husePolyDeserialize(std::declval<Deserializer&>(), std::declval<T&>()))> : std::true_type {};
+struct HasGetValue<T, decltype(std::declval<impl::RawDValue>().getValue(std::declval<T&>()))> : std::true_type {};
 
 template <typename, typename = void>
 struct HasDeserializeMethod : std::false_type {};
@@ -284,101 +369,22 @@ struct HasDeserializeFlatFunc<T, decltype(huseDeserializeFlat(std::declval<Deser
 
 template <typename T>
 void DeserializerNode::val(T& v) {
-    if constexpr (impl::HasDeserializeMethod<T>::value)
-    {
+    if constexpr (impl::HasGetValue<T>::value) {
+        m_value.getValue(v);
+    }
+    else if constexpr (impl::HasDeserializeMethod<T>::value) {
         v.huseDeserialize(*this);
     }
-    else if constexpr (impl::HasDeserializeFunc<T>::value)
-    {
+    else if constexpr (impl::HasDeserializeFunc<T>::value) {
         huseDeserialize(*this, v);
     }
-    else if constexpr (impl::HasPolyDeserialize<T>::value)
-    {
-        husePolyDeserialize(m_deserializer, v);
-    }
-    else
-    {
+    //else if constexpr (impl::HasPolyDeserialize<T>::value)
+    //{
+    //    husePolyDeserialize(m_deserializer, v);
+    //}
+    else {
         cannot_deserialize(v);
     }
-}
-
-inline Type DeserializerNode::type() const
-{
-    return pendingType_msg::call(m_deserializer);
-}
-
-inline int DeserializerNode::length() const
-{
-    return curLength_msg::call(m_deserializer);
-}
-
-inline void DeserializerNode::skip()
-{
-    skip_msg::call(m_deserializer);
-}
-
-inline bool DeserializerNode::end() const
-{
-    return !hasPending_msg::call(m_deserializer);
-}
-
-inline DeserializerArray::DeserializerArray(Deserializer& d)
-    : DeserializerNode(d)
-{
-    loadArray_msg::call(m_deserializer);
-}
-
-inline DeserializerArray::~DeserializerArray()
-{
-    unloadArray_msg::call(m_deserializer);
-}
-
-inline DeserializerNode& DeserializerArray::index(int index)
-{
-    loadIndex_msg::call(m_deserializer, index);
-    return *this;
-}
-
-inline DeserializerArray::Query DeserializerArray::peeknext()
-{
-    if (!hasPending_msg::call(m_deserializer)) return {};
-    return {this};
-}
-
-inline DeserializerObject::DeserializerObject(Deserializer& d)
-    : DeserializerNode(d)
-{
-    loadObject_msg::call(m_deserializer);
-}
-inline DeserializerObject::~DeserializerObject()
-{
-    unloadObject_msg::call(m_deserializer);
-}
-
-inline DeserializerNode& DeserializerObject::key(std::string_view k)
-{
-    loadKey_msg::call(m_deserializer, k);
-    return *this;
-}
-
-inline DeserializerNode* DeserializerObject::optkey(std::string_view k)
-{
-    if (tryLoadKey_msg::call(m_deserializer, k)) return this;
-    return nullptr;
-}
-
-inline DeserializerObject::KeyQuery DeserializerObject::peeknext()
-{
-    auto name = optPendingKey_msg::call(m_deserializer);
-    if (!name) return {};
-    return {*name, this};
-}
-
-template <typename Key, typename T>
-void DeserializerObject::keyval(Key& k, T& v)
-{
-    k = Key(pendingKey_msg::call(m_deserializer));
-    this->DeserializerNode::val(v);
 }
 
 template <typename T>
@@ -402,13 +408,13 @@ class DeserializerRoot : public DeserializerNode {
     Deserializer m_deserializerObject;
 public:
     explicit DeserializerRoot(Deserializer&& d)
-        : DeserializerNode(m_deserializerObject)
+        : DeserializerNode(m_deserializerObject, root_msg::call(d))
         , m_deserializerObject(std::move(d))
     {}
 };
 
 inline DeserializerNode Deserializer::node() {
-    return DeserializerNode(*this);
+    return DeserializerNode(*this, root_msg::call(*this));
 }
 
 } // namespace huse

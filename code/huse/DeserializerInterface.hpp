@@ -6,6 +6,8 @@
 #include "DeclareMsg.hpp"
 #include "Type.hpp"
 
+#include "impl/RawDValue.hpp"
+
 #include <splat/unreachable.h>
 #include <string_view>
 #include <optional>
@@ -72,5 +74,7 @@ DYNAMIX_DECLARE_EXPORTED_SIMPLE_MSG(HUSE_API, throwDeserializerException_msg, vo
     throwDeserializerException_msg::call(d, msg);
     SPLAT_UNREACHABLE();
 }
+
+DYNAMIX_DECLARE_EXPORTED_SIMPLE_MSG(HUSE_API, root_msg, impl::RawDValue(Deserializer&));
 
 }

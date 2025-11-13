@@ -21,11 +21,15 @@ if(NOT TARGET Boost::json)
     add_library(Boost::json ALIAS Boost::boost)
 endif()
 
+include(icm_cpu_arch)
+icm_get_native_arch_flag(nativeArchFlag)
+
 macro(huse_benchmark name)
     set(tgt bench-huse-${name})
     add_executable(${tgt})
     set_target_properties(${tgt} PROPERTIES FOLDER bench)
     target_sources(${tgt} PRIVATE b-${name}.cpp ${ARGN})
+    target_compile_options(${tgt} PRIVATE ${nativeArchFlag})
     target_link_libraries(${tgt} PRIVATE
         huse::huse
         Boost::json

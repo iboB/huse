@@ -30,10 +30,10 @@ void bench_huse(const char* path, picobench::state& s) {
     s.stop_timer();
 
     if (d.type().isObject()) {
-        s.set_result(d.obj().length());
+        s.set_result(d.obj().size());
     }
     else if (d.type().isArray()) {
-        s.set_result(d.ar().length());
+        s.set_result(d.ar().size());
     }
 }
 
