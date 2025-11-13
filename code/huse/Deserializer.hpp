@@ -183,7 +183,7 @@ public:
         if (index >= length()) {
             throwException("key not found: " + std::string(k));
         }
-        m_index = index;
+        m_index = index + 1;
         return DeserializerNode(m_deserializer, m_value.get_object_value(index));
     }
 
@@ -199,7 +199,7 @@ public:
         if (index >= length()) {
             return std::nullopt;
         }
-        m_index = index;
+        m_index = index + 1;
         return DeserializerNode(m_deserializer, m_value.get_object_value(index));
     }
 
@@ -283,7 +283,6 @@ public:
         DeserializerNode* operator->() { return &(*node); }
     };
     KeyQuery peeknext() {
-        ++m_index;
         if (end()) {
             return {};
         }
@@ -300,6 +299,7 @@ public:
         if (!p) {
             throwException("no more keys in object");
         }
+        ++m_index;
         k = Key(p.name);
         p->val(v);
     }
