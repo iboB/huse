@@ -83,7 +83,7 @@ int main()
                 {"skill": "Sword", "MP": 1},
                 {"skill": "Immortality", "MP": 10}
             ],
-            "familiar": {"familiar": "Ghost", "HP": 5, "skill": {"skill": "Biting", "MP": 1}}
+            "familiar": {"familiar": "Ghost", "HP": 5, "skill": {"skill": "Bite", "MP": 1}}
         },
         {
             "character": "Hodor",

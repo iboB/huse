@@ -15,8 +15,6 @@ icm_add_lib(huse HUSE
     SerializerInterface.hpp
     SerializerInterface.cpp
     Deserializer.hpp
-    DeserializerInterface.hpp
-    DeserializerInterface.cpp
     VTableExports.cpp
     Exception.hpp
 

@@ -4,17 +4,17 @@
 #pragma once
 #include "API.h"
 #include "impl/RawDValue.hpp"
-#include "DeserializerInterface.hpp"
-#include "DeserializerObj.hpp"
 
 #include <itlib/mem_streambuf.hpp>
 #include <splat/unreachable.h>
 #include <string_view>
 #include <optional>
 #include <istream>
+#include <memory>
 
 namespace huse
 {
+class Deserializer;
 class DeserializerArray;
 class DeserializerObject;
 
@@ -89,7 +89,10 @@ public:
         return DeserializerSStream(m_deserializer, str);
     }
 
-    [[noreturn]] void throwException(std::string_view msg) const;
+    [[noreturn]] void throwException(std::string_view msg) const {
+        m_value.throwException(msg);
+        SPLAT_UNREACHABLE();
+    }
 
 protected:
     // number of elements in compound object
@@ -399,11 +402,6 @@ inline DeserializerArray DeserializerArray::ar() {
     return index(m_index).ar();
 }
 
-inline void DeserializerNode::throwException(std::string_view msg) const {
-    m_value.throwException(msg);
-    SPLAT_UNREACHABLE();
-}
-
 namespace impl
 {
 //template <typename, typename = void>
@@ -472,17 +470,24 @@ void DeserializerObject::flatval(T& v)
     }
 }
 
-class DeserializerRoot : public DeserializerNode {
-    Deserializer m_deserializerObject;
+class HUSE_API Deserializer {
 public:
-    explicit DeserializerRoot(Deserializer&& d)
-        : DeserializerNode(m_deserializerObject, root_msg::call(d))
+    virtual ~Deserializer();
+    DeserializerNode root() {
+        return DeserializerNode(*this, rootValue());
+    }
+protected:
+    virtual impl::RawDValue rootValue() const = 0;
+    friend class DeserializerRoot;
+};
+
+class DeserializerRoot : public DeserializerNode {
+    std::shared_ptr<Deserializer> m_deserializerObject;
+public:
+    explicit DeserializerRoot(std::shared_ptr<Deserializer> d)
+        : DeserializerNode(*d, d->rootValue())
         , m_deserializerObject(std::move(d))
     {}
 };
-
-inline DeserializerNode Deserializer::node() {
-    return DeserializerNode(*this, root_msg::call(*this));
-}
 
 } // namespace huse

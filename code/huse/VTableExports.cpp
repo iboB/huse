@@ -14,9 +14,7 @@ Serializer::Serializer()
     : dynamix::object(dynamix::g::get_domain<Domain>())
 {}
 
-Deserializer::Deserializer()
-    : dynamix::object(dynamix::g::get_domain<Domain>())
-{}
+Deserializer::~Deserializer() {}
 
 Exception::~Exception() = default;
 SerializerException::~SerializerException() = default;

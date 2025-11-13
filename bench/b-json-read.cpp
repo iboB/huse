@@ -1,7 +1,7 @@
 // Copyright (c) Borislav Stanimirov
 // SPDX-License-Identifier: MIT
 //
-#include <huse/json/JsonDeserializer.hpp>
+#include <huse/json/Deserializer.hpp>
 #include <huse/Deserializer.hpp>
 #include <boost/json.hpp>
 #include <simdjson.h>
