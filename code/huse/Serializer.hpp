@@ -16,10 +16,13 @@ namespace huse
 class SerializerNode;
 class SerializerArray;
 class SerializerObject;
+class CtxObj;
 
 
 class HUSE_API Serializer {
 public:
+    Serializer(const CtxObj* ctx);
+
     virtual ~Serializer();
 
     virtual void writeValue(bool) = 0;
@@ -53,6 +56,8 @@ public:
     void throwException(const std::string& msg);
 
     SerializerNode node();
+
+    const CtxObj& ctx;
 };
 
 class SerializerSStream : public impl::UniqueStack {

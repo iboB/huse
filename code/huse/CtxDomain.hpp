@@ -6,6 +6,6 @@
 #include <dynamix/declare_domain.hpp>
 
 namespace huse {
-struct Domain;
-DYNAMIX_DECLARE_EXPORTED_DOMAIN(HUSE_API, Domain);
+struct CtxDomain;
+DYNAMIX_DECLARE_EXPORTED_DOMAIN(HUSE_API, CtxDomain);
 }

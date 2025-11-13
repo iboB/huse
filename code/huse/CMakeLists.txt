@@ -6,9 +6,6 @@ icm_add_lib(huse HUSE
 
     impl/UniqueStack.hpp
 
-    Domain.hpp
-    Domain.cpp
-
     Fwd.hpp
 
     Serializer.hpp
@@ -23,6 +20,11 @@ icm_add_lib(huse HUSE
     json/JsonDeserializer.hpp
     json/JsonDeserializer.cpp
     json/_sajson/sajson.hpp
+
+    CtxDomain.hpp
+    CtxDomain.cpp
+    CtxObj.hpp
+    CtxObj.cpp
 
     helpers/StdVector.hpp
 )

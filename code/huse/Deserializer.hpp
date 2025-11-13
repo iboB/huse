@@ -385,13 +385,11 @@ public:
     }
 };
 
-inline DeserializerObject DeserializerNode::obj()
-{
+inline DeserializerObject DeserializerNode::obj() {
     return DeserializerObject(m_deserializer, m_value);
 }
 
-inline DeserializerArray DeserializerNode::ar()
-{
+inline DeserializerArray DeserializerNode::ar() {
     return DeserializerArray(m_deserializer, m_value);
 }
 
@@ -454,18 +452,14 @@ void DeserializerNode::val(T& v) {
 }
 
 template <typename T>
-void DeserializerObject::flatval(T& v)
-{
-    if constexpr (impl::HasDeserializeFlatMethod<T>::value)
-    {
+void DeserializerObject::flatval(T& v) {
+    if constexpr (impl::HasDeserializeFlatMethod<T>::value) {
         v.huseDeserializeFlat(*this);
     }
-    else if constexpr (impl::HasDeserializeFlatFunc<T>::value)
-    {
+    else if constexpr (impl::HasDeserializeFlatFunc<T>::value) {
         huseDeserializeFlat(*this, v);
     }
-    else
-    {
+    else {
         cannot_deserialize(v);
     }
 }
