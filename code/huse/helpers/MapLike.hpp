@@ -33,7 +33,7 @@ struct MapLike {
 
         if constexpr (std::is_convertible_v<typename Map::key_type, std::string_view>) {
             auto obj = n.obj();
-            const int len = obj.length();
+            const int len = obj.size();
             for (int i = 0; i < len; ++i) {
                 KvPair val;
                 obj.keyval(val.first, val.second);
@@ -42,7 +42,7 @@ struct MapLike {
         }
         else {
             auto ar = n.ar();
-            const int len = ar.length();
+            const int len = ar.size();
             for (int i = 0; i < len; ++i) {
                 KvPair val;
                 auto pair = ar.obj();

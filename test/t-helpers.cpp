@@ -92,7 +92,7 @@ TEST_CASE("istr") {
 
     {
         ObjWrap<int, huse::IntAsString> w({});
-        CHECK_THROWS_WITH_AS(d.val(w), R"(root."t" : not an integer)", huse::DeserializerException);
+        CHECK_THROWS_WITH_AS(d.val(w), R"(not an integer)", huse::DeserializerException);
     }
 
     {

@@ -9,4 +9,4 @@ endmacro()
 
 huse_test(json)
 # huse_test(poly)
-# huse_test(helpers)
+huse_test(helpers)

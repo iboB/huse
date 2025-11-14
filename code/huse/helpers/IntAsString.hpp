@@ -39,7 +39,7 @@ struct IntAsStringOpt {
             i = *emptyStringVal;
         }
         else if (!impl::int_from_string(val, i)) {
-            throwDeserializerException(n._s(), "not an integer");
+            n.throwException("not an integer");
         }
     }
 };
