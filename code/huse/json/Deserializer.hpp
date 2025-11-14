@@ -3,7 +3,7 @@
 //
 #pragma once
 #include "../API.h"
-#include "../Deserializer.hpp"
+#include "../DeserializerRoot.hpp"
 #include <string_view>
 #include <cstddef>
 

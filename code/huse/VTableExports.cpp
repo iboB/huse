@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 //
 #include "Serializer.hpp"
-#include "Deserializer.hpp"
+#include "DeserializerRoot.hpp"
 #include "Exception.hpp"
 
 // used to export vtables
