@@ -61,6 +61,7 @@ TEST_CASE("poly i/o")
     huse::json::Make_Serializer(sout).cval(orig, helper);
 
     auto json = sout.str();
+    sout.str("");
     CHECK(json == R"({"a":72,"b":"xyz"})");
 
     PolySerializable cc;
