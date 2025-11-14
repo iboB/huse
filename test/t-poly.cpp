@@ -3,11 +3,14 @@
 //
 #include <huse/json/Deserializer.hpp>
 #include <huse/json/Serializer.hpp>
+#include <huse/CtxDomain.hpp>
 
-#include <huse/DeclareMsg.hpp>
-#include <huse/DefineMsg.hpp>
-#include <huse/Domain.hpp>
-#include <huse/PolyTraits.hpp>
+#include <dynamix/declare_mixin.hpp>
+#include <dynamix/define_mixin.hpp>
+#include <dynamix/msg/declare_msg.hpp>
+#include <dynamix/msg/define_msg.hpp>
+#include <dynamix/msg/msg_traits.hpp>
+#include <dynamix/mutate.hpp>
 
 #include <sstream>
 
@@ -17,78 +20,69 @@ struct PolySerializable {
     int a;
     std::string b;
 
-    template <typename S, typename PS>
-    static void serializeT(S& s, PS& self) {
-        auto n = s.node();
+    template <typename N, typename PS>
+    static void defaultSerialize(N& n, PS& self) {
         auto o = n.obj();
         o.val("a", self.a);
         o.val("b", self.b);
     }
+
+    struct Io {
+        virtual void operator()(huse::SerializerNode& n, const PolySerializable& ps) const = 0;
+        virtual void operator()(huse::DeserializerNode& n, PolySerializable& ps) const = 0;
+    };
+
+    struct Serialize;
 };
 
-HUSE_SD_MSG(HUSE_NO_EXPORT, PolySerializable, PolySerializable);
+DYNAMIX_DECLARE_SIMPLE_MSG(getPolySerializableIo, const PolySerializable::Io*(const huse::CtxObj&));
+
+struct PolySerializable::Serialize {
+    template <typename N, typename PS>
+    void operator()(N& n, PS& ps) const {
+        auto& ctx = n.ctx();
+        auto* io = getPolySerializableIo::call(ctx);
+        if (io) {
+            (*io)(n, ps);
+        }
+        else {
+            PS::defaultSerialize(n, ps);
+        }
+    }
+};
 
 DYNAMIX_DECLARE_MIXIN(struct SDEx);
 
-struct JsonSerializeTester {
-    struct Pack {
-        std::ostringstream sout;
-        std::optional<huse::Serializer> s;
-
-        Pack() {
-            s.emplace(huse::json::Make_SerializerObj(sout));
-        }
-
-        std::string str() {
-            s.reset();
-            return sout.str();
-        }
-    };
-
-    std::optional<Pack> pack;
-
-    huse::SerializerNode make() {
-        HUSE_ASSERT_INTERNAL(!pack);
-        pack.emplace();
-        return pack->s->node();
-    }
-
-    std::string str() {
-        std::string ret = pack->str();
-        pack.reset();
-        return ret;
-    }
-};
-
 TEST_CASE("poly i/o")
 {
-    static_assert(huse::impl::HasPolySerialize<PolySerializable>::value);
-    static_assert(huse::impl::HasPolyDeserialize<PolySerializable>::value);
-    PolySerializable orig = {72, "xyz"};
-    JsonSerializeTester j;
-    j.make().val(orig);
+    const PolySerializable orig = {72, "xyz"};
+    PolySerializable::Serialize helper;
+    std::ostringstream sout;
+    huse::json::Make_Serializer(sout).cval(orig, helper);
 
-    auto json = j.str();
+    auto json = sout.str();
     CHECK(json == R"({"a":72,"b":"xyz"})");
 
     PolySerializable cc;
-    huse::json::Make_Deserializer(json).val(cc);
+    huse::json::Make_Deserializer(json).cval(cc, helper);
 
     CHECK(orig.a == cc.a);
     CHECK(orig.b == cc.b);
 
-    j.make();
-    mutate(*j.pack->s, dynamix::add<SDEx>());
-    j.pack->s->node().val(orig);
+    {
+        auto s = huse::json::Make_Serializer(sout);
+        mutate(s.ctx(), dynamix::add<SDEx>());
+        s.cval(orig, helper);
+    }
 
-    json = j.str();
+    json = sout.str();
     CHECK(json == R"({"aa":7200,"bb":"xyz_"})");
 
     PolySerializable cc2;
     {
         auto d = huse::json::Make_Deserializer(json);
-        mutate(d._s(), dynamix::add<SDEx>());
-        d.val(cc2);
+        mutate(d.ctx(), dynamix::add<SDEx>());
+        d.cval(cc2, helper);
     }
 
     CHECK(orig.a == cc2.a);
@@ -96,33 +90,37 @@ TEST_CASE("poly i/o")
 }
 
 struct SDEx {
-    void husePolySerialize(const PolySerializable& ps) {
-        auto self = huse_s_self;
-        auto n = self->node();
-        auto o = n.obj();
-        o.val("aa", ps.a * 100);
-        o.val("bb", ps.b + "_");
-    }
-    void husePolyDeserialize(PolySerializable& ps) {
-        auto self = huse_d_self;
-        auto n = self->node();
+    struct Io final : public PolySerializable::Io {
+        void operator()(huse::SerializerNode& n, const PolySerializable& ps) const override {
+            auto o = n.obj();
+            o.val("aa", ps.a * 100);
+            o.val("bb", ps.b + "_");
+        }
+        void operator()(huse::DeserializerNode& n, PolySerializable& ps) const override {
+            auto o = n.obj();
+            o.val("aa", ps.a);
+            CHECK(ps.a % 100 == 0);
+            ps.a /= 100;
 
-        auto o = n.obj();
-        o.val("aa", ps.a);
-        CHECK(ps.a % 100 == 0);
-        ps.a /= 100;
+            o.val("bb", ps.b);
+            CHECK(ps.b.length() >= 1);
+            CHECK(ps.b.back() == '_');
+            ps.b.pop_back();
+        }
+    };
+    Io m_io;
 
-        o.val("bb", ps.b);
-        CHECK(ps.b.length() >= 1);
-        CHECK(ps.b.back() == '_');
-        ps.b.pop_back();
+    static const PolySerializable::Io* get(const SDEx* self) {
+        return &self->m_io;
     }
 };
 
-DYNAMIX_DEFINE_MIXIN(huse::Domain, SDEx)
-    .implements<husePolySerialize_PolySerializable>()
-    .implements<husePolyDeserialize_PolySerializable>()
+DYNAMIX_DEFINE_MIXIN(huse::CtxDomain, SDEx)
+    .implements_by<getPolySerializableIo>(&SDEx::get)
 ;
 
-HUSE_DEFINE_S_MSG_EX(const PolySerializable&, PolySerializable, true, (PolySerializable::serializeT<huse::Serializer, const PolySerializable>));
-HUSE_DEFINE_D_MSG_EX(PolySerializable&, PolySerializable, true, (PolySerializable::serializeT<huse::Deserializer, PolySerializable>));
+DYNAMIX_DEFINE_SIMPLE_MSG_EX(getPolySerializableIo, unicast, false,
+    [](const huse::CtxObj&)->const PolySerializable::Io* {
+        return nullptr;
+    }
+);

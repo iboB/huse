@@ -8,5 +8,5 @@ macro(huse_test test)
 endmacro()
 
 huse_test(json)
-# huse_test(poly)
+huse_test(poly)
 huse_test(helpers)
