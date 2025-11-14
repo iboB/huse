@@ -9,7 +9,7 @@
 
 namespace huse {
 
-class HUSE_API CtxObj : dynamix::object {
+class HUSE_API CtxObj : public dynamix::object {
 public:
     CtxObj();
 

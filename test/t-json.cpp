@@ -191,7 +191,7 @@ TEST_CASE("simple deserialize")
         auto d = makeD(R"({"array":[1,2,3,4],"bool":true,"bool2":false,"float":3.1,"int":-3,"unsigned-long-long":900000000000000,"str":"b\n\\g\t\u001bsdf"})");
         CHECK(d.type().isObject());
         auto obj = d.obj();
-        CHECK(&obj._s() == &d._s());
+        CHECK(&obj.ctx() == &d.ctx());
         CHECK(obj.type().isObject());
         {
             auto ar = obj.ar("array");

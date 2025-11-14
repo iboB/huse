@@ -3,26 +3,17 @@
 //
 #pragma once
 #include "Deserializer.hpp"
+#include "MsgDeserializerRoot.hpp"
+#include "CtxObj.hpp"
 
 namespace huse {
 
-class HUSE_API Deserializer {
-public:
-    virtual ~Deserializer();
-    DeserializerNode root() {
-        return DeserializerNode(*this, rootValue());
-    }
-protected:
-    virtual ImValue rootValue() const = 0;
-    friend class DeserializerRoot;
-};
-
 class DeserializerRoot : public DeserializerNode {
-    std::shared_ptr<Deserializer> m_deserializerObject;
+    CtxObj m_ctxobj;
 public:
-    explicit DeserializerRoot(std::shared_ptr<Deserializer> d)
-        : DeserializerNode(*d, d->rootValue())
-        , m_deserializerObject(std::move(d))
+    explicit DeserializerRoot(CtxObj&& d)
+        : DeserializerNode(m_ctxobj, Deserializer_root::call(d))
+        , m_ctxobj(std::move(d))
     {}
 };
 

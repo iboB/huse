@@ -17,14 +17,19 @@ icm_add_lib(huse HUSE
     json/JsonSerializer.hpp
     json/JsonSerializer.cpp
     json/Deserializer.hpp
-    json/JsonDeserializer.hpp
-    json/JsonDeserializer.cpp
+    json/DeserializerMixin.hpp
+    json/Deserializer.cpp
+    json/Parser.hpp
+    json/Parser.cpp
     json/_sajson/sajson.hpp
 
     CtxDomain.hpp
     CtxDomain.cpp
     CtxObj.hpp
     CtxObj.cpp
+
+    MsgDeserializerRoot.hpp
+    MsgDeserializerRoot.cpp
 
     helpers/StdVector.hpp
 )
