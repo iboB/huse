@@ -10,6 +10,4 @@ CtxObj::CtxObj()
     : dynamix::object(dynamix::g::get_domain<CtxDomain>())
 {}
 
-const CtxObj CtxObj::defaultCtx;
-
 } // namespace huse

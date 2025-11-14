@@ -13,11 +13,12 @@ class HUSE_API CtxObj : dynamix::object {
 public:
     CtxObj();
 
+    static CtxObj& of(void* mixin) {
+        return *static_cast<CtxObj*>(dynamix::object_of(mixin));
+    }
     static const CtxObj& of(const void* mixin) {
         return *static_cast<const CtxObj*>(dynamix::object_of(mixin));
     }
-
-    static const CtxObj defaultCtx;
 };
 
 #define huse_ctx_self ::huse::CtxObj::of(this)
