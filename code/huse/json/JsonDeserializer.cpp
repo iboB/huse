@@ -30,7 +30,7 @@ JsonDeserializer::JsonDeserializer(char* str, size_t len)
 
 JsonDeserializer::~JsonDeserializer() = default;
 
-impl::RawDValue JsonDeserializer::rootValue() const {
+ImValue JsonDeserializer::rootValue() const {
     return m_document.get_root();
 }
 

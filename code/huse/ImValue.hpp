@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT
 //
 #pragma once
-#include "../Type.hpp"
-#include "../Exception.hpp"
+#include "Type.hpp"
+#include "Exception.hpp"
 #include <splat/unreachable.h>
 #include <cmath>
 #include <optional>
@@ -584,8 +584,6 @@ private:
 
 } // namespace huse::json::sajson
 
-namespace huse::impl {
-
-using RawDValue = huse::json::sajson::value;
-
-} // namespace huse::impl
+namespace huse {
+using ImValue = huse::json::sajson::value;
+} // namespace huse

@@ -6,9 +6,9 @@
 #include <huse/Exception.hpp>
 
 //// raw deserializer value
-//struct RawDValue {
+//struct ImValue {
 //public:
-//    RawDValue()
+//    ImValue()
 //        : m_type(Type::Null)
 //        , m_payload(nullptr)
 //        , m_buffer(nullptr)
@@ -27,7 +27,7 @@
 //
 //
 //protected:
-//    RawDValue(Type t, const size_t* payload, const std::byte* buffer)
+//    ImValue(Type t, const size_t* payload, const std::byte* buffer)
 //        : m_type(t)
 //        , m_payload(payload)
 //        , m_buffer(buffer)

@@ -18,7 +18,7 @@ public:
 
 protected:
     JsonDeserializer(sajson::document&& doc);
-    virtual impl::RawDValue rootValue() const override;
+    virtual ImValue rootValue() const override;
     sajson::document m_document;
 };
 

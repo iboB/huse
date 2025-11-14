@@ -3,7 +3,7 @@
 //
 #pragma once
 #include "API.h"
-#include "impl/RawDValue.hpp"
+#include "ImValue.hpp"
 
 #include <itlib/mem_streambuf.hpp>
 #include <splat/unreachable.h>
@@ -57,9 +57,9 @@ class DeserializerNode {
 protected:
     friend class Deserializer;
     Deserializer& m_deserializer;
-    impl::RawDValue m_value;
+    ImValue m_value;
 public:
-    explicit DeserializerNode(Deserializer& d, const impl::RawDValue& value)
+    explicit DeserializerNode(Deserializer& d, const ImValue& value)
         : m_deserializer(d)
         , m_value(value)
     {}
@@ -107,7 +107,7 @@ class DeserializerValue : public DeserializerNode {
 class DeserializerArray : public DeserializerNode {
     int m_index = 0;
 public:
-    explicit DeserializerArray(Deserializer& d, const impl::RawDValue& value)
+    explicit DeserializerArray(Deserializer& d, const ImValue& value)
         : DeserializerNode(d, value)
     {
         if (!value.htype().isArray()) {
@@ -200,7 +200,7 @@ class DeserializerObject : public DeserializerNode
 {
     int m_index = 0;
 public:
-    explicit DeserializerObject(Deserializer& d, const impl::RawDValue& value)
+    explicit DeserializerObject(Deserializer& d, const ImValue& value)
         : DeserializerNode(d, value)
     {
         if (!value.htype().isObject()) {
@@ -410,7 +410,7 @@ namespace impl
 template <typename, typename = void>
 struct HasGetValue : std::false_type {};
 template <typename T>
-struct HasGetValue<T, decltype(std::declval<impl::RawDValue>().getValue(std::declval<T&>()))> : std::true_type {};
+struct HasGetValue<T, decltype(std::declval<ImValue>().getValue(std::declval<T&>()))> : std::true_type {};
 
 template <typename, typename = void>
 struct HasDeserializeMethod : std::false_type {};
@@ -471,7 +471,7 @@ public:
         return DeserializerNode(*this, rootValue());
     }
 protected:
-    virtual impl::RawDValue rootValue() const = 0;
+    virtual ImValue rootValue() const = 0;
     friend class DeserializerRoot;
 };
 
