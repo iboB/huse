@@ -6,6 +6,7 @@
 #include <huse/json/Deserializer.hpp>
 #include <huse/json/Serializer.hpp>
 #include <huse/json/Limits.hpp>
+#include <huse/MsgSerializerValueSerializer.hpp>
 
 #include <huse/helpers/StdVector.hpp>
 
@@ -20,14 +21,18 @@ TEST_SUITE_BEGIN("json");
 struct JsonSerializerPack
 {
     std::ostringstream sout;
-    std::shared_ptr<huse::Serializer> s;
+    huse::CtxObj s;
 
     JsonSerializerPack(bool pretty = false) {
-        s = huse::json::Make_SerializerPtr(sout, pretty);
+        s = huse::json::Make_SerializerCtx(sout, pretty);
+    }
+
+    huse::SerializerNode node() {
+        return huse::SerializerNode(huse::Serializer_valueSerializer::call(s), nullptr);
     }
 
     std::string str() {
-        s.reset();
+        s.clear();
         return sout.str();
     }
 };
@@ -40,7 +45,7 @@ struct JsonSerializeTester
     {
         HUSE_ASSERT_INTERNAL(!pack);
         pack.emplace(pretty);
-        return pack->s->node();
+        return pack->node();
     }
 
     huse::SerializerNode compact() { return make(false); }
@@ -68,7 +73,7 @@ TEST_CASE("simple serialize")
         auto root = j.compact();
         auto obj = root.obj();
 
-        CHECK(&obj._s() == j.pack->s.get());
+        CHECK(&obj.ctx() == &j.pack->s);
 
         {
             auto ar = obj.ar("array");
@@ -143,7 +148,7 @@ TEST_CASE("serializer exceptions")
 {
     {
         CHECK_THROWS_WITH_AS(
-            JsonSerializerPack().s->node().val(1ull << 55),
+            JsonSerializerPack().node().val(1ull << 55),
             "Integer value is bigger than maximum allowed for JSON",
             huse::SerializerException
         );
@@ -151,7 +156,7 @@ TEST_CASE("serializer exceptions")
 
     {
         CHECK_THROWS_WITH_AS(
-            JsonSerializerPack().s->node().val(-(1ll << 55)),
+            JsonSerializerPack().node().val(-(1ll << 55)),
             "Integer value is bigger than maximum allowed for JSON",
             huse::SerializerException
         );
@@ -159,7 +164,7 @@ TEST_CASE("serializer exceptions")
 
     {
         CHECK_THROWS_WITH_AS(
-            JsonSerializerPack().s->node().val(std::numeric_limits<float>::infinity()),
+            JsonSerializerPack().node().val(std::numeric_limits<float>::infinity()),
             "Floating point value is not finite. Not supported by JSON",
             huse::SerializerException
         );
@@ -167,7 +172,7 @@ TEST_CASE("serializer exceptions")
 
     {
         CHECK_THROWS_WITH_AS(
-            JsonSerializerPack().s->node().val(std::numeric_limits<double>::quiet_NaN()),
+            JsonSerializerPack().node().val(std::numeric_limits<double>::quiet_NaN()),
             "Floating point value is not finite. Not supported by JSON",
             huse::SerializerException
         );

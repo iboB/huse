@@ -14,8 +14,10 @@ icm_add_lib(huse HUSE
     Exception.hpp
 
     json/Serializer.hpp
-    json/JsonSerializer.hpp
-    json/JsonSerializer.cpp
+    json/SerializerMixin.hpp
+    json/Serializer.cpp
+    json/JsonValueSerializer.hpp
+    json/JsonValueSerializer.cpp
     json/Deserializer.hpp
     json/DeserializerMixin.hpp
     json/Deserializer.cpp
@@ -28,6 +30,8 @@ icm_add_lib(huse HUSE
     CtxObj.hpp
     CtxObj.cpp
 
+    MsgSerializerValueSerializer.hpp
+    MsgSerializerValueSerializer.cpp
     MsgDeserializerRoot.hpp
     MsgDeserializerRoot.cpp
 

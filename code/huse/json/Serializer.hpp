@@ -3,15 +3,15 @@
 //
 #pragma once
 #include "../API.h"
-#include "../Serializer.hpp"
+#include "../SerializerRoot.hpp"
 #include <iosfwd>
 
 namespace huse::json {
 
-HUSE_API std::shared_ptr<Serializer> Make_SerializerPtr(std::ostream& out, bool pretty = false);
+HUSE_API CtxObj Make_SerializerCtx(std::ostream& out, bool pretty = false);
 
 inline SerializerRoot Make_Serializer(std::ostream& out, bool pretty = false) {
-    return SerializerRoot(Make_SerializerPtr(out, pretty));
+    return SerializerRoot(Make_SerializerCtx(out, pretty));
 }
 
 } // namespace huse::json

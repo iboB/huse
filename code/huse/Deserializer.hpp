@@ -10,7 +10,6 @@
 #include <string_view>
 #include <optional>
 #include <istream>
-#include <memory>
 
 namespace huse
 {

@@ -8,7 +8,7 @@
 
 namespace huse::json {
 
-struct DeserializerMixin : public Parser {
+struct DeserializerMixin final : public Parser {
     using Parser::Parser;
 };
 
