@@ -124,31 +124,31 @@ struct JsonRedirectStreambuf : public std::streambuf
 
 } // namespace
 
-JsonValueSerializer::JsonValueSerializer(std::ostream& out, bool pretty)
+JsonSerializer::JsonSerializer(std::ostream& out, bool pretty)
     : m_out(out)
     , m_pretty(pretty)
 {}
 
-JsonValueSerializer::~JsonValueSerializer() {
+JsonSerializer::~JsonSerializer() {
     if (std::uncaught_exceptions()) return; // nothing smart to do
     HUSE_ASSERT_INTERNAL(m_depth == 0);
 }
 
 
-void JsonValueSerializer::writeRawJson(std::string_view json) {
+void JsonSerializer::writeRawJson(std::string_view json) {
     prepareWriteVal();
     m_out.rdbuf()->sputn(json.data(), json.size());
 }
 
-void JsonValueSerializer::writeValue(bool val) {
+void JsonSerializer::writeValue(bool val) {
     static constexpr std::string_view t = "true", f = "false";
     writeRawJson(val ? t : f);
 }
 
-void JsonValueSerializer::writeValue(std::nullptr_t) { writeRawJson("null"); }
+void JsonSerializer::writeValue(std::nullptr_t) { writeRawJson("null"); }
 
 template <typename T>
-void JsonValueSerializer::writeSmallInteger(T n) {
+void JsonSerializer::writeSmallInteger(T n) {
     prepareWriteVal();
 
     auto& out = *m_out.rdbuf();
@@ -175,13 +175,13 @@ void JsonValueSerializer::writeSmallInteger(T n) {
     out.sputn(p, end - p);
 }
 
-void JsonValueSerializer::writeValue(short val) { writeSmallInteger(val); }
-void JsonValueSerializer::writeValue(unsigned short val) { writeSmallInteger(val); }
-void JsonValueSerializer::writeValue(int val) { writeSmallInteger(val); }
-void JsonValueSerializer::writeValue(unsigned int val) { writeSmallInteger(val); }
+void JsonSerializer::writeValue(short val) { writeSmallInteger(val); }
+void JsonSerializer::writeValue(unsigned short val) { writeSmallInteger(val); }
+void JsonSerializer::writeValue(int val) { writeSmallInteger(val); }
+void JsonSerializer::writeValue(unsigned int val) { writeSmallInteger(val); }
 
 template <typename T>
-void JsonValueSerializer::writePotentiallyBigIntegerValue(T val) {
+void JsonSerializer::writePotentiallyBigIntegerValue(T val) {
     static constexpr std::string_view IntegerTooBig = "Integer value is bigger than maximum allowed for JSON";
 
     if constexpr (sizeof(T) <= 4) {
@@ -207,13 +207,13 @@ void JsonValueSerializer::writePotentiallyBigIntegerValue(T val) {
 }
 
 // some values may not fit json's numbers
-void JsonValueSerializer::writeValue(long val) { writePotentiallyBigIntegerValue(val); }
-void JsonValueSerializer::writeValue(unsigned long val) { writePotentiallyBigIntegerValue(val); }
-void JsonValueSerializer::writeValue(long long val) { writePotentiallyBigIntegerValue(val); }
-void JsonValueSerializer::writeValue(unsigned long long val) { writePotentiallyBigIntegerValue(val); }
+void JsonSerializer::writeValue(long val) { writePotentiallyBigIntegerValue(val); }
+void JsonSerializer::writeValue(unsigned long val) { writePotentiallyBigIntegerValue(val); }
+void JsonSerializer::writeValue(long long val) { writePotentiallyBigIntegerValue(val); }
+void JsonSerializer::writeValue(unsigned long long val) { writePotentiallyBigIntegerValue(val); }
 
 template <typename T>
-void JsonValueSerializer::writeFloatValue(T val) {
+void JsonSerializer::writeFloatValue(T val) {
     if (std::isfinite(val)) {
         char out[25]; // max length of double
         auto result = HUSE_CHARCONV_NAMESPACE::to_chars(out, out + sizeof(out), val);
@@ -224,24 +224,24 @@ void JsonValueSerializer::writeFloatValue(T val) {
     }
 }
 
-void JsonValueSerializer::writeValue(float val) { writeFloatValue(val); }
-void JsonValueSerializer::writeValue(double val) { writeFloatValue( val); }
+void JsonSerializer::writeValue(float val) { writeFloatValue(val); }
+void JsonSerializer::writeValue(double val) { writeFloatValue( val); }
 
-void JsonValueSerializer::writeValue(std::string_view val) {
+void JsonSerializer::writeValue(std::string_view val) {
     prepareWriteVal();
     writeQuotedEscapedUTF8StringToStream(m_out, val);
 }
 
-void JsonValueSerializer::writeValue(std::nullopt_t) {
+void JsonSerializer::writeValue(std::nullopt_t) {
     m_pendingKey.reset();
 }
 
-void JsonValueSerializer::pushKey(std::string_view k) {
+void JsonSerializer::pushKey(std::string_view k) {
     HUSE_ASSERT_INTERNAL(!m_pendingKey);
     m_pendingKey = k;
 }
 
-void JsonValueSerializer::newLine() {
+void JsonSerializer::newLine() {
     if (!m_pretty) return; // not pretty
     if (m_depth == 0 && !m_hasValue) return; // no new line for initial value
 
@@ -253,7 +253,7 @@ void JsonValueSerializer::newLine() {
     }
 }
 
-void JsonValueSerializer::prepareWriteVal() {
+void JsonSerializer::prepareWriteVal() {
     auto& out = *m_out.rdbuf();
 
     if (m_hasValue) {
@@ -271,14 +271,14 @@ void JsonValueSerializer::prepareWriteVal() {
     m_hasValue = true;
 }
 
-void JsonValueSerializer::open(char o) {
+void JsonSerializer::open(char o) {
     prepareWriteVal();
     m_out.rdbuf()->sputc(o);
     m_hasValue = false;
     ++m_depth;
 }
 
-void JsonValueSerializer::close(char c) {
+void JsonSerializer::close(char c) {
     HUSE_ASSERT_INTERNAL(m_depth);
     --m_depth;
     if (m_hasValue) newLine();
@@ -286,13 +286,13 @@ void JsonValueSerializer::close(char c) {
     m_hasValue = true;
 }
 
-void JsonValueSerializer::openObject() { open('{'); }
-void JsonValueSerializer::closeObject() { close('}'); }
-void JsonValueSerializer::openArray() { open('['); }
-void JsonValueSerializer::closeArray() { close(']'); }
+void JsonSerializer::openObject() { open('{'); }
+void JsonSerializer::closeObject() { close('}'); }
+void JsonSerializer::openArray() { open('['); }
+void JsonSerializer::closeArray() { close(']'); }
 
 
-struct JsonValueSerializer::JsonOStream {
+struct JsonSerializer::JsonOStream {
     JsonOStream(std::ostream& rt)
         : streambuf(*rt.rdbuf())
         , stream(&streambuf)
@@ -302,7 +302,7 @@ struct JsonValueSerializer::JsonOStream {
     std::ostream stream;
 };
 
-std::ostream& JsonValueSerializer::openStringStream() {
+std::ostream& JsonSerializer::openStringStream() {
     prepareWriteVal();
     m_out.rdbuf()->sputc('"');
 
@@ -314,7 +314,7 @@ std::ostream& JsonValueSerializer::openStringStream() {
     return (*m_stringStream)->stream;
 }
 
-void JsonValueSerializer::closeStringStream() {
+void JsonSerializer::closeStringStream() {
     assert(!!m_stringStream && !!*m_stringStream);
     m_stringStream->reset();
     m_out.rdbuf()->sputc('"');

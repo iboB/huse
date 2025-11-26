@@ -11,9 +11,9 @@
 namespace huse {
 class CtxObj;
 
-class HUSE_API ValueSerializer {
+class HUSE_API StatefulSerializer {
 public:
-    virtual ~ValueSerializer();
+    virtual ~StatefulSerializer();
 
     virtual void writeValue(bool) = 0;
     virtual void writeValue(short) = 0;

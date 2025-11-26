@@ -3,16 +3,16 @@
 //
 #pragma once
 #include "../API.h"
-#include "../ValueSerializer.hpp"
+#include "../StatefulSerializer.hpp"
 #include <iosfwd>
 #include <memory>
 
 namespace huse::json {
 
-class JsonValueSerializer : public ValueSerializer {
+class JsonSerializer : public StatefulSerializer {
 public:
-    JsonValueSerializer(std::ostream& out, bool pretty = false);
-    ~JsonValueSerializer();
+    JsonSerializer(std::ostream& out, bool pretty = false);
+    ~JsonSerializer();
 
     virtual void writeValue(bool val) final override;
     virtual void writeValue(short val) final override;
