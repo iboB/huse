@@ -51,7 +51,7 @@ int main()
 
     try
     {
-        auto d = huse::json::Make_Deserializer(json);
+        auto d = huse::json::DeserializerRoot::Create(json);
         int i;
         d.val(i);
     }

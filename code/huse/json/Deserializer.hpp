@@ -3,20 +3,26 @@
 //
 #pragma once
 #include "../API.h"
-#include "../DeserializerRoot.hpp"
+#include "Parser.hpp"
+#include "../Deserializer.hpp"
 #include <string_view>
 #include <cstddef>
 
 namespace huse::json {
 
-HUSE_API CtxObj Make_DeserializerCtx(std::string_view str);
-HUSE_API CtxObj Make_DeserializerCtx(char* mutableString, size_t len = size_t(-1));
-
-inline DeserializerRoot Make_Deserializer(std::string_view str) {
-    return DeserializerRoot(Make_DeserializerCtx(str));
-}
-inline DeserializerRoot Make_Deserializer(char* mutableString, size_t len = size_t(-1)) {
-    return DeserializerRoot(Make_DeserializerCtx(mutableString, len));
-}
+class DeserializerRoot : public DeserializerNode {
+    Parser m_parser;
+    DeserializerRoot(Parser&& p)
+        : DeserializerNode(p.rootValue())
+        , m_parser(std::move(p))
+    {}
+public:
+    static DeserializerRoot Create(std::string_view str) {
+        return DeserializerRoot(Parser(str));
+    }
+    static DeserializerRoot Create(char* mutableString, size_t len = size_t(-1)) {
+        return DeserializerRoot(Parser(mutableString, len));
+    }
+};
 
 } // namespace huse::json

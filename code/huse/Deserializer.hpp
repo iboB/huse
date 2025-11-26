@@ -13,16 +13,14 @@
 
 namespace huse
 {
-class CtxObj;
 class DeserializerArray;
 class DeserializerObject;
 
 class DeserializerSStream
 {
 public:
-    explicit DeserializerSStream(CtxObj& d, std::string_view str)
-        : m_ctx(d)
-        , m_streambuf(str.data(), str.size())
+    explicit DeserializerSStream(std::string_view str)
+        : m_streambuf(str.data(), str.size())
         , m_stream(&m_streambuf)
     {}
 
@@ -46,23 +44,17 @@ public:
     std::istream& get() { return m_stream; }
 
 private:
-    CtxObj& m_ctx;
-
     itlib::mem_istreambuf<char> m_streambuf;
     std::istream m_stream;
 };
 
 class DeserializerNode {
 protected:
-    CtxObj& m_ctx;
     ImValue m_value;
 public:
-    explicit DeserializerNode(CtxObj& d, const ImValue& value)
-        : m_ctx(d)
-        , m_value(value)
+    explicit DeserializerNode(const ImValue& value)
+        : m_value(value)
     {}
-
-    CtxObj& ctx() { return m_ctx; }
 
     Type type() const {
         return m_value.htype();
@@ -84,7 +76,7 @@ public:
     {
         std::string_view str;
         val(str);
-        return DeserializerSStream(m_ctx, str);
+        return DeserializerSStream(str);
     }
 
     [[noreturn]] void throwException(std::string_view msg) const {
@@ -105,8 +97,8 @@ class DeserializerValue : public DeserializerNode {
 class DeserializerArray : public DeserializerNode {
     int m_index = 0;
 public:
-    explicit DeserializerArray(CtxObj& d, const ImValue& value)
-        : DeserializerNode(d, value)
+    explicit DeserializerArray(const ImValue& value)
+        : DeserializerNode(value)
     {
         if (!value.htype().isArray()) {
             throwException("not an array");
@@ -122,7 +114,7 @@ public:
         if (done()) {
             return std::nullopt;
         }
-        auto ret = DeserializerNode(m_ctx, m_value.get_array_element(m_index));
+        auto ret = DeserializerNode(m_value.get_array_element(m_index));
         ++m_index;
         return ret;
     }
@@ -175,7 +167,7 @@ public:
         {}
 
         DeserializerNode operator*() const {
-            return DeserializerNode(m_array->m_ctx, m_array->m_value.get_array_element(m_index));
+            return DeserializerNode(m_array->m_value.get_array_element(m_index));
         }
 
         iterator& operator++() {
@@ -198,8 +190,8 @@ class DeserializerObject : public DeserializerNode
 {
     int m_index = 0;
 public:
-    explicit DeserializerObject(CtxObj& d, const ImValue& value)
-        : DeserializerNode(d, value)
+    explicit DeserializerObject(const ImValue& value)
+        : DeserializerNode(value)
     {
         if (!value.htype().isObject()) {
             throwException("not an object");
@@ -227,7 +219,7 @@ public:
             return std::nullopt;
         }
         m_index = index + 1;
-        return DeserializerNode(m_ctx, m_value.get_object_value(index));
+        return DeserializerNode(m_value.get_object_value(index));
     }
 
     DeserializerNode key(std::string_view k) {
@@ -317,7 +309,7 @@ public:
             return std::nullopt;
         }
         auto key = m_value.get_object_key(m_index);
-        auto val = DeserializerNode(m_ctx, m_value.get_object_value(m_index));
+        auto val = DeserializerNode(m_value.get_object_value(m_index));
         ++m_index;
         return std::make_pair(key, val);
     }
@@ -363,7 +355,7 @@ public:
             auto& val = m_object->m_value;
             return {
                 val.get_object_key(m_index),
-                DeserializerNode(m_object->m_ctx, val.get_object_value(m_index))
+                DeserializerNode(val.get_object_value(m_index))
             };
         }
 
@@ -384,11 +376,11 @@ public:
 };
 
 inline DeserializerObject DeserializerNode::obj() {
-    return DeserializerObject(m_ctx, m_value);
+    return DeserializerObject(m_value);
 }
 
 inline DeserializerArray DeserializerNode::ar() {
-    return DeserializerArray(m_ctx, m_value);
+    return DeserializerArray(m_value);
 }
 
 inline DeserializerObject DeserializerArray::obj() {

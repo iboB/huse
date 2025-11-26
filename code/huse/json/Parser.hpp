@@ -18,6 +18,8 @@ struct HUSE_API Parser {
 
     Parser(const Parser&) = delete;
     Parser& operator=(const Parser&) = delete;
+    Parser(Parser&&) = default;
+    Parser& operator=(Parser&&) = default;
 
     ImValue rootValue() const;
 

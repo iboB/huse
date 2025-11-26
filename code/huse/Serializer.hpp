@@ -12,7 +12,6 @@
 #include <iosfwd>
 
 namespace huse {
-class CtxObj;
 class SerializerNode;
 class SerializerArray;
 class SerializerObject;
@@ -62,7 +61,6 @@ public:
     SerializerNode& operator=(SerializerNode&&) = delete;
 
     ValueSerializer& _s() { return m_serializer; }
-    CtxObj& ctx() { return m_serializer.ctx(); }
 
     SerializerObject obj();
     SerializerArray ar();
@@ -94,7 +92,6 @@ public:
     ~SerializerObject();
 
     using SerializerNode::_s;
-    using SerializerNode::ctx;
     using SerializerNode::throwException;
 
     SerializerNode& key(std::string_view k);

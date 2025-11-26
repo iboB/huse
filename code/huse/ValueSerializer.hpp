@@ -43,8 +43,6 @@ public:
     virtual void openArray() = 0;
     virtual void closeArray() = 0;
 
-    virtual CtxObj& ctx() = 0;
-
     void throwException(const std::string& msg);
 };
 
