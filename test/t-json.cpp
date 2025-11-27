@@ -3,8 +3,8 @@
 //
 #include <doctest/doctest.h>
 
-#include <huse/json/Deserializer.hpp>
-#include <huse/json/Serializer.hpp>
+#include <huse/json/DeserializerRoot.hpp>
+#include <huse/json/SerializerRoot.hpp>
 #include <huse/json/Limits.hpp>
 
 #include <huse/helpers/StdVector.hpp>

@@ -1,8 +1,8 @@
 // Copyright (c) Borislav Stanimirov
 // SPDX-License-Identifier: MIT
 //
-#include <huse/json/Deserializer.hpp>
-#include <huse/json/Serializer.hpp>
+#include <huse/json/DeserializerRoot.hpp>
+#include <huse/json/SerializerRoot.hpp>
 
 #include <huse/helpers/Identity.hpp>
 #include <huse/helpers/StdVector.hpp>
@@ -40,7 +40,7 @@ T cclone(const T& val, C c, std::optional<std::string> check = std::nullopt) {
 
     std::stringstream sout;
     {
-        auto s = huse::json::Make_Serializer(sout, !check.has_value());
+        huse::json::SerializerRoot s(sout, !check.has_value());
         s.val(wrap);
     }
 
@@ -50,7 +50,7 @@ T cclone(const T& val, C c, std::optional<std::string> check = std::nullopt) {
     }
 
     ObjWrap<T, C> ret(c);
-    auto d = huse::json::Make_Deserializer(json.data(), json.length());
+    auto d = huse::json::DeserializerRoot::create(json.data(), json.length());
     d.val(ret);
     return ret.t;
 }
@@ -88,7 +88,7 @@ TEST_CASE("istr") {
     CHECK(u64c == u64);
 
     const std::string json = R"({"t":""})";
-    auto d = huse::json::Make_Deserializer(json);
+    auto d = huse::json::DeserializerRoot::create(json);
 
     {
         ObjWrap<int, huse::IntAsString> w({});
