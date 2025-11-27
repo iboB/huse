@@ -1,7 +1,7 @@
 // Copyright (c) Borislav Stanimirov
 // SPDX-License-Identifier: MIT
 //
-#include <huse/json/Deserializer.hpp>
+#include <huse/json/DeserializerRoot.hpp>
 #include <huse/Deserializer.hpp>
 #include <huse/impl/Charconv.hpp>
 
@@ -138,7 +138,7 @@ result_t check_setInteraction(huse::DeserializerObject& d) {
     return res;
 }
 
-result_t parse(huse::DeserializerRoot& d) {
+result_t parse(huse::DeserializerNode& d) {
     auto obj = d.obj();
     result_t res = 0;
     res += check_ack(obj);
@@ -155,7 +155,7 @@ void bench_huse(picobench::state& s) {
 
     for (auto i : s) {
         auto& line = lines[i];
-        auto d = huse::json::Make_Deserializer(line.data(), line.size());
+        auto d = huse::json::DeserializerRoot::create(line.data(), line.size());
         res += parse(d);
     }
 

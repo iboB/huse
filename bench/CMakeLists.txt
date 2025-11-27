@@ -44,5 +44,5 @@ macro(huse_benchmark name)
     set_target_properties(run-${tgt} PROPERTIES FOLDER bench)
 endmacro()
 
-# huse_benchmark(json-read)
-# huse_benchmark(json-parse)
+huse_benchmark(json-read)
+huse_benchmark(json-parse)

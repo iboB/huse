@@ -1,7 +1,7 @@
 // Copyright (c) Borislav Stanimirov
 // SPDX-License-Identifier: MIT
 //
-#include <huse/json/Deserializer.hpp>
+#include <huse/json/DeserializerRoot.hpp>
 #include <huse/Deserializer.hpp>
 #include <boost/json.hpp>
 #include <simdjson.h>
@@ -26,7 +26,7 @@ void bench_huse(const char* path, picobench::state& s) {
     auto content = readFile(path);
 
     s.start_timer();
-    auto d = huse::json::Make_Deserializer(content);
+    auto d = huse::json::DeserializerRoot::create(content);
     s.stop_timer();
 
     if (d.type().isObject()) {
