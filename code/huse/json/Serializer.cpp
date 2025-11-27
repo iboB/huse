@@ -9,9 +9,6 @@
 #include "../impl/Assert.hpp"
 #include "../impl/Charconv.hpp"
 
-#include <dynamix/define_mixin.hpp>
-#include <dynamix/mutate.hpp>
-
 #include <cmath>
 #include <exception>
 #include <ostream>
