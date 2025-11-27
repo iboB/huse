@@ -4,7 +4,7 @@
 #pragma once
 #include "API.h"
 #include "impl/UniqueStack.hpp"
-#include "ValueSerializer.hpp"
+#include "StatefulSerializer.hpp"
 
 #include <string_view>
 #include <string>
@@ -18,7 +18,7 @@ class SerializerObject;
 
 class SerializerSStream : public impl::UniqueStack {
 public:
-    SerializerSStream(ValueSerializer& s, impl::UniqueStack* parent);
+    explicit SerializerSStream(StatefulSerializer& s, impl::UniqueStack* parent);
     ~SerializerSStream();
 
     SerializerSStream(const SerializerSStream&) = delete;
@@ -43,15 +43,15 @@ public:
     [[noreturn]] void throwException(const std::string& msg) const;
 
 private:
-    ValueSerializer& m_serializer;
+    StatefulSerializer& m_serializer;
     std::ostream& m_stream;
 };
 
 class SerializerNode : public impl::UniqueStack {
 protected:
-    ValueSerializer& m_serializer;
+    StatefulSerializer& m_serializer;
 public:
-    SerializerNode(ValueSerializer& s, impl::UniqueStack* parent)
+    explicit SerializerNode(StatefulSerializer& s, impl::UniqueStack* parent)
         : impl::UniqueStack(parent)
         , m_serializer(s)
     {}
@@ -60,7 +60,7 @@ public:
     SerializerNode(SerializerNode&&) = delete;
     SerializerNode& operator=(SerializerNode&&) = delete;
 
-    ValueSerializer& _s() { return m_serializer; }
+    StatefulSerializer& _s() { return m_serializer; }
 
     SerializerObject obj();
     SerializerArray ar();
@@ -82,13 +82,13 @@ public:
 
 class SerializerArray : public SerializerNode {
 public:
-    SerializerArray(ValueSerializer& s, impl::UniqueStack* parent = nullptr);
+    explicit SerializerArray(StatefulSerializer& s, impl::UniqueStack* parent = nullptr);
     ~SerializerArray();
 };
 
 class SerializerObject : private SerializerNode {
 public:
-    SerializerObject(ValueSerializer& s, impl::UniqueStack* parent = nullptr);
+    explicit SerializerObject(StatefulSerializer& s, impl::UniqueStack* parent = nullptr);
     ~SerializerObject();
 
     using SerializerNode::_s;
@@ -150,7 +150,7 @@ public:
     /////////////////
 };
 
-inline SerializerSStream::SerializerSStream(ValueSerializer& s, impl::UniqueStack* parent)
+inline SerializerSStream::SerializerSStream(StatefulSerializer& s, impl::UniqueStack* parent)
     : impl::UniqueStack(parent)
     , m_serializer(s)
     , m_stream(s.openStringStream())
@@ -177,12 +177,12 @@ namespace impl
 //template <typename, typename = void>
 //struct HasPolySerialize : std::false_type {};
 //template <typename T>
-//struct HasPolySerialize<T, decltype(husePolySerialize(std::declval<ValueSerializer&>(), std::declval<T>()))> : std::true_type {};
+//struct HasPolySerialize<T, decltype(husePolySerialize(std::declval<StatefulSerializer&>(), std::declval<T>()))> : std::true_type {};
 
 template <typename, typename = void>
 struct HasWriteValue : std::false_type {};
 template <typename T>
-struct HasWriteValue<T, decltype(std::declval<ValueSerializer&>().writeValue(std::declval<T>()))> : std::true_type {};
+struct HasWriteValue<T, decltype(std::declval<StatefulSerializer&>().writeValue(std::declval<T>()))> : std::true_type {};
 
 template <typename, typename = void>
 struct HasSerializeMethod : std::false_type {};
@@ -226,7 +226,7 @@ inline void SerializerNode::throwException(const std::string& msg) const {
     m_serializer.throwException(msg);
 }
 
-inline SerializerArray::SerializerArray(ValueSerializer& s, impl::UniqueStack* parent)
+inline SerializerArray::SerializerArray(StatefulSerializer& s, impl::UniqueStack* parent)
     : SerializerNode(s, parent)
 {
     m_serializer.openArray();
@@ -236,7 +236,7 @@ inline SerializerArray::~SerializerArray() {
     m_serializer.closeArray();
 }
 
-inline SerializerObject::SerializerObject(ValueSerializer& s, impl::UniqueStack* parent)
+inline SerializerObject::SerializerObject(StatefulSerializer& s, impl::UniqueStack* parent)
     : SerializerNode(s, parent)
 {
     m_serializer.openObject();

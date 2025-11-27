@@ -17,10 +17,10 @@ class DeserializerRoot : public DeserializerNode {
         , m_parser(std::move(p))
     {}
 public:
-    static DeserializerRoot Create(std::string_view str) {
+    static DeserializerRoot create(std::string_view str) {
         return DeserializerRoot(Parser(str));
     }
-    static DeserializerRoot Create(char* mutableString, size_t len = size_t(-1)) {
+    static DeserializerRoot create(char* mutableString, size_t len = size_t(-1)) {
         return DeserializerRoot(Parser(mutableString, len));
     }
 };

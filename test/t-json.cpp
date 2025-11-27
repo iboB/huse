@@ -6,7 +6,6 @@
 #include <huse/json/Deserializer.hpp>
 #include <huse/json/Serializer.hpp>
 #include <huse/json/Limits.hpp>
-#include <huse/MsgSerializerValueSerializer.hpp>
 
 #include <huse/helpers/StdVector.hpp>
 
@@ -21,18 +20,18 @@ TEST_SUITE_BEGIN("json");
 struct JsonSerializerPack
 {
     std::ostringstream sout;
-    huse::CtxObj s;
+    std::optional<huse::json::JsonSerializer> s;
 
     JsonSerializerPack(bool pretty = false) {
-        s = huse::json::Make_SerializerCtx(sout, pretty);
+        s.emplace(sout, pretty);
     }
 
     huse::SerializerNode node() {
-        return huse::SerializerNode(huse::Serializer_valueSerializer::call(s), nullptr);
+        return huse::SerializerNode(*s, nullptr);
     }
 
     std::string str() {
-        s.clear();
+        s.reset();
         return sout.str();
     }
 };
@@ -73,7 +72,7 @@ TEST_CASE("simple serialize")
         auto root = j.compact();
         auto obj = root.obj();
 
-        CHECK(&obj.ctx() == &j.pack->s);
+        CHECK(&obj._s() == &(*j.pack->s));
 
         {
             auto ar = obj.ar("array");
@@ -179,9 +178,9 @@ TEST_CASE("serializer exceptions")
     }
 }
 
-huse::DeserializerRoot makeD(std::string_view str)
+huse::json::DeserializerRoot makeD(std::string_view str)
 {
-    return huse::json::Make_Deserializer(str);
+    return huse::json::DeserializerRoot::create(str);
 }
 
 TEST_CASE("simple deserialize")
@@ -196,7 +195,7 @@ TEST_CASE("simple deserialize")
         auto d = makeD(R"({"array":[1,2,3,4],"bool":true,"bool2":false,"float":3.1,"int":-3,"unsigned-long-long":900000000000000,"str":"b\n\\g\t\u001bsdf"})");
         CHECK(d.type().isObject());
         auto obj = d.obj();
-        CHECK(&obj.ctx() == &d.ctx());
+        //CHECK(&obj.ctx() == &d.ctx());
         CHECK(obj.type().isObject());
         {
             auto ar = obj.ar("array");
