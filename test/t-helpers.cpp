@@ -30,7 +30,8 @@ struct ObjWrap {
         auto obj = n.obj();
         obj.cval("t", s.t, s.c);
     }
-    void huseSerialize(huse::SerializerNode& n) const { sh(n, *this); }
+    template <typename S>
+    void huseSerialize(huse::SerializerNode<S>& n) const { sh(n, *this); }
     void huseDeserialize(huse::DeserializerNode& n) { sh(n, *this); }
 };
 

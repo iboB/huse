@@ -9,8 +9,8 @@
 namespace huse
 {
 
-template <typename T, typename A>
-void huseSerialize(SerializerNode& n, const std::vector<T, A>& vec)
+template <typename S, typename T, typename A>
+void huseSerialize(SerializerNode<S>& n, const std::vector<T, A>& vec)
 {
     VectorLike{}(n, vec);
 }

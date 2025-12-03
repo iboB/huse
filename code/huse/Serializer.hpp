@@ -1,267 +1,286 @@
-// Copyright (c) Borislav Stanimirov
-// SPDX-License-Identifier: MIT
-//
 #pragma once
-#include "API.h"
+#include "OpenTags.hpp"
 #include "impl/UniqueStack.hpp"
-#include "StatefulSerializer.hpp"
-
+#include <concepts>
 #include <string_view>
-#include <string>
-#include <optional>
-#include <iosfwd>
+#include <initializer_list>
 
 namespace huse {
-class SerializerNode;
-class SerializerArray;
+
+template <typename Serializer>
 class SerializerObject;
+template <typename Serializer>
+class SerializerArray;
 
-class SerializerSStream : public impl::UniqueStack {
-public:
-    explicit SerializerSStream(StatefulSerializer& s, impl::UniqueStack* parent);
-    ~SerializerSStream();
-
-    SerializerSStream(const SerializerSStream&) = delete;
-    SerializerSStream& operator=(const SerializerSStream&) = delete;
-    SerializerSStream(SerializerSStream&& other) noexcept = delete;
-    SerializerSStream& operator=(SerializerSStream&&) = delete;
-
-    template <typename T>
-    SerializerSStream& operator<<(const T& t) {
-        m_stream << t;
-        return *this;
-    }
-
-    template <typename T>
-    SerializerSStream& operator&(const T& t) {
-        m_stream << t;
-        return *this;
-    }
-
-    std::ostream& get() { return m_stream; }
-
-    [[noreturn]] void throwException(const std::string& msg) const;
-
-private:
-    StatefulSerializer& m_serializer;
-    std::ostream& m_stream;
-};
-
+template <typename Serializer>
 class SerializerNode : public impl::UniqueStack {
 protected:
-    StatefulSerializer& m_serializer;
+    template <typename S>
+    friend class SerializerNode;
+
+    Serializer* m_serializer;
+    bool m_ownsClose = false;
 public:
-    explicit SerializerNode(StatefulSerializer& s, impl::UniqueStack* parent)
-        : impl::UniqueStack(parent)
-        , m_serializer(s)
+    SerializerNode(Serializer& s) noexcept
+        : UniqueStack(nullptr)
+        , m_serializer(&s)
     {}
-    SerializerNode(const SerializerNode&) = delete;
-    SerializerNode& operator=(const SerializerNode&) = delete;
-    SerializerNode(SerializerNode&&) = delete;
-    SerializerNode& operator=(SerializerNode&&) = delete;
 
-    StatefulSerializer& _s() { return m_serializer; }
+    template <std::derived_from<Serializer> OtherSerializer>
+    SerializerNode(SerializerNode<OtherSerializer>& other, bool ownsClose = false) noexcept
+        : UniqueStack(&other)
+        , m_serializer(other.m_serializer)
+        , m_ownsClose(ownsClose)
+    {}
 
-    SerializerObject obj();
-    SerializerArray ar();
-
-    template <typename T>
-    void val(const T& v);
-
-    template <typename T, typename F>
-    void cval(const T& v, F&& f) {
-        f(*this, v);
+    SerializerNode(SerializerNode&& other) noexcept
+        : UniqueStack(std::move(other))
+        , m_serializer(other.m_serializer)
+        , m_ownsClose(other.m_ownsClose)
+    {
+        other.m_serializer = nullptr;
+        other.m_ownsClose = false;
     }
 
-    SerializerSStream sstream() {
-        return SerializerSStream(m_serializer, this);
+    template <std::derived_from<Serializer> OtherSerializer>
+    SerializerNode(SerializerNode<OtherSerializer>&& other) noexcept
+        : UniqueStack(std::move(other))
+        , m_serializer(other.m_serializer)
+        , m_ownsClose(other.m_ownsClose)
+    {
+        other.m_serializer = nullptr;
+        other.m_ownsClose = false;
     }
 
-    [[noreturn]] void throwException(const std::string& msg) const;
+    [[noreturn]] void throwException(const std::string& msg) const {
+        m_serializer->throwException(msg);
+    }
+
+    bool _active() const noexcept { return !!m_serializer; }
+    Serializer& _s() noexcept { return *m_serializer; }
+
+    template <typename V>
+    void val(V&& v);
+
+    template <typename O>
+    decltype(auto) open(O&& o);
+
+    template <typename V, typename F>
+    void cval(V&& v, F&& f) {
+        f(*this, std::forward<V>(v));
+    }
+
+    SerializerArray<Serializer> ar();
+    SerializerObject<Serializer> obj();
 };
 
-class SerializerArray : public SerializerNode {
+template <typename Serializer>
+class SerializerArray : public SerializerNode<Serializer> {
+    template <typename S>
+    friend class SerializerArray;
 public:
-    explicit SerializerArray(StatefulSerializer& s, impl::UniqueStack* parent = nullptr);
-    ~SerializerArray();
+    using Node = SerializerNode<Serializer>;
+
+    SerializerArray(Node& parent) noexcept
+        : Node(parent, true)
+    {}
+    template <std::derived_from<Serializer> OtherSerializer>
+    SerializerArray(SerializerArray<OtherSerializer>& other) noexcept
+        : Node(other, false)
+    {}
+    SerializerArray(SerializerArray&& other) noexcept
+        : Node(std::move(other))
+    {}
+    template <std::derived_from<Serializer> OtherSerializer>
+    SerializerArray(SerializerArray<OtherSerializer>&& other) noexcept
+        : Node(std::move(other))
+    {}
+
+    ~SerializerArray() {
+        if (this->m_ownsClose) {
+            HUSE_ASSERT_INTERNAL(this->m_serializer);
+            this->m_serializer->closeArray();
+        }
+    }
 };
 
-class SerializerObject : private SerializerNode {
+template <typename Serializer>
+class SerializerObject : private SerializerNode<Serializer> {
+    template <typename S>
+    friend class SerializerObject;
 public:
-    explicit SerializerObject(StatefulSerializer& s, impl::UniqueStack* parent = nullptr);
-    ~SerializerObject();
+    using Node = SerializerNode<Serializer>;
 
-    using SerializerNode::_s;
-    using SerializerNode::throwException;
+    SerializerObject(Node& parent) noexcept
+        : Node(parent, true)
+    {}
+    template <std::derived_from<Serializer> OtherSerializer>
+    SerializerObject(SerializerObject<OtherSerializer>& other) noexcept
+        : Node(other, false)
+    {}
+    SerializerObject(SerializerObject&& other) noexcept
+        : Node(std::move(other))
+    {}
+    template <std::derived_from<Serializer> OtherSerializer>
+    SerializerObject(SerializerObject<OtherSerializer>&& other) noexcept
+        : Node(std::move(other))
+    {}
 
-    SerializerNode& key(std::string_view k);
+    ~SerializerObject() {
+        if (this->m_ownsClose) {
+            HUSE_ASSERT_INTERNAL(this->m_serializer);
+            this->m_serializer->closeObject();
+        }
+    }
+
+    using Node::throwException;
+    using Node::_active;
+    using Node::_s;
+
+    Node& key(std::string_view k) {
+        this->m_serializer->pushKey(k);
+        return *this;
+    }
+    Node& key(std::initializer_list<std::string_view> kp) {
+        this->m_serializer->pushKeyParts(kp);
+        return *this;
+    }
 
     SerializerObject obj(std::string_view k) {
         return key(k).obj();
     }
-    SerializerArray ar(std::string_view k) {
+    SerializerArray<Serializer> ar(std::string_view k) {
         return key(k).ar();
     }
 
-    template <typename T>
-    void val(std::string_view k, const T& v) {
-        key(k).val(v);
+    template <typename K, typename V>
+    void val(K&& k, V&& v) {
+        key(std::forward<K>(k)).val(std::forward<V>(v));
     }
 
-    template <typename T>
-    void val(std::string_view k, const std::optional<T>& v) {
-        if (v) val(k, *v);
+    template <typename K, typename V, typename F>
+    void cval(K&& k, V&& v, F&& f) {
+        key(std::forward<K>(k)).cval(std::forward<V>(v), std::forward<F>(f));
     }
 
-    template <typename T>
-    bool optval(std::string_view k, const std::optional<T>& v, const T& d) {
-        if (v) {
-            val(k, *v);
-            return true;
-        }
-        else {
-            val(k, d);
-            return false;
-        }
-    }
-
-    template <typename T>
-    void flatval(const T& v);
-
-    template <typename T, typename F>
-    void cval(std::string_view k, const T& v, F&& f) {
-        key(k).cval(v, std::forward<F>(f));
-    }
-
-    template <typename T, typename F>
-    void cval(std::string_view k, const std::optional<T>& v, F&& f) {
-        if (v) cval(k, *v, std::forward<F>(f));
-    }
-
-    SerializerSStream sstream(std::string_view k) {
-        return key(k).sstream();
-    }
+    template <typename FV>
+    void flatval(FV&& v);
 
     /////////////////
     // compatibility with deserializer
-    template <typename T> bool optval(std::string_view k, const T& v) { val(k, v); return true; }
-    template <typename T> void keyval(std::string_view k, const T& v) { val(k, v); }
-    template <typename T> bool optkeyval(std::string_view k, const T& v) { val(k, v); return true; }
+    template <typename K, typename V>
+    bool optval(K&& k, V&& v) {
+        val(std::forward<K>(k), std::forward<V>(v));
+        return true;
+    }
+    template <typename V>
+    void keyval(std::string_view k, V&& v) {
+        val(k, std::forward<V>(v));
+    }
+    template <typename V>
+    bool optkeyval(std::string_view k, V&& v) {
+        val(k, std::forward<V>(v));
+        return true;
+    }
     /////////////////
 };
 
-inline SerializerSStream::SerializerSStream(StatefulSerializer& s, impl::UniqueStack* parent)
-    : impl::UniqueStack(parent)
-    , m_serializer(s)
-    , m_stream(s.openStringStream())
-{}
-
-inline SerializerSStream::~SerializerSStream() {
-    m_serializer.closeStringStream();
+template <typename Serializer>
+SerializerArray<Serializer> SerializerNode<Serializer>::ar() {
+    return open(Array{});
+}
+template <typename Serializer>
+SerializerObject<Serializer> SerializerNode<Serializer>::obj() {
+    return open(Object{});
 }
 
-inline void SerializerSStream::throwException(const std::string& msg) const {
-    m_serializer.throwException(msg);
+namespace impl {
+
+template <typename Serializer, typename T>
+concept HasWriteValue = requires(Serializer& s, T t) {
+    s.writeValue(t);
+};
+template <typename T, typename Serializer>
+concept HasSerializeMethod = requires(T t, SerializerNode<Serializer>& node) {
+    t.huseSerialize(node);
+};
+template <typename T, typename Serializer>
+concept HasSerializeFunc = requires(SerializerNode<Serializer>& node, T t) {
+    huseSerialize(node, t);
+};
+
+template <typename Serializer, typename T>
+concept HasOpen = requires(Serializer & s, T t) {
+    s.open(t);
+};
+template <typename T, typename Serializer>
+concept HasOpenMethod = requires(T t, SerializerNode<Serializer>&node) {
+    t.huseOpen(node);
+};
+template <typename T, typename Serializer>
+concept HasOpenFunc = requires(SerializerNode<Serializer>&node, T t) {
+    huseOpen(node, t);
+};
+
+
+template <typename T, typename Serializer>
+concept HasSerializeFlatMethod = requires(T t, SerializerObject<Serializer>& obj) {
+    t.huseSerializeFlat(obj);
+};
+template <typename T, typename Serializer>
+concept HasSerializeFlatFunc = requires(SerializerObject<Serializer>& obj, T t) {
+    huseSerializeFlat(obj, t);
+};
 }
 
-inline SerializerObject SerializerNode::obj() {
-    return SerializerObject(m_serializer, this);
-}
-
-inline SerializerArray SerializerNode::ar() {
-    return SerializerArray(m_serializer, this);
-}
-
-namespace impl
-{
-//template <typename, typename = void>
-//struct HasPolySerialize : std::false_type {};
-//template <typename T>
-//struct HasPolySerialize<T, decltype(husePolySerialize(std::declval<StatefulSerializer&>(), std::declval<T>()))> : std::true_type {};
-
-template <typename, typename = void>
-struct HasWriteValue : std::false_type {};
-template <typename T>
-struct HasWriteValue<T, decltype(std::declval<StatefulSerializer&>().writeValue(std::declval<T>()))> : std::true_type {};
-
-template <typename, typename = void>
-struct HasSerializeMethod : std::false_type {};
-template <typename T>
-struct HasSerializeMethod<T, decltype(std::declval<T>().huseSerialize(std::declval<SerializerNode&>()))> : std::true_type {};
-template <typename, typename = void>
-struct HasSerializeFunc : std::false_type {};
-template <typename T>
-struct HasSerializeFunc<T, decltype(huseSerialize(std::declval<SerializerNode&>(), std::declval<T>()))> : std::true_type {};
-
-template <typename, typename = void>
-struct HasSerializeFlatMethod : std::false_type {};
-template <typename T>
-struct HasSerializeFlatMethod<T, decltype(std::declval<T>().huseSerializeFlat(std::declval<SerializerObject&>()))> : std::true_type {};
-template <typename, typename = void>
-struct HasSerializeFlatFunc : std::false_type {};
-template <typename T>
-struct HasSerializeFlatFunc<T, decltype(huseSerializeFlat(std::declval<SerializerObject&>(), std::declval<T>()))> : std::true_type {};
-} // namespace impl
-
-template <typename T>
-void SerializerNode::val(const T& v) {
-    if constexpr (impl::HasWriteValue<T>::value) {
-        m_serializer.writeValue(v);
+template <typename Serializer>
+template <typename V>
+void SerializerNode<Serializer>::val(V&& v) {
+    if constexpr (impl::HasWriteValue<Serializer, V>) {
+        m_serializer->writeValue(std::forward<V>(v));
     }
-    else if constexpr (impl::HasSerializeMethod<T>::value) {
-        v.huseSerialize(*this);
+    else if constexpr (impl::HasSerializeMethod<V, Serializer>) {
+        std::forward<V>(v).huseSerialize(*this);
     }
-    else if constexpr (impl::HasSerializeFunc<T>::value) {
-        huseSerialize(*this, v);
-    }
-    //else if constexpr (impl::HasPolySerialize<T>::value) {
-    //    husePolySerialize(m_serializer, v);
-    //}
-    else {
-        cannot_serialize(v);
-    }
-}
-
-inline void SerializerNode::throwException(const std::string& msg) const {
-    m_serializer.throwException(msg);
-}
-
-inline SerializerArray::SerializerArray(StatefulSerializer& s, impl::UniqueStack* parent)
-    : SerializerNode(s, parent)
-{
-    m_serializer.openArray();
-}
-
-inline SerializerArray::~SerializerArray() {
-    m_serializer.closeArray();
-}
-
-inline SerializerObject::SerializerObject(StatefulSerializer& s, impl::UniqueStack* parent)
-    : SerializerNode(s, parent)
-{
-    m_serializer.openObject();
-}
-
-inline SerializerObject::~SerializerObject() {
-    m_serializer.closeObject();
-}
-
-inline SerializerNode& SerializerObject::key(std::string_view k) {
-    m_serializer.pushKey(k);
-    return *this;
-}
-
-template <typename T>
-void SerializerObject::flatval(const T& v) {
-    if constexpr (impl::HasSerializeFlatMethod<T>::value) {
-        v.huseSerializeFlat(*this);
-    }
-    else if constexpr (impl::HasSerializeFlatFunc<T>::value) {
-        huseSerializeFlat(*this, v);
+    else if constexpr (impl::HasSerializeFunc<V, Serializer>) {
+        huseSerialize(*this, std::forward<V>(v));
     }
     else {
-        cannot_serialize(v);
+        huseCannotSerialize(*this, v);
+    }
+}
+
+template <typename Serializer>
+template <typename O>
+decltype(auto) SerializerNode<Serializer>::open(O&& o) {
+    if constexpr (impl::HasOpen<Serializer, O>) {
+        m_serializer->open(std::forward<O>(o));
+        return O::template SerializerNode<Serializer>(*this);
+    }
+    else if constexpr (impl::HasOpenMethod<O, Serializer>) {
+        return std::forward<O>(o).huseOpen(*this);
+    }
+    else if constexpr (impl::HasOpenFunc<O, Serializer>) {
+        return huseOpen(*this, std::forward<O>(o));
+    }
+    else {
+        return huseCannotOpen(*this, o);
+    }
+}
+
+template <typename Serializer>
+template <typename FV>
+void SerializerObject<Serializer>::flatval(FV&& v) {
+    if constexpr (impl::HasSerializeFlatMethod<FV, Serializer>) {
+        std::forward<FV>(v).huseSerializeFlat(*this);
+    }
+    else if constexpr (impl::HasSerializeFlatFunc<FV, Serializer>) {
+        huseSerializeFlat(*this, std::forward<FV>(v));
+    }
+    else {
+        huseCannotSerializeFlat(*this, v);
     }
 }
 
 } // namespace huse
+

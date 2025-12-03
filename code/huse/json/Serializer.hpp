@@ -28,6 +28,7 @@ public:
     virtual void writeValue(std::string_view val) final override;
     virtual void writeValue(std::nullptr_t) final override;
     virtual void writeValue(std::nullopt_t) final override;
+    using StatefulSerializer::writeValue;
 
     virtual std::ostream& openStringStream() final override;
     virtual void closeStringStream() final override;

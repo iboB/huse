@@ -9,8 +9,8 @@ namespace huse {
 
 // a serialization functor for vector-like objects
 struct VectorLike{
-    template <typename Vec>
-    void operator()(SerializerNode& n, const Vec& vec) const  {
+    template <typename S, typename Vec>
+    void operator()(SerializerNode<S>& n, const Vec& vec) const  {
         auto ar = n.ar();
         for (auto& val : vec)
         {

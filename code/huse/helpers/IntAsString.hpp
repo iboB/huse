@@ -26,7 +26,8 @@ struct IntAsStringOpt {
     std::optional<Int> emptyStringVal;
     explicit IntAsStringOpt(std::optional<Int> esv = std::nullopt) : emptyStringVal(esv) {}
 
-    void operator()(SerializerNode& n, Int i) const {
+    template <typename S>
+    void operator()(SerializerNode<S>& n, Int i) const {
         char buf[21] = {0};
         auto res = HUSE_CHARCONV_NAMESPACE::to_chars(buf, buf + sizeof(buf), i);
         n.val(std::string_view(buf, res.ptr - buf));

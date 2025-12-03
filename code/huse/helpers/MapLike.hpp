@@ -9,8 +9,8 @@ namespace huse {
 
 // a serialization functor for map-like objects
 struct MapLike {
-    template <typename Map>
-    void operator()(SerializerNode& n, const Map& map) const {
+    template <typename S, typename Map>
+    void operator()(SerializerNode<S>& n, const Map& map) const {
         if constexpr (std::is_convertible_v<typename Map::key_type, std::string_view>) {
             auto obj = n.obj();
             for (auto& val : map) {

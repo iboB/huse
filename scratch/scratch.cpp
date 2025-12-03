@@ -4,7 +4,6 @@
 #include <iostream>
 #include <huse/json/Serializer.hpp>
 #include <huse/Exception.hpp>
-#include <huse/StatefulSerializerNode.hpp>
 
 //// raw deserializer value
 //struct ImValue {
@@ -61,11 +60,5 @@ int main()
     //    std::cout << e.what() << std::endl;
     //    return 1;
     //}
-
-    huse::json::JsonSerializer json(std::cout, true);
-    huse::StatefulSerializerNode root(json);
-
-    auto obj = root.obj();
-
     return 0;
 }

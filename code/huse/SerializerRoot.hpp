@@ -7,12 +7,12 @@
 namespace huse {
 
 template <typename SSerializer>
-class SerializerRoot : public SSerializer, public SerializerNode {
+class SerializerRoot : private SSerializer, public SerializerNode<SSerializer> {
 public:
     template <typename... Args>
     SerializerRoot(Args&&... args)
         : SSerializer(std::forward<Args>(args)...)
-        , SerializerNode(*this, nullptr)
+        , SerializerNode<SSerializer>(*this)
     {}
 };
 
