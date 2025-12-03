@@ -255,7 +255,7 @@ template <typename O>
 decltype(auto) SerializerNode<Serializer>::open(O&& o) {
     if constexpr (impl::HasOpen<Serializer, O>) {
         m_serializer->open(std::forward<O>(o));
-        return O::template SerializerNode<Serializer>(*this);
+        return typename O::template SerializerNode<Serializer>(*this);
     }
     else if constexpr (impl::HasOpenMethod<O, Serializer>) {
         return std::forward<O>(o).huseOpen(*this);

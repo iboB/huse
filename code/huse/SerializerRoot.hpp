@@ -12,7 +12,7 @@ public:
     template <typename... Args>
     SerializerRoot(Args&&... args)
         : SSerializer(std::forward<Args>(args)...)
-        , SerializerNode<SSerializer>(*this)
+        , SerializerNode<SSerializer>((SSerializer&)*this)
     {}
 };
 
