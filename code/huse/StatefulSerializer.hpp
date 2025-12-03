@@ -3,6 +3,7 @@
 //
 #pragma once
 #include "API.h"
+#include "OpenTags.hpp"
 #include <string_view>
 #include <string>
 #include <cstddef>
@@ -42,6 +43,9 @@ public:
     virtual void closeObject() = 0;
     virtual void openArray() = 0;
     virtual void closeArray() = 0;
+
+    void open(Object) { openObject(); }
+    void open(Array) { openArray(); }
 
     void throwException(const std::string& msg);
 };

@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: MIT
 //
 #include <iostream>
-#include <huse/json/DeserializerRoot.hpp>
+#include <huse/json/Serializer.hpp>
 #include <huse/Exception.hpp>
+#include <huse/StatefulSerializerNode.hpp>
 
 //// raw deserializer value
 //struct ImValue {
@@ -47,19 +48,24 @@
 
 int main()
 {
-    constexpr std::string_view json = R"({"ar": [2.3, -5], "val": 5, "b": false})";
+    //constexpr std::string_view json = R"({"ar": [2.3, -5], "val": 5, "b": false})";
 
-    try
-    {
-        auto d = huse::json::DeserializerRoot::create(json);
-        int i;
-        d.val(i);
-    }
-    catch (std::exception& e)
-    {
-        std::cout << e.what() << std::endl;
-        return 1;
-    }
+    //try
+    //{
+    //    auto d = huse::json::DeserializerRoot::create(json);
+    //    int i;
+    //    d.val(i);
+    //}
+    //catch (std::exception& e)
+    //{
+    //    std::cout << e.what() << std::endl;
+    //    return 1;
+    //}
+
+    huse::json::JsonSerializer json(std::cout, true);
+    huse::StatefulSerializerNode root(json);
+
+    auto obj = root.obj();
 
     return 0;
 }

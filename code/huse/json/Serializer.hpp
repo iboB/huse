@@ -39,6 +39,8 @@ public:
     virtual void openArray() final override;
     virtual void closeArray() final override;
 
+    using StatefulSerializer::open;
+
     void writeRawJson(std::string_view json);
     std::ostream& out() { return m_out; }
 
