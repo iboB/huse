@@ -118,32 +118,32 @@ R"({
     );
 }
 
-//TEST_CASE("serializer stream")
-//{
-//    JsonSerializeTester j;
-//
-//    j.compact().sstream() << "xx " << 123;
-//    CHECK(j.str() == R"("xx 123")");
-//
-//    {
-//        auto root = j.compact();
-//        auto s = root.sstream();
-//        s << -5;
-//        s.get().put(' ');
-//        s.get().write("abc", 3);
-//    }
-//    CHECK(j.str() == R"("-5 abc")");
-//
-//    {
-//        auto root = j.compact();
-//        auto s = root.sstream();
-//        s << "b\n\\g";
-//        s.get().put('\t');
-//        s.get().put(27);
-//        s << "sdf";
-//    }
-//    CHECK(j.str() == R"("b\n\\g\t\u001bsdf")");
-//}
+TEST_CASE("serializer stream")
+{
+    JsonSerializeTester j;
+
+    j.compact().sstream() << "xx " << 123;
+    CHECK(j.str() == R"("xx 123")");
+
+    {
+        auto root = j.compact();
+        auto s = root.sstream();
+        s << -5;
+        s.get().put(' ');
+        s.get().write("abc", 3);
+    }
+    CHECK(j.str() == R"("-5 abc")");
+
+    {
+        auto root = j.compact();
+        auto s = root.sstream();
+        s << "b\n\\g";
+        s.get().put('\t');
+        s.get().put(27);
+        s << "sdf";
+    }
+    CHECK(j.str() == R"("b\n\\g\t\u001bsdf")");
+}
 
 TEST_CASE("serializer exceptions")
 {
@@ -789,43 +789,43 @@ std::istream& operator>>(std::istream& i, vector2& v)
     return i;
 }
 
-//struct MultipleValuesAsString
-//{
-//    std::string a;
-//    vector2 b;
-//
-//    template <typename N, typename MVS>
-//    static void serializeT(N& n, MVS& self)
-//    {
-//        n.obj().sstream("data") & self.b & self.a;
-//    }
-//
-//    void huseSerialize(huse::SerializerNode<huse::json::JsonSerializer>& n) const
-//    {
-//        serializeT(n, *this);
-//    }
-//
-//    void huseDeserialize(huse::DeserializerNode& n)
-//    {
-//        serializeT(n, *this);
-//    }
-//};
-//
-//TEST_CASE("stream i/o")
-//{
-//    MultipleValuesAsString mvs = {"xyz", {34, 88}};
-//    JsonSerializeTester j;
-//    j.compact().val(mvs);
-//
-//    auto json = j.str();
-//
-//    MultipleValuesAsString cc;
-//    {
-//        auto d = makeD(json);
-//        d.val(cc);
-//    }
-//
-//    CHECK(mvs.a == cc.a);
-//    CHECK(mvs.b.x == cc.b.x);
-//    CHECK(mvs.b.y == cc.b.y);
-//}
+struct MultipleValuesAsString
+{
+    std::string a;
+    vector2 b;
+
+    template <typename N, typename MVS>
+    static void serializeT(N& n, MVS& self)
+    {
+        n.obj().sstream("data") & self.b & self.a;
+    }
+
+    void huseSerialize(huse::SerializerNode<huse::json::JsonSerializer>& n) const
+    {
+        serializeT(n, *this);
+    }
+
+    void huseDeserialize(huse::DeserializerNode& n)
+    {
+        serializeT(n, *this);
+    }
+};
+
+TEST_CASE("stream i/o")
+{
+    MultipleValuesAsString mvs = {"xyz", {34, 88}};
+    JsonSerializeTester j;
+    j.compact().val(mvs);
+
+    auto json = j.str();
+
+    MultipleValuesAsString cc;
+    {
+        auto d = makeD(json);
+        d.val(cc);
+    }
+
+    CHECK(mvs.a == cc.a);
+    CHECK(mvs.b.x == cc.b.x);
+    CHECK(mvs.b.y == cc.b.y);
+}

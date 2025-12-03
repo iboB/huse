@@ -1,6 +1,7 @@
 #pragma once
 #include "OpenTags.hpp"
 #include "impl/UniqueStack.hpp"
+#include <iosfwd>
 #include <concepts>
 #include <string_view>
 #include <initializer_list>
@@ -14,6 +15,8 @@ template <typename Serializer>
 class SerializerObject;
 template <typename Serializer>
 class SerializerArray;
+template <typename Serializer>
+class SerializerSStream;
 
 template <typename Serializer>
 class SerializerNode : public impl::UniqueStack {
@@ -75,6 +78,62 @@ public:
 
     SerializerArray<Serializer> ar();
     SerializerObject<Serializer> obj();
+    SerializerSStream<Serializer> sstream();
+};
+
+template <typename Serializer>
+class SerializerSStream : private SerializerNode<Serializer> {
+    std::ostream* m_stream;
+public:
+    using Node = SerializerNode<Serializer>;
+
+    SerializerSStream(Node& parent, std::ostream& stream) noexcept
+        : Node(parent, true)
+        , m_stream(&stream)
+    {}
+    template <std::derived_from<Serializer> OtherSerializer>
+    SerializerSStream(SerializerSStream<OtherSerializer>& other) noexcept
+        : Node(other, false)
+        , m_stream(other.m_stream)
+    {}
+    SerializerSStream(SerializerSStream&& other) noexcept
+        : Node(std::move(other))
+        , m_stream(other.m_stream)
+    {
+        other.m_stream = nullptr;
+    }
+    template <std::derived_from<Serializer> OtherSerializer>
+    SerializerSStream(SerializerSStream<OtherSerializer>&& other) noexcept
+        : Node(std::move(other))
+        , m_stream(other.m_stream)
+    {
+        other.m_stream = nullptr;
+    }
+
+    ~SerializerSStream() {
+        if (this->m_ownsClose) {
+            HUSE_ASSERT_INTERNAL(this->m_serializer);
+            this->m_serializer->closeStringStream();
+        }
+    }
+
+    using Node::throwException;
+    using Node::_active;
+    using Node::_s;
+
+    template <typename T>
+    SerializerSStream& operator<<(const T& t) {
+        *m_stream << t;
+        return *this;
+    }
+
+    template <typename T>
+    SerializerSStream& operator&(const T& t) {
+        *m_stream << t;
+        return *this;
+    }
+
+    std::ostream& get() { return *m_stream; }
 };
 
 template <typename Serializer>
@@ -155,6 +214,10 @@ public:
     SerializerArray<Serializer> ar(std::string_view k) {
         return key(k).ar();
     }
+    template <typename K>
+    SerializerSStream<Serializer> sstream(K&& k) {
+        return key(std::forward<K>(k)).sstream();
+    }
 
     template <typename K, typename V>
     void val(K&& k, V&& v) {
@@ -196,6 +259,10 @@ SerializerArray<Serializer> SerializerNode<Serializer>::ar() {
 template <typename Serializer>
 SerializerObject<Serializer> SerializerNode<Serializer>::obj() {
     return open(Object{});
+}
+template <typename Serializer>
+SerializerSStream<Serializer> SerializerNode<Serializer>::sstream() {
+    return open(StringStream{});
 }
 
 namespace impl {

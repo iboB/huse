@@ -16,4 +16,11 @@ struct Object {
     using SerializerNode = SerializerObject<Serializer>;
 };
 
+template <typename Serializer>
+class SerializerSStream;
+struct StringStream {
+    template <typename Serializer>
+    using SerializerNode = SerializerSStream<Serializer>;
+};
+
 } // namespace huse
