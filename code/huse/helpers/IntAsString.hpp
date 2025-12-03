@@ -3,7 +3,7 @@
 //
 #pragma once
 #include "../SerializerNode.hpp"
-#include "../Deserializer.hpp"
+#include "../DeserializerNode.hpp"
 
 #include "../impl/Charconv.hpp"
 

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 //
 #include <huse/json/DeserializerRoot.hpp>
-#include <huse/Deserializer.hpp>
+#include <huse/DeserializerNode.hpp>
 #include <huse/impl/Charconv.hpp>
 
 #include <boost/json.hpp>

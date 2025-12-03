@@ -4,7 +4,7 @@
 #pragma once
 #include "../API.h"
 #include "Parser.hpp"
-#include "../Deserializer.hpp"
+#include "../DeserializerNode.hpp"
 #include <string_view>
 #include <cstddef>
 
