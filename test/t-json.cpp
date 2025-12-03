@@ -78,10 +78,15 @@ TEST_CASE("simple serialize")
             auto ar = obj.ar("array");
             for (int i = 1; i < 5; ++i) ar.val(i);
         }
-        obj.val("bool", true);
-        obj.val("bool2", false);
-        obj.val("float", 3.1f);
-        obj.val("int", -3);
+        std::optional<int> nope;
+        int* nope2 = nullptr;
+        std::optional<int> yup = -3;
+        obj.val("bool",true);
+        obj.val("bool2",false);
+        obj.val("float",3.1f);
+        obj.optval("int", yup);
+        obj.optval("nope", nope);
+        obj.optval("nope2", nope2);
         obj.val("unsigned-long-long",900000000000000ULL);
         obj.val("str", "b\n\\g\t\033sdf");
     }

@@ -158,6 +158,12 @@ public:
         key(std::forward<K>(k)).val(std::forward<V>(v));
     }
 
+    template <typename K, typename OV>
+    void optval(K&& k, OV&& ov) {
+        if (!ov) return;
+        key(std::forward<K>(k)).val(*std::forward<OV>(ov));
+    }
+
     template <typename K, typename V, typename F>
     void cval(K&& k, V&& v, F&& f) {
         key(std::forward<K>(k)).cval(std::forward<V>(v), std::forward<F>(f));
@@ -168,11 +174,6 @@ public:
 
     /////////////////
     // compatibility with deserializer
-    template <typename K, typename V>
-    bool optval(K&& k, V&& v) {
-        val(std::forward<K>(k), std::forward<V>(v));
-        return true;
-    }
     template <typename V>
     void keyval(std::string_view k, V&& v) {
         val(k, std::forward<V>(v));
