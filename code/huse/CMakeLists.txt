@@ -8,8 +8,7 @@ icm_add_lib(huse HUSE
 
     Fwd.hpp
 
-    Serializer.hpp
-    Deserializer.hpp
+    SerializerNode.hpp
     VTableExports.cpp
     Exception.hpp
 

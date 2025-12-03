@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 //
 #pragma once
-#include "Serializer.hpp"
+#include "SerializerNode.hpp"
 
 namespace huse {
 

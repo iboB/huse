@@ -6,8 +6,11 @@
 namespace huse
 {
 
+template <typename S>
 class SerializerNode;
+template <typename S>
 class SerializerArray;
+template <typename S>
 class SerializerObject;
 
 class DeserializerNode;

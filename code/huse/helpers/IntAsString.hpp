@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 //
 #pragma once
-#include "../Serializer.hpp"
+#include "../SerializerNode.hpp"
 #include "../Deserializer.hpp"
 
 #include "../impl/Charconv.hpp"
