@@ -3,13 +3,13 @@
 //
 #pragma once
 #include "../API.h"
-#include "../StatefulSerializer.hpp"
+#include "../Serializer.hpp"
 #include <iosfwd>
 #include <memory>
 
 namespace huse::json {
 
-class HUSE_API JsonSerializer : public StatefulSerializer {
+class HUSE_API JsonSerializer : public Serializer {
 public:
     JsonSerializer(std::ostream& out, bool pretty = false);
     ~JsonSerializer();
@@ -28,7 +28,7 @@ public:
     virtual void writeValue(std::string_view val) final override;
     virtual void writeValue(std::nullptr_t) final override;
     virtual void writeValue(std::nullopt_t) final override;
-    using StatefulSerializer::writeValue;
+    using Serializer::writeValue;
 
     virtual std::ostream& openStringStream() final override;
     virtual void closeStringStream() final override;
@@ -40,7 +40,7 @@ public:
     virtual void openArray() final override;
     virtual void closeArray() final override;
 
-    using StatefulSerializer::open;
+    using Serializer::open;
 
     void writeRawJson(std::string_view json);
     std::ostream& out() { return m_out; }
