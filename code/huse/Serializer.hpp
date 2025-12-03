@@ -44,8 +44,8 @@ public:
     virtual void openArray() = 0;
     virtual void closeArray() = 0;
 
-    void open(Object) { openObject(); }
-    void open(Array) { openArray(); }
+    int open(Object) { openObject(); return 0; }
+    int open(Array) { openArray(); return 0; }
 
     void throwException(const std::string& msg);
 };

@@ -7,6 +7,9 @@
 
 namespace huse {
 
+class SerializeSStream : public impl::UniqueStack {
+};
+
 template <typename Serializer>
 class SerializerObject;
 template <typename Serializer>
@@ -81,7 +84,7 @@ class SerializerArray : public SerializerNode<Serializer> {
 public:
     using Node = SerializerNode<Serializer>;
 
-    SerializerArray(Node& parent) noexcept
+    SerializerArray(Node& parent, int) noexcept
         : Node(parent, true)
     {}
     template <std::derived_from<Serializer> OtherSerializer>
@@ -111,7 +114,7 @@ class SerializerObject : private SerializerNode<Serializer> {
 public:
     using Node = SerializerNode<Serializer>;
 
-    SerializerObject(Node& parent) noexcept
+    SerializerObject(Node& parent, int) noexcept
         : Node(parent, true)
     {}
     template <std::derived_from<Serializer> OtherSerializer>
@@ -215,11 +218,11 @@ concept HasOpen = requires(Serializer & s, T t) {
     s.open(t);
 };
 template <typename T, typename Serializer>
-concept HasOpenMethod = requires(T t, SerializerNode<Serializer>&node) {
+concept HasOpenMethod = requires(T t, SerializerNode<Serializer>& node) {
     t.huseOpen(node);
 };
 template <typename T, typename Serializer>
-concept HasOpenFunc = requires(SerializerNode<Serializer>&node, T t) {
+concept HasOpenFunc = requires(SerializerNode<Serializer>& node, T t) {
     huseOpen(node, t);
 };
 
@@ -255,8 +258,10 @@ template <typename Serializer>
 template <typename O>
 decltype(auto) SerializerNode<Serializer>::open(O&& o) {
     if constexpr (impl::HasOpen<Serializer, O>) {
-        m_serializer->open(std::forward<O>(o));
-        return typename O::template SerializerNode<Serializer>(*this);
+        return typename O::template SerializerNode<Serializer>(
+            *this,
+            m_serializer->open(std::forward<O>(o))
+        );
     }
     else if constexpr (impl::HasOpenMethod<O, Serializer>) {
         return std::forward<O>(o).huseOpen(*this);
