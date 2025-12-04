@@ -9,7 +9,7 @@
 
 namespace huse::json {
 
-class HUSE_API JsonSerializer : public Serializer {
+class HUSE_API JsonSerializer : virtual public Serializer {
 public:
     JsonSerializer(std::ostream& out, bool pretty = false);
     ~JsonSerializer();
