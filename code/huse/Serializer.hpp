@@ -4,10 +4,17 @@
 #pragma once
 #include "API.h"
 #include "OpenTags.hpp"
+#include <splat/warnings.h>
 #include <string_view>
 #include <string>
 #include <cstddef>
 #include <optional>
+
+// Yes, yes, we're propagating the warning disable to all includers
+// but this class is supposed to be inherited virtually and this triggers the
+// stupid and absoltely pointless MSVC warning.
+// MSVC, how are we supposed to use virtual inheritance if not like this?
+DISABLE_MSVC_WARNING(4250)
 
 namespace huse {
 class CtxObj;
