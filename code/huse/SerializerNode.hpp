@@ -203,10 +203,10 @@ public:
         this->m_serializer->pushKey(k);
         return *this;
     }
-    Node& key(std::initializer_list<std::string_view> kp) {
-        this->m_serializer->pushKeyParts(kp);
-        return *this;
-    }
+    //Node& key(std::initializer_list<std::string_view> kp) {
+    //    this->m_serializer->pushKeyParts(kp);
+    //    return *this;
+    //}
 
     SerializerObject obj(std::string_view k) {
         return key(k).obj();
