@@ -1,15 +1,11 @@
 #pragma once
 #include "OpenTags.hpp"
-#include "impl/UniqueStack.hpp"
 #include <iosfwd>
 #include <concepts>
 #include <string_view>
 #include <initializer_list>
 
 namespace huse {
-
-class SerializeSStream : public impl::UniqueStack {
-};
 
 template <typename Serializer>
 class SerializerObject;
@@ -19,43 +15,60 @@ template <typename Serializer>
 class SerializerSStream;
 
 template <typename Serializer>
-class SerializerNode : public impl::UniqueStack {
+class SerializerNode {
 protected:
     template <typename S>
     friend class SerializerNode;
 
     Serializer* m_serializer;
-    bool m_ownsClose = false;
+
+    uint32_t m_parentId;
+    const uint32_t m_id;
+
+    bool ownsClose() const {
+        return m_parentId >= 0;
+    }
 public:
     SerializerNode(Serializer& s) noexcept
-        : UniqueStack(nullptr)
-        , m_serializer(&s)
+        : m_serializer(&s)
+        , m_id(s.getNewNodeId())
+        , m_parentId(s.curNodeId())
     {}
 
     template <std::derived_from<Serializer> OtherSerializer>
     SerializerNode(SerializerNode<OtherSerializer>& other, bool ownsClose = false) noexcept
-        : UniqueStack(&other)
-        , m_serializer(other.m_serializer)
-        , m_ownsClose(ownsClose)
+        : m_serializer(other.m_serializer)
+        , m_parentId(ownsClose ? other.m_id : -1)
+        , m_id(ownsClose ? m_serializer->getNewNodeId() : other.m_id)
     {}
 
     SerializerNode(SerializerNode&& other) noexcept
-        : UniqueStack(std::move(other))
-        , m_serializer(other.m_serializer)
-        , m_ownsClose(other.m_ownsClose)
+        : m_serializer(other.m_serializer)
+        , m_parentId(other.m_parentId)
+        , m_id(other.m_id)
     {
         other.m_serializer = nullptr;
-        other.m_ownsClose = false;
+        other.m_parentId = -1;
     }
 
     template <std::derived_from<Serializer> OtherSerializer>
     SerializerNode(SerializerNode<OtherSerializer>&& other) noexcept
-        : UniqueStack(std::move(other))
-        , m_serializer(other.m_serializer)
-        , m_ownsClose(other.m_ownsClose)
+        : m_serializer(other.m_serializer)
+        , m_parentId(other.m_parentId)
+        , m_id(other.m_id)
     {
         other.m_serializer = nullptr;
-        other.m_ownsClose = false;
+        other.m_parentId = -1;
+    }
+
+    SerializerNode& operator=(const SerializerNode&) = delete;
+    SerializerNode& operator=(SerializerNode&&) = delete;
+
+    ~SerializerNode() {
+        if (ownsClose()) {
+            HUSE_ASSERT_INTERNAL(m_serializer);
+            m_serializer->releaseNodeId(m_id, m_parentId);
+        }
     }
 
     [[noreturn]] void throwException(const std::string& msg) const {
@@ -111,7 +124,7 @@ public:
     }
 
     ~SerializerSStream() {
-        if (this->m_ownsClose) {
+        if (this->ownsClose()) {
             HUSE_ASSERT_INTERNAL(this->m_serializer);
             this->m_serializer->closeStringStream();
         }
@@ -159,7 +172,7 @@ public:
     {}
 
     ~SerializerArray() {
-        if (this->m_ownsClose) {
+        if (this->ownsClose()) {
             HUSE_ASSERT_INTERNAL(this->m_serializer);
             this->m_serializer->closeArray();
         }
@@ -189,7 +202,7 @@ public:
     {}
 
     ~SerializerObject() {
-        if (this->m_ownsClose) {
+        if (this->ownsClose()) {
             HUSE_ASSERT_INTERNAL(this->m_serializer);
             this->m_serializer->closeObject();
         }

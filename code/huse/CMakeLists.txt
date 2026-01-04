@@ -4,8 +4,6 @@
 icm_add_lib(huse HUSE
     API.h
 
-    impl/UniqueStack.hpp
-
     Fwd.hpp
 
     SerializerNode.hpp

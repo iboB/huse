@@ -4,6 +4,7 @@
 #pragma once
 #include "API.h"
 #include "OpenTags.hpp"
+#include "impl/Assert.hpp"
 #include <splat/warnings.h>
 #include <string_view>
 #include <string>
@@ -56,6 +57,22 @@ public:
     std::ostream& open(StringStream) { return openStringStream(); }
 
     void throwException(const std::string& msg);
+
+    // stack control (for debugging purposes)
+    int curNodeId() const noexcept {
+        return m_curNodeId;
+    }
+    int getNewNodeId() noexcept {
+        m_curNodeId = m_freeNodeId++;
+        return m_curNodeId;
+    }
+    void releaseNodeId([[maybe_unused]] int released, int newCur) noexcept {
+        HUSE_ASSERT_USAGE(released == m_curNodeId, "node id mismatch");
+        m_curNodeId = newCur;
+    }
+private:
+    int m_freeNodeId = 0;
+    int m_curNodeId = -1;
 };
 
 } // namespace huse
