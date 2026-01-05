@@ -22,8 +22,8 @@ protected:
 
     Serializer* m_serializer;
 
-    uint32_t m_parentId;
-    const uint32_t m_id;
+    int m_parentId;
+    const int m_id;
 
     bool ownsClose() const {
         return m_parentId >= 0;
