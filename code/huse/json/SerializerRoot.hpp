@@ -3,6 +3,7 @@
 //
 #pragma once
 #include "Serializer.hpp"
+#include "SerializerXNode.hpp"
 #include "../SerializerRoot.hpp"
 
 namespace huse::json {

@@ -70,6 +70,10 @@ public:
         HUSE_ASSERT_USAGE(released == m_curNodeId, "node id mismatch");
         m_curNodeId = newCur;
     }
+
+    struct XNode {};
+    struct XArray {};
+    struct XObject {};
 private:
     int m_freeNodeId = 0;
     int m_curNodeId = -1;

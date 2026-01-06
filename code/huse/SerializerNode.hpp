@@ -15,7 +15,7 @@ template <typename Serializer>
 class SerializerSStream;
 
 template <typename Serializer>
-class SerializerNode {
+class SerializerNode : public Serializer::XNode {
 protected:
     template <typename S>
     friend class SerializerNode;
@@ -150,7 +150,7 @@ public:
 };
 
 template <typename Serializer>
-class SerializerArray : public SerializerNode<Serializer> {
+class SerializerArray : public SerializerNode<Serializer>, public Serializer::XArray {
     template <typename S>
     friend class SerializerArray;
 public:
@@ -180,7 +180,7 @@ public:
 };
 
 template <typename Serializer>
-class SerializerObject : private SerializerNode<Serializer> {
+class SerializerObject : private SerializerNode<Serializer>, public Serializer::XObject {
     template <typename S>
     friend class SerializerObject;
 public:

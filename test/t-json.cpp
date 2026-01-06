@@ -77,6 +77,7 @@ TEST_CASE("simple serialize")
         {
             auto ar = obj.ar("array");
             for (int i = 1; i < 5; ++i) ar.val(i);
+            ar.raw("42");
         }
         std::optional<int> nope;
         int* nope2 = nullptr;
@@ -90,7 +91,7 @@ TEST_CASE("simple serialize")
         obj.val("unsigned-long-long",900000000000000ULL);
         obj.val("str", "b\n\\g\t\033sdf");
     }
-    CHECK(j.str() == R"({"array":[1,2,3,4],"bool":true,"bool2":false,"float":3.1,"int":-3,"unsigned-long-long":900000000000000,"str":"b\n\\g\t\u001bsdf"})");
+    CHECK(j.str() == R"({"array":[1,2,3,4,42],"bool":true,"bool2":false,"float":3.1,"int":-3,"unsigned-long-long":900000000000000,"str":"b\n\\g\t\u001bsdf"})");
 
     j.compact().obj().obj("i1").obj("i2").obj("i3").val("deep", true);
     CHECK(j.str() == R"({"i1":{"i2":{"i3":{"deep":true}}}})");
