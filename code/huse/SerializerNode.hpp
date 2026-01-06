@@ -31,8 +31,8 @@ protected:
 public:
     SerializerNode(Serializer& s) noexcept
         : m_serializer(&s)
-        , m_id(s.getNewNodeId())
         , m_parentId(s.curNodeId())
+        , m_id(s.getNewNodeId())
     {}
 
     template <std::derived_from<Serializer> OtherSerializer>
