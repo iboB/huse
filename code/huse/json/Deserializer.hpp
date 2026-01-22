@@ -8,7 +8,7 @@
 
 namespace huse::json {
 
-class HUSE_API JsonDeserializer : public Deserializer, private Parser {
+class HUSE_API JsonDeserializer : virtual public Deserializer, private Parser {
 public:
     using Parser::Parser;
     ~JsonDeserializer();
