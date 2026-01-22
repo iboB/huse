@@ -294,15 +294,15 @@ concept HasSerializeFunc = requires(SerializerNode<Serializer>& node, T t) {
 };
 
 template <typename Serializer, typename T>
-concept HasOpen = requires(Serializer & s, T t) {
+concept HasSOpen = requires(Serializer& s, T t) {
     s.open(t);
 };
 template <typename T, typename Serializer>
-concept HasOpenMethod = requires(T t, SerializerNode<Serializer>& node) {
+concept HasOpenSMethod = requires(T t, SerializerNode<Serializer>& node) {
     t.huseOpen(node);
 };
 template <typename T, typename Serializer>
-concept HasOpenFunc = requires(SerializerNode<Serializer>& node, T t) {
+concept HasOpenSFunc = requires(SerializerNode<Serializer>& node, T t) {
     huseOpen(node, t);
 };
 
@@ -337,16 +337,16 @@ void SerializerNode<Serializer>::val(V&& v) {
 template <typename Serializer>
 template <typename O>
 decltype(auto) SerializerNode<Serializer>::open(O&& o) {
-    if constexpr (impl::HasOpen<Serializer, O>) {
+    if constexpr (impl::HasSOpen<Serializer, O>) {
         return typename O::template SerializerNode<Serializer>(
             *this,
             m_serializer->open(std::forward<O>(o))
         );
     }
-    else if constexpr (impl::HasOpenMethod<O, Serializer>) {
+    else if constexpr (impl::HasOpenSMethod<O, Serializer>) {
         return std::forward<O>(o).huseOpen(*this);
     }
-    else if constexpr (impl::HasOpenFunc<O, Serializer>) {
+    else if constexpr (impl::HasOpenSFunc<O, Serializer>) {
         return huseOpen(*this, std::forward<O>(o));
     }
     else {

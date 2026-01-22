@@ -33,7 +33,8 @@ struct IntAsStringOpt {
         n.val(std::string_view(buf, res.ptr - buf));
     }
 
-    void operator()(DeserializerNode& n, Int& i) const {
+    template <typename D>
+    void operator()(DeserializerNode<D>& n, Int& i) const {
         std::string_view val;
         n.val(val);
         if (val.empty() && emptyStringVal) {

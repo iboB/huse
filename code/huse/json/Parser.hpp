@@ -10,9 +10,9 @@
 namespace huse::json {
 
 struct HUSE_API Parser {
-    Parser(sajson::document&& doc);
-    Parser(std::string_view str);
-    Parser(char* mutableString, size_t len = size_t(-1));
+    explicit Parser(sajson::document&& doc);
+    explicit Parser(std::string_view str);
+    explicit Parser(char* mutableString, size_t len = size_t(-1));
 
     ~Parser();
 

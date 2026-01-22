@@ -1,26 +1,27 @@
 #pragma once
+#include "Fwd.hpp"
 
 namespace huse {
 
-template <typename Serializer>
-class SerializerArray;
 struct Array {
     template <typename Serializer>
     using SerializerNode = SerializerArray<Serializer>;
+    template <typename Deserializer>
+    using DeserializerNode = DeserializerArray<Deserializer>;
 };
 
-template <typename Serializer>
-class SerializerObject;
 struct Object {
     template <typename Serializer>
     using SerializerNode = SerializerObject<Serializer>;
+    template <typename Deserializer>
+    using DeserializerNode = DeserializerObject<Deserializer>;
 };
 
-template <typename Serializer>
-class SerializerSStream;
 struct StringStream {
     template <typename Serializer>
     using SerializerNode = SerializerSStream<Serializer>;
+    template <typename Deserializer>
+    using DeserializerNode = DeserializerSStream;
 };
 
 } // namespace huse

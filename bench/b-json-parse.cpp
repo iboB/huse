@@ -33,14 +33,17 @@ size_t hash(std::string_view str) {
 ////////////////////////////////////////////////////////////////////////////////
 // huse
 
-void huseDeserialize(huse::DeserializerNode& n, vec& v) {
+using HuseJsonNode = huse::DeserializerNode<huse::json::JsonDeserializer>;
+using HuseJsonObject = huse::DeserializerObject<huse::json::JsonDeserializer>;
+
+void huseDeserialize(HuseJsonNode& n, vec& v) {
     auto obj = n.obj();
     obj.val("x", v.x);
     obj.val("y", v.y);
     obj.val("z", v.z);
 }
 
-result_t check_ack(huse::DeserializerObject& obj) {
+result_t check_ack(HuseJsonObject& obj) {
     auto node = obj.optkey("ack");
     if (!node) return 0;
     int ack;
@@ -48,7 +51,7 @@ result_t check_ack(huse::DeserializerObject& obj) {
     return ack;
 }
 
-result_t check_setSubscriptions(huse::DeserializerObject& d) {
+result_t check_setSubscriptions(HuseJsonObject& d) {
     auto node = d.optkey("setSubscriptions");
     if (!node) return 0;
     result_t res = 0;
@@ -64,7 +67,7 @@ result_t check_setSubscriptions(huse::DeserializerObject& d) {
     return res;
 }
 
-result_t check_setRequestBatch(huse::DeserializerObject& d) {
+result_t check_setRequestBatch(HuseJsonObject& d) {
     auto node = d.optkey("setRequestBatch");
     if (!node) return 0;
 
@@ -91,7 +94,7 @@ result_t check_setRequestBatch(huse::DeserializerObject& d) {
     return res;
 }
 
-result_t check_ping(huse::DeserializerObject& d) {
+result_t check_ping(HuseJsonObject& d) {
     auto node = d.optkey("ping");
     if (!node) return 0;
 
@@ -104,7 +107,7 @@ result_t check_ping(huse::DeserializerObject& d) {
     return res;
 }
 
-result_t check_setInteraction(huse::DeserializerObject& d) {
+result_t check_setInteraction(HuseJsonObject& d) {
     auto node = d.optkey("setInteraction");
     if (!node) return 0;
     result_t res = 0;
@@ -138,7 +141,7 @@ result_t check_setInteraction(huse::DeserializerObject& d) {
     return res;
 }
 
-result_t parse(huse::DeserializerNode& d) {
+result_t parse(HuseJsonNode& d) {
     auto obj = d.obj();
     result_t res = 0;
     res += check_ack(obj);
@@ -155,7 +158,7 @@ void bench_huse(picobench::state& s) {
 
     for (auto i : s) {
         auto& line = lines[i];
-        auto d = huse::json::DeserializerRoot::create(line.data(), line.size());
+        huse::json::DeserializerRoot d(line.data(), line.size());
         res += parse(d);
     }
 

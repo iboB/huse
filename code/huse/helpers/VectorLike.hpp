@@ -18,8 +18,8 @@ struct VectorLike{
         }
     }
 
-    template <typename Vec>
-    void operator()(DeserializerNode& n, Vec& vec) const {
+    template <typename D, typename Vec>
+    void operator()(DeserializerNode<D>& n, Vec& vec) const {
         auto ar = n.ar();
         auto len = ar.size();
         vec.resize(size_t(len));

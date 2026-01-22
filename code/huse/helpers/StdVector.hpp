@@ -15,8 +15,8 @@ void huseSerialize(SerializerNode<S>& n, const std::vector<T, A>& vec)
     VectorLike{}(n, vec);
 }
 
-template <typename T, typename A>
-void huseDeserialize(DeserializerNode& n, std::vector<T, A>& vec)
+template <typename D, typename T, typename A>
+void huseDeserialize(DeserializerNode<D>& n, std::vector<T, A>& vec)
 {
     VectorLike{}(n, vec);
 }

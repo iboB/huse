@@ -183,7 +183,7 @@ TEST_CASE("serializer exceptions")
 
 huse::json::DeserializerRoot makeD(std::string_view str)
 {
-    return huse::json::DeserializerRoot::create(str);
+    return huse::json::DeserializerRoot(str);
 }
 
 TEST_CASE("simple deserialize")
@@ -355,7 +355,7 @@ TEST_CASE("deserialize iteration")
         CHECK(!ar.optval());
         CHECK_THROWS_D(ar.val(n), "array index out of bounds");
 
-        std::vector<huse::DeserializerNode> nodes;
+        std::vector<huse::DeserializerNode<huse::json::JsonDeserializer>> nodes;
         for (auto node : ar) {
             nodes.push_back(node);
         }
@@ -452,7 +452,7 @@ TEST_CASE("deserializer exceptions")
         auto o = d.obj();
         auto a = o.ar("ar");
         auto io = a.index(1).obj();
-        auto rf = [](huse::DeserializerNode& n, float& out) {
+        auto rf = [](huse::DeserializerNode<huse::json::JsonDeserializer>& n, float& out) {
             n.val(out);
             if (out > 2) n.throwException("val too big");
         };
@@ -571,7 +571,7 @@ struct SimpleTest
         serializeFlatT(o, *this);
     }
 
-    void huseDeserializeFlat(huse::DeserializerObject& o)
+    void huseDeserializeFlat(huse::DeserializerObject<huse::json::JsonDeserializer>& o)
     {
         serializeFlatT(o, *this);
     }
@@ -588,7 +588,7 @@ struct SimpleTest
         serializeT(n, *this);
     }
 
-    void huseDeserialize(huse::DeserializerNode& n)
+    void huseDeserialize(huse::DeserializerNode<huse::json::JsonDeserializer>& n)
     {
         serializeT(n, *this);
     }
@@ -623,7 +623,7 @@ void huseSerialize(huse::SerializerNode<huse::json::JsonSerializer>& n, const Co
     ComplexTest::serialize(n, ct);
 }
 
-void huseDeserialize(huse::DeserializerNode& n, ComplexTest& ct)
+void huseDeserialize(huse::DeserializerNode<huse::json::JsonDeserializer>& n, ComplexTest& ct)
 {
     ComplexTest::serialize(n, ct);
 }
@@ -689,7 +689,7 @@ void serializeInt64AsMaybeString(huse::SerializerNode<huse::json::JsonSerializer
     else n.val(std::to_string(i));
 }
 
-void serializeInt64AsMaybeString(huse::DeserializerNode& n, uint64_t& i)
+void serializeInt64AsMaybeString(huse::DeserializerNode<huse::json::JsonDeserializer>& n, uint64_t& i)
 {
     if (n.type().isNumber()) n.val(i);
     else
@@ -740,7 +740,7 @@ struct CustomSerialization
         serializeT(n, *this);
     }
 
-    void huseDeserialize(huse::DeserializerNode& n)
+    void huseDeserialize(huse::DeserializerNode<huse::json::JsonDeserializer>& n)
     {
         serializeT(n, *this);
     }
@@ -806,7 +806,7 @@ struct MultipleValuesAsString
         serializeT(n, *this);
     }
 
-    void huseDeserialize(huse::DeserializerNode& n)
+    void huseDeserialize(huse::DeserializerNode<huse::json::JsonDeserializer>& n)
     {
         serializeT(n, *this);
     }

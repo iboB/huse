@@ -26,7 +26,7 @@ void bench_huse(const char* path, picobench::state& s) {
     auto content = readFile(path);
 
     s.start_timer();
-    auto d = huse::json::DeserializerRoot::create(content);
+    huse::json::DeserializerRoot d(content);
     s.stop_timer();
 
     if (d.type().isObject()) {

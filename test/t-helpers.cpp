@@ -32,7 +32,8 @@ struct ObjWrap {
     }
     template <typename S>
     void huseSerialize(huse::SerializerNode<S>& n) const { sh(n, *this); }
-    void huseDeserialize(huse::DeserializerNode& n) { sh(n, *this); }
+    template <typename D>
+    void huseDeserialize(huse::DeserializerNode<D>& n) { sh(n, *this); }
 };
 
 template <typename T, typename C>
@@ -51,7 +52,7 @@ T cclone(const T& val, C c, std::optional<std::string> check = std::nullopt) {
     }
 
     ObjWrap<T, C> ret(c);
-    auto d = huse::json::DeserializerRoot::create(json.data(), json.length());
+    huse::json::DeserializerRoot d(json.data(), json.length());
     d.val(ret);
     return ret.t;
 }
@@ -89,7 +90,7 @@ TEST_CASE("istr") {
     CHECK(u64c == u64);
 
     const std::string json = R"({"t":""})";
-    auto d = huse::json::DeserializerRoot::create(json);
+    huse::json::DeserializerRoot d(json);
 
     {
         ObjWrap<int, huse::IntAsString> w({});

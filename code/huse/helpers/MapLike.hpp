@@ -27,8 +27,8 @@ struct MapLike {
         }
     }
 
-    template <typename Map>
-    void operator()(DeserializerNode& n, Map& map) const {
+    template <typename D, typename Map>
+    void operator()(DeserializerNode<D>& n, Map& map) const {
         using KvPair = std::pair<typename Map::key_type, typename Map::mapped_type>;
 
         if constexpr (std::is_convertible_v<typename Map::key_type, std::string_view>) {

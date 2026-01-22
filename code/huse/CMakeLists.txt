@@ -13,6 +13,8 @@ icm_add_lib(huse HUSE
 
     json/Serializer.hpp
     json/Serializer.cpp
+    json/Deserializer.hpp
+    json/Deserializer.cpp
     json/DeserializerRoot.hpp
     json/Parser.hpp
     json/Parser.cpp
