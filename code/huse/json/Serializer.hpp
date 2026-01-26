@@ -9,8 +9,6 @@
 
 namespace huse::json {
 
-struct SerializerXNode;
-
 class HUSE_API JsonSerializer : virtual public Serializer {
 public:
     JsonSerializer(std::ostream& out, bool pretty = false);
@@ -44,10 +42,14 @@ public:
 
     using Serializer::open;
 
-    void writeRawJson(std::string_view json);
-    std::ostream& out() { return m_out; }
+    // special writers
+    struct RawJson {
+        std::string_view str;
+    };
+    void writeValue(RawJson json) { writeRawJson(json.str); }
 
-    using XNode = SerializerXNode;
+
+    std::ostream& out() { return m_out; }
 
 private:
     void newLine();
@@ -55,6 +57,7 @@ private:
     void open(char o);
     void close(char c);
 
+    void writeRawJson(std::string_view json);
     template <typename T> void writeSmallInteger(T n);
     template <typename T> void writePotentiallyBigIntegerValue(T val);
     template <typename T> void writeFloatValue(T val);

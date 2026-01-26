@@ -20,10 +20,6 @@ public:
     virtual ~Deserializer();
 
     virtual ImValue getRootValue() const = 0;
-
-    struct XNode {};
-    struct XArray {};
-    struct XObject {};
 };
 
 } // namespace huse

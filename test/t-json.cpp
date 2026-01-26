@@ -77,7 +77,7 @@ TEST_CASE("simple serialize")
         {
             auto ar = obj.ar("array");
             for (int i = 1; i < 5; ++i) ar.val(i);
-            ar.raw("42");
+            ar.val(huse::json::JsonSerializer::RawJson{"42"});
         }
         std::optional<int> nope;
         int* nope2 = nullptr;

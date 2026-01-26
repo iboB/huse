@@ -75,7 +75,7 @@ template <typename Deserializer>
 class DeserializerArray;
 
 template <typename Deserializer>
-class DeserializerNode : public impl::DeserializerNodeImpl, public Deserializer::XNode {
+class DeserializerNode : public impl::DeserializerNodeImpl {
 protected:
     template <typename D>
     friend class DeserializerNode;
@@ -120,7 +120,7 @@ public:
 };
 
 template <typename Deserializer>
-class DeserializerArray : public DeserializerNode<Deserializer>, public Deserializer::XArray {
+class DeserializerArray : public DeserializerNode<Deserializer> {
     template <typename D>
     friend class DeserializerArray;
 
@@ -226,8 +226,7 @@ public:
 };
 
 template <typename Deserializer>
-class DeserializerObject : public DeserializerNode<Deserializer>, public Deserializer::XObject
-{
+class DeserializerObject : public DeserializerNode<Deserializer> {
     template <typename D>
     friend class DeserializerObject;
 
