@@ -107,7 +107,9 @@ public:
     }
 
     template <typename O>
-    decltype(auto) open(O&& o);
+    decltype(auto) open(O&& o) {
+        return std::forward<O>(o).huseOpen(*this);
+    }
 
     DeserializerArray<Deserializer> ar();
     DeserializerObject<Deserializer> obj();
@@ -251,6 +253,11 @@ public:
     {}
 
     using Node::size;
+
+    template <typename O>
+    decltype(auto) open(O&& o) {
+        return std::forward<O>(o).huseOpen(*this);
+    }
 
     void skip() {
         ++m_index;
@@ -455,19 +462,6 @@ concept HasDeserializeFunc = requires(T& t, DeserializerNode<Deserializer>& node
     huseDeserialize(node, t);
 };
 
-template <typename Deserializer, typename T>
-concept HasDOpen = requires(Deserializer& d, T t, ImValue& v) {
-    d.open(t, v);
-};
-template <typename T, typename Deserializer>
-concept HasOpenDMethod = requires(T t, DeserializerNode<Deserializer>& node) {
-    t.huseOpen(node);
-};
-template <typename T, typename Deserializer>
-concept HasOpenDFunc = requires(DeserializerNode<Deserializer>& node, T t) {
-    huseOpen(node, t);
-};
-
 template <typename T, typename Deserializer>
 concept HasDeserializeFlatMethod = requires(T t, DeserializerObject<Deserializer>& obj) {
     t.huseDeserializeFlat(obj);
@@ -495,26 +489,6 @@ void DeserializerNode<Deserializer>::val(T& v) {
     }
     else {
         huseCannotDeserialize(v);
-    }
-}
-
-template <typename Deserializer>
-template <typename O>
-decltype(auto) DeserializerNode<Deserializer>::open(O&& o) {
-    if constexpr (impl::HasDOpen<Deserializer, O>) {
-        return typename O::template DeserializerNode<Deserializer>(
-            this->m_deserializer->open(std::forward<O>(o), m_value),
-            this->m_deserializer
-        );
-    }
-    else if constexpr (impl::HasOpenDMethod<O, Deserializer>) {
-        return std::forward<O>(o).huseOpen(*this);
-    }
-    else if constexpr (impl::HasOpenDFunc<O, Deserializer>) {
-        return huseOpen(*this, std::forward<O>(o));
-    }
-    else {
-        return huseCannotOpen(*this, o);
     }
 }
 

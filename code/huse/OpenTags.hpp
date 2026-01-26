@@ -1,27 +1,21 @@
 #pragma once
 #include "Fwd.hpp"
+#include <string_view>
 
 namespace huse {
 
-struct Array {
-    template <typename Serializer>
-    using SerializerNode = SerializerArray<Serializer>;
-    template <typename Deserializer>
-    using DeserializerNode = DeserializerArray<Deserializer>;
-};
-
-struct Object {
-    template <typename Serializer>
-    using SerializerNode = SerializerObject<Serializer>;
-    template <typename Deserializer>
-    using DeserializerNode = DeserializerObject<Deserializer>;
-};
-
 struct StringStream {
     template <typename Serializer>
-    using SerializerNode = SerializerSStream<Serializer>;
+    SerializerSStream<Serializer> huseOpen(SerializerNode<Serializer>& parent) {
+        return SerializerSStream<Serializer>(parent, parent._s().openStringStream());
+    }
+
     template <typename Deserializer>
-    using DeserializerNode = DeserializerSStream;
+    DeserializerSStream huseOpen(DeserializerNode<Deserializer>& parent) {
+        std::string_view str;
+        parent.val(str);
+        return DeserializerSStream(str);
+    }
 };
 
 } // namespace huse

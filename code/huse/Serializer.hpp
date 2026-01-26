@@ -52,8 +52,6 @@ public:
     virtual void openArray() = 0;
     virtual void closeArray() = 0;
 
-    int open(Object) { openObject(); return 0; }
-    int open(Array) { openArray(); return 0; }
     std::ostream& open(StringStream) { return openStringStream(); }
 
     void throwException(const std::string& msg);

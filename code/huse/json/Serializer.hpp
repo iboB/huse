@@ -48,7 +48,6 @@ public:
     };
     void writeValue(RawJson json) { writeRawJson(json.str); }
 
-
     std::ostream& out() { return m_out; }
 
 private:

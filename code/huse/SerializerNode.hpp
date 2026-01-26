@@ -82,7 +82,9 @@ public:
     void val(V&& v);
 
     template <typename O>
-    decltype(auto) open(O&& o);
+    decltype(auto) open(O&& o) {
+        return std::forward<O>(o).huseOpen(*this);
+    }
 
     template <typename V, typename F>
     void cval(V&& v, F&& f) {
@@ -212,6 +214,11 @@ public:
     using Node::_active;
     using Node::_s;
 
+    template <typename O>
+    decltype(auto) open(O&& o) {
+        return std::forward<O>(o).huseOpen(*this);
+    }
+
     Node& key(std::string_view k) {
         this->m_serializer->pushKey(k);
         return *this;
@@ -267,11 +274,13 @@ public:
 
 template <typename Serializer>
 SerializerArray<Serializer> SerializerNode<Serializer>::ar() {
-    return open(Array{});
+    m_serializer->openArray();
+    return SerializerArray<Serializer>(*this, 0);
 }
 template <typename Serializer>
 SerializerObject<Serializer> SerializerNode<Serializer>::obj() {
-    return open(Object{});
+    m_serializer->openObject();
+    return SerializerObject<Serializer>(*this, 0);
 }
 template <typename Serializer>
 SerializerSStream<Serializer> SerializerNode<Serializer>::sstream() {
@@ -292,20 +301,6 @@ template <typename T, typename Serializer>
 concept HasSerializeFunc = requires(SerializerNode<Serializer>& node, T t) {
     huseSerialize(node, t);
 };
-
-template <typename Serializer, typename T>
-concept HasSOpen = requires(Serializer& s, T t) {
-    s.open(t);
-};
-template <typename T, typename Serializer>
-concept HasOpenSMethod = requires(T t, SerializerNode<Serializer>& node) {
-    t.huseOpen(node);
-};
-template <typename T, typename Serializer>
-concept HasOpenSFunc = requires(SerializerNode<Serializer>& node, T t) {
-    huseOpen(node, t);
-};
-
 
 template <typename T, typename Serializer>
 concept HasSerializeFlatMethod = requires(T t, SerializerObject<Serializer>& obj) {
@@ -331,26 +326,6 @@ void SerializerNode<Serializer>::val(V&& v) {
     }
     else {
         huseCannotSerialize(*this, v);
-    }
-}
-
-template <typename Serializer>
-template <typename O>
-decltype(auto) SerializerNode<Serializer>::open(O&& o) {
-    if constexpr (impl::HasSOpen<Serializer, O>) {
-        return typename O::template SerializerNode<Serializer>(
-            *this,
-            m_serializer->open(std::forward<O>(o))
-        );
-    }
-    else if constexpr (impl::HasOpenSMethod<O, Serializer>) {
-        return std::forward<O>(o).huseOpen(*this);
-    }
-    else if constexpr (impl::HasOpenSFunc<O, Serializer>) {
-        return huseOpen(*this, std::forward<O>(o));
-    }
-    else {
-        return huseCannotOpen(*this, o);
     }
 }
 
