@@ -42,7 +42,7 @@ public:
     void writeValue(const char* str) { writeValue(std::string_view(str)); }
 
     virtual std::ostream& openStringStream() = 0;
-    virtual void closeStream() = 0;
+    virtual void closeStringStream() = 0;
 
     virtual void pushKey(std::string_view key) = 0;
 

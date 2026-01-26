@@ -31,7 +31,7 @@ public:
     using Serializer::writeValue;
 
     virtual std::ostream& openStringStream() final override;
-    virtual void closeStream() final override;
+    virtual void closeStringStream() final override;
 
     virtual void pushKey(std::string_view key) final override;
 

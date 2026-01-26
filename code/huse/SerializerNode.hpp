@@ -12,7 +12,7 @@ class SerializerObject;
 template <typename Serializer>
 class SerializerArray;
 template <typename Serializer>
-class SerializerStream;
+class SerializerSStream;
 
 template <typename Serializer>
 class SerializerNode {
@@ -96,38 +96,38 @@ public:
 };
 
 template <typename Serializer>
-class SerializerStream : private SerializerNode<Serializer> {
+class SerializerSStream : private SerializerNode<Serializer> {
     std::ostream* m_stream;
 public:
     using Node = SerializerNode<Serializer>;
 
-    SerializerStream(Node& parent, std::ostream& stream) noexcept
+    SerializerSStream(Node& parent, std::ostream& stream) noexcept
         : Node(parent, true)
         , m_stream(&stream)
     {}
     template <std::derived_from<Serializer> OtherSerializer>
-    SerializerStream(SerializerStream<OtherSerializer>& other) noexcept
+    SerializerSStream(SerializerSStream<OtherSerializer>& other) noexcept
         : Node(other, false)
         , m_stream(other.m_stream)
     {}
-    SerializerStream(SerializerStream&& other) noexcept
+    SerializerSStream(SerializerSStream&& other) noexcept
         : Node(std::move(other))
         , m_stream(other.m_stream)
     {
         other.m_stream = nullptr;
     }
     template <std::derived_from<Serializer> OtherSerializer>
-    SerializerStream(SerializerStream<OtherSerializer>&& other) noexcept
+    SerializerSStream(SerializerSStream<OtherSerializer>&& other) noexcept
         : Node(std::move(other))
         , m_stream(other.m_stream)
     {
         other.m_stream = nullptr;
     }
 
-    ~SerializerStream() {
+    ~SerializerSStream() {
         if (this->ownsClose()) {
             HUSE_ASSERT_INTERNAL(this->m_serializer);
-            this->m_serializer->closeStream();
+            this->m_serializer->closeStringStream();
         }
     }
 
@@ -136,13 +136,13 @@ public:
     using Node::_s;
 
     template <typename T>
-    SerializerStream& operator<<(const T& t) {
+    SerializerSStream& operator<<(const T& t) {
         *m_stream << t;
         return *this;
     }
 
     template <typename T>
-    SerializerStream& operator&(const T& t) {
+    SerializerSStream& operator&(const T& t) {
         *m_stream << t;
         return *this;
     }
@@ -335,8 +335,8 @@ void SerializerObject<Serializer>::flatval(FV&& v) {
 }
 
 template <typename Serializer>
-SerializerStream<Serializer> huseOpen(StringStream, SerializerNode<Serializer>& parent) {
-    return SerializerStream<Serializer>(parent, parent._s().openStringStream());
+SerializerSStream<Serializer> huseOpen(StringStream, SerializerNode<Serializer>& parent) {
+    return SerializerSStream<Serializer>(parent, parent._s().openStringStream());
 }
 
 } // namespace huse

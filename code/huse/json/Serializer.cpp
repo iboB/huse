@@ -311,7 +311,7 @@ std::ostream& JsonSerializer::openStringStream() {
     return (*m_stringStream)->stream;
 }
 
-void JsonSerializer::closeStream() {
+void JsonSerializer::closeStringStream() {
     assert(!!m_stringStream && !!*m_stringStream);
     m_stringStream->reset();
     m_out.rdbuf()->sputc('"');
