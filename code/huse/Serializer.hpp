@@ -51,7 +51,7 @@ public:
     virtual void openArray() = 0;
     virtual void closeArray() = 0;
 
-    void throwException(const std::string& msg);
+    [[noreturn]] void throwException(const std::string& msg);
 
     // stack control (for debugging purposes)
     int curNodeId() const noexcept {

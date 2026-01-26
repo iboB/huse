@@ -7,7 +7,7 @@
 namespace huse {
 
 template <typename SSerializer>
-class SerializerRoot : public SSerializer, public SerializerNode<SSerializer> {
+class SerializerRoot final : public SSerializer, public SerializerNode<SSerializer> {
 public:
     template <typename... Args>
     SerializerRoot(Args&&... args)
