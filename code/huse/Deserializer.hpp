@@ -3,7 +3,6 @@
 //
 #pragma once
 #include "API.h"
-#include "OpenTags.hpp"
 #include "ImValue.hpp"
 #include <splat/warnings.h>
 

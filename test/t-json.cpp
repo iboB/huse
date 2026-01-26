@@ -123,12 +123,12 @@ TEST_CASE("serializer stream")
 {
     JsonSerializeTester j;
 
-    j.compact().sstream() << "xx " << 123;
+    j.compact().open(huse::StringStream{}) << "xx " << 123;
     CHECK(j.str() == R"("xx 123")");
 
     {
         auto root = j.compact();
-        auto s = root.sstream();
+        auto s = root.open(huse::StringStream{});
         s << -5;
         s.get().put(' ');
         s.get().write("abc", 3);
@@ -137,7 +137,7 @@ TEST_CASE("serializer stream")
 
     {
         auto root = j.compact();
-        auto s = root.sstream();
+        auto s = root.open(huse::StringStream{});
         s << "b\n\\g";
         s.get().put('\t');
         s.get().put(27);
@@ -282,7 +282,7 @@ TEST_CASE("stream deserialize")
 
     {
         std::string a, b, c;
-        o.sstream("string") >> a >> b >> c;
+        o.key("string").open(huse::StringStream{}) >> a >> b >> c;
         CHECK(a == "aa");
         CHECK(b == "bbb");
         CHECK(c == "c");
@@ -290,7 +290,7 @@ TEST_CASE("stream deserialize")
 
     {
         std::string a, b, c;
-        auto s = o.sstream("string");
+        auto s = o.key("string").open(huse::StringStream{});
         s >> a >> b >> c;
         CHECK(a == "aa");
         CHECK(b == "bbb");
@@ -798,7 +798,7 @@ struct MultipleValuesAsString
     template <typename N, typename MVS>
     static void serializeT(N& n, MVS& self)
     {
-        n.obj().sstream("data") & self.b & self.a;
+        n.obj().key("data").open(huse::StringStream{}) & self.b & self.a;
     }
 
     void huseSerialize(huse::SerializerNode<huse::json::JsonSerializer>& n) const

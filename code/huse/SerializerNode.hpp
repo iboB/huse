@@ -1,5 +1,5 @@
 #pragma once
-#include "OpenTags.hpp"
+#include "OpenStringStream.hpp"
 #include <iosfwd>
 #include <concepts>
 #include <string_view>
@@ -12,7 +12,7 @@ class SerializerObject;
 template <typename Serializer>
 class SerializerArray;
 template <typename Serializer>
-class SerializerSStream;
+class SerializerStream;
 
 template <typename Serializer>
 class SerializerNode {
@@ -83,7 +83,7 @@ public:
 
     template <typename O>
     decltype(auto) open(O&& o) {
-        return std::forward<O>(o).huseOpen(*this);
+        return huseOpen(std::forward<O>(o), *this);
     }
 
     template <typename V, typename F>
@@ -93,42 +93,41 @@ public:
 
     SerializerArray<Serializer> ar();
     SerializerObject<Serializer> obj();
-    SerializerSStream<Serializer> sstream();
 };
 
 template <typename Serializer>
-class SerializerSStream : private SerializerNode<Serializer> {
+class SerializerStream : private SerializerNode<Serializer> {
     std::ostream* m_stream;
 public:
     using Node = SerializerNode<Serializer>;
 
-    SerializerSStream(Node& parent, std::ostream& stream) noexcept
+    SerializerStream(Node& parent, std::ostream& stream) noexcept
         : Node(parent, true)
         , m_stream(&stream)
     {}
     template <std::derived_from<Serializer> OtherSerializer>
-    SerializerSStream(SerializerSStream<OtherSerializer>& other) noexcept
+    SerializerStream(SerializerStream<OtherSerializer>& other) noexcept
         : Node(other, false)
         , m_stream(other.m_stream)
     {}
-    SerializerSStream(SerializerSStream&& other) noexcept
+    SerializerStream(SerializerStream&& other) noexcept
         : Node(std::move(other))
         , m_stream(other.m_stream)
     {
         other.m_stream = nullptr;
     }
     template <std::derived_from<Serializer> OtherSerializer>
-    SerializerSStream(SerializerSStream<OtherSerializer>&& other) noexcept
+    SerializerStream(SerializerStream<OtherSerializer>&& other) noexcept
         : Node(std::move(other))
         , m_stream(other.m_stream)
     {
         other.m_stream = nullptr;
     }
 
-    ~SerializerSStream() {
+    ~SerializerStream() {
         if (this->ownsClose()) {
             HUSE_ASSERT_INTERNAL(this->m_serializer);
-            this->m_serializer->closeStringStream();
+            this->m_serializer->closeStream();
         }
     }
 
@@ -137,13 +136,13 @@ public:
     using Node::_s;
 
     template <typename T>
-    SerializerSStream& operator<<(const T& t) {
+    SerializerStream& operator<<(const T& t) {
         *m_stream << t;
         return *this;
     }
 
     template <typename T>
-    SerializerSStream& operator&(const T& t) {
+    SerializerStream& operator&(const T& t) {
         *m_stream << t;
         return *this;
     }
@@ -216,7 +215,7 @@ public:
 
     template <typename O>
     decltype(auto) open(O&& o) {
-        return std::forward<O>(o).huseOpen(*this);
+        return huseOpen(std::forward<O>(o), *this);
     }
 
     Node& key(std::string_view k) {
@@ -233,10 +232,6 @@ public:
     }
     SerializerArray<Serializer> ar(std::string_view k) {
         return key(k).ar();
-    }
-    template <typename K>
-    SerializerSStream<Serializer> sstream(K&& k) {
-        return key(std::forward<K>(k)).sstream();
     }
 
     template <typename K, typename V>
@@ -281,10 +276,6 @@ template <typename Serializer>
 SerializerObject<Serializer> SerializerNode<Serializer>::obj() {
     m_serializer->openObject();
     return SerializerObject<Serializer>(*this, 0);
-}
-template <typename Serializer>
-SerializerSStream<Serializer> SerializerNode<Serializer>::sstream() {
-    return open(StringStream{});
 }
 
 namespace impl {
@@ -341,6 +332,11 @@ void SerializerObject<Serializer>::flatval(FV&& v) {
     else {
         huseCannotSerializeFlat(*this, v);
     }
+}
+
+template <typename Serializer>
+SerializerStream<Serializer> huseOpen(StringStream, SerializerNode<Serializer>& parent) {
+    return SerializerStream<Serializer>(parent, parent._s().openStringStream());
 }
 
 } // namespace huse

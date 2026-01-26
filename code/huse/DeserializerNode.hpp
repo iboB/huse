@@ -4,6 +4,7 @@
 #pragma once
 #include "API.h"
 #include "ImValue.hpp"
+#include "OpenStringStream.hpp"
 
 #include <itlib/mem_streambuf.hpp>
 #include <splat/unreachable.h>
@@ -13,24 +14,24 @@
 
 namespace huse {
 
-class DeserializerSStream {
+class DeserializerStream {
 public:
-    explicit DeserializerSStream(std::string_view str)
+    explicit DeserializerStream(std::string_view str)
         : m_streambuf(str.data(), str.size())
         , m_stream(&m_streambuf)
     {}
 
-    DeserializerSStream(const DeserializerSStream&) = delete;
-    DeserializerSStream& operator=(const DeserializerSStream&) = delete;
+    DeserializerStream(const DeserializerStream&) = delete;
+    DeserializerStream& operator=(const DeserializerStream&) = delete;
 
     template <typename T>
-    DeserializerSStream& operator>>(T& t) {
+    DeserializerStream& operator>>(T& t) {
         m_stream >> t;
         return *this;
     }
 
     template <typename T>
-    DeserializerSStream& operator&(T& t) {
+    DeserializerStream& operator&(T& t) {
         m_stream >> t;
         return *this;
     }
@@ -108,17 +109,11 @@ public:
 
     template <typename O>
     decltype(auto) open(O&& o) {
-        return std::forward<O>(o).huseOpen(*this);
+        return huseOpen(std::forward<O>(o), *this);
     }
 
     DeserializerArray<Deserializer> ar();
     DeserializerObject<Deserializer> obj();
-
-    DeserializerSStream sstream() {
-        std::string_view str;
-        val(str);
-        return DeserializerSStream(str);
-    }
 };
 
 template <typename Deserializer>
@@ -181,10 +176,6 @@ public:
     template <typename T, typename F>
     void cval(T& v, F&& f) {
         f(val(), v);
-    }
-
-    DeserializerSStream sstream() {
-        return val().sstream();
     }
 
     void skip() {
@@ -256,7 +247,7 @@ public:
 
     template <typename O>
     decltype(auto) open(O&& o) {
-        return std::forward<O>(o).huseOpen(*this);
+        return huseOpen(std::forward<O>(o), *this);
     }
 
     void skip() {
@@ -348,10 +339,6 @@ public:
         else {
             v.reset();
         }
-    }
-
-    DeserializerSStream sstream(std::string_view k) {
-        return key(k).sstream();
     }
 
     std::optional<std::pair<std::string_view, Node>> optkeyval() {
@@ -504,6 +491,13 @@ void DeserializerObject<Deserializer>::flatval(T& v) {
     else {
         huseCannotDeserializeFlat(v);
     }
+}
+
+template <typename Deserializer>
+DeserializerStream huseOpen(StringStream, DeserializerNode<Deserializer>& parent) {
+    std::string_view str;
+    parent.val(str);
+    return DeserializerStream(str);
 }
 
 } // namespace huse

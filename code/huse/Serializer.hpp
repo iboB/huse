@@ -3,7 +3,6 @@
 //
 #pragma once
 #include "API.h"
-#include "OpenTags.hpp"
 #include "impl/Assert.hpp"
 #include <splat/warnings.h>
 #include <string_view>
@@ -43,7 +42,7 @@ public:
     void writeValue(const char* str) { writeValue(std::string_view(str)); }
 
     virtual std::ostream& openStringStream() = 0;
-    virtual void closeStringStream() = 0;
+    virtual void closeStream() = 0;
 
     virtual void pushKey(std::string_view key) = 0;
 
@@ -51,8 +50,6 @@ public:
     virtual void closeObject() = 0;
     virtual void openArray() = 0;
     virtual void closeArray() = 0;
-
-    std::ostream& open(StringStream) { return openStringStream(); }
 
     void throwException(const std::string& msg);
 
