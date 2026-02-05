@@ -19,7 +19,10 @@ struct HUSE_API Parser {
     Parser(const Parser&) = delete;
     Parser& operator=(const Parser&) = delete;
     Parser(Parser&&) = default;
-    Parser& operator=(Parser&&) = default;
+
+    // deleted because sajson::document::operator= is deleted,
+    // but can be made available if there is needed
+    Parser& operator=(Parser&&) = delete;
 
     ImValue rootValue() const;
 
