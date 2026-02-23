@@ -2,8 +2,6 @@
 
 A C++ library for **HU**man-readable **SE**rialization.
 
-It defines *stateful* classes `huse::Serializer` and `huse::Deserializer` which can be used to serialize and deserialize data to and fom human-readable streams with a common interface.
-
 ## Building
 
 Build with CMake.
