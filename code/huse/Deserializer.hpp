@@ -10,7 +10,7 @@ namespace huse {
 
 // Yes, yes, we're propagating the warning disable to all includers
 // but this class is supposed to be inherited virtually and this triggers the
-// stupid and absoltely pointless MSVC warning.
+// stupid and absolutely pointless MSVC warning.
 // MSVC, how are we supposed to use virtual inheritance if not like this?
 DISABLE_MSVC_WARNING(4250)
 
