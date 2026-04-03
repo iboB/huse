@@ -292,15 +292,6 @@ public:
         key(k).val(v);
     }
 
-    template <typename T>
-    void val(std::string_view k, std::optional<T>& v) {
-        if (auto open = optkey(k)) {
-            open->val(v.emplace());
-        }
-        else {
-            v.reset();
-        }
-    }
 
     template <typename T>
     bool optval(std::string_view k, T& v) {
@@ -308,19 +299,8 @@ public:
             open->val(v);
             return true;
         }
+        v = {};
         return false;
-    }
-
-    template <typename T>
-    bool optval(std::string_view k, std::optional<T>& v, const T& d) {
-        if (auto open = optkey(k)) {
-            open->val(v.emplace());
-            return true;
-        }
-        else {
-            v.reset(d);
-            return false;
-        }
     }
 
     template <typename T>
@@ -329,16 +309,6 @@ public:
     template <typename T, typename F>
     void cval(std::string_view k, T& v, F&& f) {
         key(k).cval(v, std::forward<F>(f));
-    }
-
-    template <typename T, typename F>
-    void cval(std::string_view k, std::optional<T>& v, F&& f) {
-        if (auto open = optkey(k)) {
-            open->cval(v.emplace(), std::forward<F>(f));
-        }
-        else {
-            v.reset();
-        }
     }
 
     std::optional<std::pair<std::string_view, Node>> optkeyval() {

@@ -79,15 +79,10 @@ TEST_CASE("simple serialize")
             for (int i = 1; i < 5; ++i) ar.val(i);
             ar.val(huse::json::JsonSerializer::RawJson{"42"});
         }
-        std::optional<int> nope;
-        int* nope2 = nullptr;
-        std::optional<int> yup = -3;
         obj.val("bool",true);
         obj.val("bool2",false);
         obj.val("float",3.1f);
-        obj.optval("int", yup);
-        obj.optval("nope", nope);
-        obj.optval("nope2", nope2);
+        obj.optval("int", -3);
         obj.val("unsigned-long-long",900000000000000ULL);
         obj.val("str", "b\n\\g\t\033sdf");
     }
@@ -245,6 +240,7 @@ TEST_CASE("simple deserialize")
 
         int i;
         CHECK_FALSE(obj.optval("no-such-int", i));
+        CHECK(i == 0);
         obj.val("int", i);
         CHECK(i == -3);
 
