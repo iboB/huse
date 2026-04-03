@@ -339,9 +339,9 @@ TEST_CASE("deserialize iteration")
         CHECK(ar.size() == 3);
         auto q = ar.optval();
         REQUIRE(q);
-        CHECK(q->type().isNumber());
+        CHECK(q.type().isNumber());
         int n;
-        q->val(n);
+        q.val(n);
         CHECK(n == 10);
         ar.skip();
         std::string_view s;
@@ -349,6 +349,7 @@ TEST_CASE("deserialize iteration")
         CHECK(s == "xx");
         CHECK(ar.done());
         CHECK(!ar.optval());
+        CHECK(ar.optval().type() == huse::Type::Undefined);
         CHECK_THROWS_D(ar.val(n), "array index out of bounds");
 
         std::vector<huse::DeserializerNode<huse::json::JsonDeserializer>> nodes;

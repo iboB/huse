@@ -47,7 +47,7 @@ result_t check_ack(HuseJsonObject& obj) {
     auto node = obj.optkey("ack");
     if (!node) return 0;
     int ack;
-    node->val(ack);
+    node.val(ack);
     return ack;
 }
 
@@ -55,7 +55,7 @@ result_t check_setSubscriptions(HuseJsonObject& d) {
     auto node = d.optkey("setSubscriptions");
     if (!node) return 0;
     result_t res = 0;
-    auto obj = node->obj();
+    auto obj = node.obj();
     const int len = obj.size();
     for (int i = 0; i < len; ++i) {
         std::string_view key, value;
@@ -72,7 +72,7 @@ result_t check_setRequestBatch(HuseJsonObject& d) {
     if (!node) return 0;
 
     result_t res = 0;
-    auto obj = node->obj();
+    auto obj = node.obj();
     {
         std::string_view batchId;
         obj.val("batchID", batchId);
@@ -98,7 +98,7 @@ result_t check_ping(HuseJsonObject& d) {
     auto node = d.optkey("ping");
     if (!node) return 0;
 
-    auto obj = node->obj();
+    auto obj = node.obj();
     std::string_view pl;
     obj.val("payload", pl);
 
@@ -111,7 +111,7 @@ result_t check_setInteraction(HuseJsonObject& d) {
     auto node = d.optkey("setInteraction");
     if (!node) return 0;
     result_t res = 0;
-    auto obj = node->obj();
+    auto obj = node.obj();
 
     std::string_view type;
     obj.val("type", type);

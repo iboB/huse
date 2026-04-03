@@ -7,6 +7,7 @@
 #include <huse/helpers/Identity.hpp>
 #include <huse/helpers/StdVector.hpp>
 #include <huse/helpers/StdMap.hpp>
+#include <huse/helpers/StdOptional.hpp>
 #include <huse/helpers/IntAsString.hpp>
 
 #include <huse/Exception.hpp>
@@ -78,6 +79,21 @@ TEST_CASE("map") {
     std::map<int, std::string> is = {{1, "foo"}, {4, "dsfsd"}, {-5, "boo"}};
     auto isclone = sclone(is);
     CHECK(isclone == is);
+}
+
+TEST_CASE("opt") {
+    SUBCASE("has value") {
+        std::optional<int> i = 42;
+        auto iclone = sclone(i, R"({"t":42})");
+        CHECK(iclone.has_value());
+        CHECK(*iclone == 42);
+    };
+
+    SUBCASE("no value") {
+        std::optional<int> i;
+        auto iclone = sclone(i, R"({})");
+        CHECK_FALSE(iclone.has_value());
+    };
 }
 
 TEST_CASE("istr") {

@@ -76,6 +76,7 @@ public:
     }
 
     bool _active() const noexcept { return !!m_serializer; }
+    explicit operator bool() const noexcept { return _active(); }
     Serializer& _s() noexcept { return *m_serializer; }
 
     template <typename V>

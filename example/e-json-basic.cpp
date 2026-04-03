@@ -1,8 +1,8 @@
 // Copyright (c) Borislav Stanimirov
 // SPDX-License-Identifier: MIT
 //
-#include <huse/json/Serializer.hpp>
-#include <huse/json/Deserializer.hpp>
+#include <huse/json/SerializerRoot.hpp>
+#include <huse/json/DeserializerRoot.hpp>
 #include <huse/helpers/StdVector.hpp>
 
 #include <iostream>
@@ -12,11 +12,11 @@
 template <typename Self>
 struct SerializableT
 {
-    void huseSerialize(huse::SerializerNode& n) const
+    void huseSerialize(huse::SerializerNode<huse::json::JsonSerializer>& n) const
     {
         Self::serializeT(n, *static_cast<const Self*>(this));
     }
-    void huseDeserialize(huse::DeserializerNode& n)
+    void huseDeserialize(huse::DeserializerNode<huse::json::JsonDeserializer>& n)
     {
         Self::serializeT(n, *static_cast<Self*>(this));
     }
@@ -95,13 +95,13 @@ int main()
         }
     ])json";
     std::vector<Character> characters;
-    auto d = huse::json::Make_Deserializer(json.data(), json.length());
+    huse::json::DeserializerRoot d(json);
 
     // read characters
     d.val(characters);
 
     // print characters as pretty json
-    auto s = huse::json::Make_Serializer(std::cout, true);
+    huse::json::SerializerRoot s(std::cout, true);
     s.val(characters);
 
     std::cout << '\n';

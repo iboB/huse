@@ -93,6 +93,7 @@ public:
         , m_deserializer(other.m_deserializer)
     {}
 
+    explicit operator bool() const noexcept { return !!m_deserializer; }
     Deserializer& _d() noexcept { return *m_deserializer; }
 
     Type type() const {
@@ -149,9 +150,9 @@ public:
     DeserializerObject<Deserializer> obj();
     DeserializerArray<Deserializer> ar();
 
-    std::optional<Node> optval() {
+    Node optval() {
         if (done()) {
-            return std::nullopt;
+            return Node({}, nullptr);
         }
         auto ret = Node(this->m_value.get_array_element(m_index), this->m_deserializer);
         ++m_index;
@@ -163,7 +164,7 @@ public:
         if (!v) {
             this->throwException("array index out of bounds");
         }
-        return *v;
+        return v;
     }
 
     Node index(int index) {
@@ -260,7 +261,7 @@ public:
         return m_index >= size();
     }
 
-    std::optional<Node> optkey(std::string_view k) {
+    Node optkey(std::string_view k) {
         auto index = /*iile*/[&]() {
             if (!done() && this->m_value.get_object_key(m_index) == k) {
                 return m_index;
@@ -269,7 +270,7 @@ public:
         }();
         if (index >= size()) {
             m_index = index;
-            return std::nullopt;
+            return Node({}, nullptr);
         }
         m_index = index + 1;
         return Node(this->m_value.get_object_value(index), this->m_deserializer);
@@ -280,7 +281,7 @@ public:
         if (!ret) {
             this->throwException("key not found in object");
         }
-        return *ret;
+        return ret;
     }
 
     DeserializerObject<Deserializer> obj(std::string_view k) {
@@ -299,7 +300,7 @@ public:
     template <typename T>
     bool optval(std::string_view k, T& v) {
         if (auto open = optkey(k)) {
-            open->val(v);
+            open.val(v);
             return true;
         }
         v = {};
