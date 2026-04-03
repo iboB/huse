@@ -84,7 +84,7 @@ protected:
     Deserializer* m_deserializer;
 
 public:
-    DeserializerNode(const ImValue& value, Deserializer* d = nullptr) noexcept
+    DeserializerNode(const ImValue& value, Deserializer* d) noexcept
         : impl::DeserializerNodeImpl(value)
         , m_deserializer(d)
     {}
@@ -125,7 +125,7 @@ class DeserializerArray : public DeserializerNode<Deserializer> {
 public:
     using Node = DeserializerNode<Deserializer>;
 
-    explicit DeserializerArray(const ImValue& value, Deserializer* d = nullptr)
+    explicit DeserializerArray(const ImValue& value, Deserializer* d)
         : Node(value, d)
     {
         if (!value.htype().isArray()) {
@@ -199,7 +199,7 @@ public:
         {}
 
         Node operator*() const {
-            return Node(m_array->m_value.get_array_element(m_index));
+            return Node(m_array->m_value.get_array_element(m_index), m_array->m_deserializer);
         }
 
         iterator& operator++() {
@@ -227,7 +227,7 @@ class DeserializerObject : public DeserializerNode<Deserializer> {
 public:
     using Node = DeserializerNode<Deserializer>;
 
-    explicit DeserializerObject(const ImValue& value, Deserializer* d = nullptr)
+    explicit DeserializerObject(const ImValue& value, Deserializer* d)
         : Node(value, d)
     {
         if (!value.htype().isObject()) {
@@ -269,7 +269,7 @@ public:
             return std::nullopt;
         }
         m_index = index + 1;
-        return Node(this->m_value.get_object_value(index));
+        return Node(this->m_value.get_object_value(index), this->m_deserializer);
     }
 
     Node key(std::string_view k) {
@@ -316,7 +316,7 @@ public:
             return std::nullopt;
         }
         auto key = this->m_value.get_object_key(m_index);
-        auto val = Node(this->m_value.get_object_value(m_index));
+        auto val = Node(this->m_value.get_object_value(m_index), this->m_deserializer);
         ++m_index;
         return std::make_pair(key, val);
     }
@@ -362,7 +362,7 @@ public:
             auto& val = m_object->m_value;
             return {
                 val.get_object_key(m_index),
-                Node(val.get_object_value(m_index))
+                Node(val.get_object_value(m_index), m_object->m_deserializer)
             };
         }
 
@@ -384,11 +384,11 @@ public:
 
 template <typename Deserializer>
 inline DeserializerObject<Deserializer> DeserializerNode<Deserializer>::obj() {
-    return DeserializerObject<Deserializer>(m_value);
+    return DeserializerObject<Deserializer>(m_value, this->m_deserializer);
 }
 template <typename Deserializer>
 inline DeserializerArray<Deserializer> DeserializerNode<Deserializer>::ar() {
-    return DeserializerArray<Deserializer>(m_value);
+    return DeserializerArray<Deserializer>(m_value, this->m_deserializer);
 }
 
 template <typename Deserializer>

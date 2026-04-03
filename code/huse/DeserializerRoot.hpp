@@ -12,7 +12,7 @@ public:
     template <typename... Args>
     DeserializerRoot(Args&&... args)
         : SDeserializer(std::forward<Args>(args)...)
-        , DeserializerNode<SDeserializer>(this->SDeserializer::getRootValue())
+        , DeserializerNode<SDeserializer>(this->SDeserializer::getRootValue(), this)
     {}
 };
 
