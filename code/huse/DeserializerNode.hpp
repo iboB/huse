@@ -59,10 +59,6 @@ protected:
     }
 
 public:
-    Type type() const {
-        return m_value.htype();
-    }
-
     [[noreturn]] void throwException(std::string_view msg) const {
         m_value.throwException(msg);
         SPLAT_UNREACHABLE();
@@ -98,6 +94,13 @@ public:
     {}
 
     Deserializer& _d() noexcept { return *m_deserializer; }
+
+    Type type() const {
+        if (!m_deserializer) {
+            return Type::Undefined;
+        }
+        return m_value.htype();
+    }
 
     template <typename T>
     void val(T& v);

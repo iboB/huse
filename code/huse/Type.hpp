@@ -9,6 +9,7 @@ namespace huse {
 struct Type {
 public:
     enum Value : uint8_t {
+        Undefined = 0, // uninitialized node
         Null,
         String,
         Object,
