@@ -300,7 +300,7 @@ template <typename T, typename Serializer>
 concept HasSerializeFlatFunc = requires(SerializerObject<Serializer>& obj, T t) {
     huseSerializeFlat(obj, t);
 };
-}
+} // namespace impl
 
 template <typename Serializer>
 template <typename V>
