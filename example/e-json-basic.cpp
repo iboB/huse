@@ -4,6 +4,7 @@
 #include <huse/json/SerializerRoot.hpp>
 #include <huse/json/DeserializerRoot.hpp>
 #include <huse/helpers/StdVector.hpp>
+#include <huse/helpers/StdOptional.hpp>
 
 #include <iostream>
 #include <vector>
