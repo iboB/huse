@@ -498,6 +498,33 @@ TEST_CASE("string i/o")
     }
 }
 
+TEST_CASE("float i/o") {
+    const double nums[] = {
+        1, -3, -0.25, 1e-10, 1e60, 1e-120, // easy
+        1.65, 0.3, 0.333, 3.141592, 3e-121, //tricky
+        27.900001108646396, 0.9689776221127033 // super tricky
+    };
+
+    JsonSerializeTester j;
+    {
+        auto root = j.compact();
+        auto ar = root.ar();
+        for (double d : nums) ar.val(d);
+    }
+
+    auto json = j.str();
+    CHECK(json == "[1,-3,-0.25,1e-10,1e+60,1e-120,1.65,0.3,0.333,3.141592,3e-121,27.900001108646396,0.9689776221127033]");
+
+    auto root = makeD(json);
+    auto ar = root.ar();
+    CHECK(ar.size() == int(std::size(nums)));
+    for (int i = 0; i < ar.size(); ++i) {
+        double d;
+        ar.val(d);
+        CHECK(d == nums[i]);
+    }
+}
+
 struct BigIntegers
 {
     int32_t min32;
