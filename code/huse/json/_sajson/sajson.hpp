@@ -1594,12 +1594,10 @@ private:
             auto res = std::from_chars(begin, p, value);
             if (res.ec == std::errc::result_out_of_range) {
                 match_double = true;
-            }
-            else if (res.ec != std::errc()) {
+            } else if (res.ec != std::errc()) {
                 return std::make_pair(
                     make_error(p, ERROR_INVALID_NUMBER), tag::null);
-            }
-            else if (value >= std::numeric_limits<int32_t>::min() && value <= std::numeric_limits<int32_t>::max()) {
+            } else if (value >= std::numeric_limits<int32_t>::min() && value <= std::numeric_limits<int32_t>::max()) {
                 bool success;
                 size_t* out
                     = allocator.reserve(integer_storage::word_length, &success);
@@ -1615,7 +1613,7 @@ private:
         }
 
         if (match_double) {
-            std::from_chars_result res = std::from_chars(begin, input_end, double_value);
+            auto res = std::from_chars(begin, input_end, double_value);
             if (res.ec != std::errc()) {
                 return std::make_pair(
                     make_error(p, ERROR_INVALID_NUMBER), tag::null);
