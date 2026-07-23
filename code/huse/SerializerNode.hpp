@@ -1,5 +1,6 @@
 #pragma once
 #include "OpenStringStream.hpp"
+#include "impl/Assert.hpp"
 #include <iosfwd>
 #include <concepts>
 #include <string_view>
