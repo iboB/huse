@@ -59,6 +59,10 @@ public:
         return m_stack.back();
     }
 
+    uintptr_t topId() const {
+        return reinterpret_cast<uintptr_t>(top().value.data_ptr());
+    }
+
     Trace getTrace() const;
 
     [[noreturn]] void throwException(std::string msg) const;

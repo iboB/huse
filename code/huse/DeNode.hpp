@@ -22,9 +22,9 @@ protected:
     De& m_state;
     bool m_ownsTop;
 #if !defined(NDEBUG)
-    typename De::StackEntry& m_entry;
+    uintptr_t m_entryId;
     void assertIsTop() const noexcept {
-        assert(&m_entry == &m_state.top());
+        assert(m_entryId == m_state.topId());
     }
 #else
     FORCE_INLINE void assertIsTop() const noexcept {}
@@ -38,7 +38,7 @@ public:
         : m_state(state)
         , m_ownsTop(ownsTop)
 #if !defined(NDEBUG)
-        , m_entry(state.top())
+        , m_entryId(state.topId())
 #endif
     {}
 
