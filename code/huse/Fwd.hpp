@@ -3,23 +3,22 @@
 //
 #pragma once
 
-namespace huse
-{
+namespace huse {
 
-template <typename S>
-class SerializerNode;
-template <typename S>
-class SerializerArray;
-template <typename S>
-class SerializerObject;
-template <typename Serializer>
-class SerializerSStream;
+class ISerState;
+
+template <typename Ser = ISerState>
+class SerNode;
+template <typename Ser = ISerState>
+class SerArray;
+template <typename Ser = ISerState>
+class SerObject;
 
 template <typename D>
-class DeserializerNode;
+class DeNode;
 template <typename D>
-class DeserializerArray;
+class DeArray;
 template <typename D>
-class DeserializerObject;
-class DeserializerSStream;
-}
+class DeObject;
+
+} // namespace huse

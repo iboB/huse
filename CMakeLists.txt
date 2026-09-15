@@ -30,27 +30,32 @@ option(HUSE_BUILD_BENCH "huse: build benchmarks" ${ICM_DEV_MODE})
 
 #######################################
 # packages
-CPMAddPackage(gh:iboB/splat@1.3.4)
-CPMAddPackage(gh:iboB/itlib@1.11.7)
+CPMAddPackage(gh:iboB/splat@1.3.5)
+CPMAddPackage(gh:iboB/itlib@1.12.2)
+
+if(NOT TARGET pojobuf::pojobuf)
+    set(CPM_pojobuf_SOURCE ${CMAKE_SOURCE_DIR}/../pojobuf)
+    CPMAddPackage(gh:iboB/pojobuf@0.0.1)
+endif()
 
 #######################################
 # subdirs
 
-add_subdirectory(code/huse)
-
-if(ICM_DEV_MODE)
-    add_subdirectory(scratch)
-endif()
-
-if(HUSE_BUILD_EXAMPLES)
-    add_subdirectory(example)
-endif()
+add_subdirectory(code)
 
 if(HUSE_BUILD_TESTS)
     enable_testing()
     add_subdirectory(test)
 endif()
 
-if(HUSE_BUILD_BENCH)
-    add_subdirectory(bench)
-endif()
+#~ if(ICM_DEV_MODE)
+#~     add_subdirectory(scratch)
+#~ endif()
+#~
+#~ if(HUSE_BUILD_EXAMPLES)
+#~     add_subdirectory(example)
+#~ endif()
+#~
+#~ if(HUSE_BUILD_BENCH)
+#~     add_subdirectory(bench)
+#~ endif()
