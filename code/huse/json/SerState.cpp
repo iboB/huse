@@ -75,11 +75,20 @@ SerState::~SerState() {
     assert(curStackDepth() == 0);
 }
 
+void SerState::addPendingKey() {
+    if (m_pendingKey.data()) {
+        m_impl->writer.add_object_key(m_pendingKey);
+        m_pendingKey = {};
+    }
+}
+
 void SerState::writeRawJsonValue(std::string_view json) {
+    addPendingKey();
     m_impl->writer.add_raw_json_value(json);
 }
 
 void SerState::writeValue(bool val) {
+    addPendingKey();
     if (val) {
         m_impl->writer.add_literal_element<pojobuf::value_tag::true_>();
     }
@@ -89,15 +98,17 @@ void SerState::writeValue(bool val) {
 }
 
 void SerState::writeValue(std::nullptr_t) {
+    addPendingKey();
     m_impl->writer.add_literal_element<pojobuf::value_tag::null>();
 }
 
 void SerState::discardTop() noexcept {
-    m_impl->writer.discard_pending_key();
+    m_pendingKey = {};
 }
 
 template <typename T>
 void SerState::writeNumber(T num) {
+    addPendingKey();
     if (!m_impl->writer.add_number_element(num)) {
         throwException("Invalid JSON number value");
     }
@@ -115,20 +126,23 @@ void SerState::writeValue(float val) { writeNumber(val); }
 void SerState::writeValue(double val) { writeNumber(val); }
 
 void SerState::writeValue(std::string_view val) {
+    addPendingKey();
     m_impl->writer.add_string_element(val);
 }
 
 void SerState::topObjectPushKey(std::string_view k) {
-    m_impl->writer.add_object_key(k);
+    m_pendingKey = k;
 }
 
 void SerState::pushObjectValue() {
+    addPendingKey();
     m_impl->writer.open_compound_element<pojobuf::value_tag::object>();
 }
 void SerState::topObjectClose() {
     m_impl->writer.close_compound_element<pojobuf::value_tag::object>();
 }
 void SerState::pushArrayValue() {
+    addPendingKey();
     m_impl->writer.open_compound_element<pojobuf::value_tag::array>();
 }
 void SerState::topArrayClose() {
@@ -151,6 +165,7 @@ std::ostream& SerState::pushStringStream() {
     }
     assert(!*m_stringStream);
     m_stringStream->emplace(*m_impl);
+    addPendingKey();
     m_impl->writer.prepare_for_val();
     m_sink.add('"');
     return (*m_stringStream)->stream;

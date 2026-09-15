@@ -55,15 +55,17 @@ public:
     struct Impl;
 private:
     template <typename T> void writeNumber(T num);
+    void addPendingKey();
 
     pojobuf::ostream_string_sink<> m_sink;
+
+    std::string_view m_pendingKey;
 
     alignas (std::max_align_t) std::byte m_implBuf[ImplBuf_Size];
     Impl* m_impl;
 
     struct JsonOStream;
     std::unique_ptr<std::optional<JsonOStream>> m_stringStream;
-
 };
 
 struct RawJsonValue {
