@@ -67,7 +67,7 @@ public:
 
     [[noreturn]] void throwException(std::string msg) const;
 
-    void push(const pojobuf::value& val) noexcept {
+    void push(const pojobuf::value& val) {
         m_stack.push_back({val});
     }
     void pop() noexcept {
