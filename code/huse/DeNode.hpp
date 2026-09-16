@@ -350,6 +350,16 @@ public:
         return key(k).obj();
     }
 
+    template <typename O>
+    decltype(auto) open(O&& o) const& {
+        return huse_open(*this, std::forward<O>(o));
+    }
+
+    template <typename O>
+    decltype(auto) open(O&& o) && {
+        return huse_open(std::move(*this), std::forward<O>(o));
+    }
+
     class Iterator {
         const DeObject& m_obj;
         union { KvPair m_pair; };

@@ -111,19 +111,37 @@ protected:
 
     SerCompound(const SerCompound& other) noexcept
         : SerCompound(other.m_state, false)
-    {}
+    {
+#if !defined(NDEBUG)
+        m_depth = other.m_depth;
+#endif
+    }
     template <std::derived_from<Ser> Ser2>
     SerCompound(const SerCompound<Ser2>& other) noexcept
         : SerCompound(other.m_state, false)
-    {}
+    {
+#if !defined(NDEBUG)
+        m_depth = other.m_depth;
+#endif
+    }
 
     SerCompound(SerCompound&& other) noexcept
         : SerCompound(other.m_state, std::exchange(other.m_ownsClose, false))
-    {}
+    {
+#if !defined(NDEBUG)
+        m_depth = other.m_depth;
+#endif
+    }
+
     template <std::derived_from<Ser> Ser2>
     SerCompound(SerCompound<Ser2>&& other) noexcept
         : SerCompound(other.m_state, std::exchange(other.m_ownsClose, false))
-    {}
+    {
+#if !defined(NDEBUG)
+        m_depth = other.m_depth;
+#endif
+    }
+
     SerCompound& operator=(SerCompound&&) = delete;
 
 public:
@@ -138,8 +156,8 @@ public:
     using Super = SerCompound<Ser>;
 
     ~SerArray() {
-        this->assertIsTop();
         if (this->m_ownsClose) {
+            this->assertIsTop();
             this->m_state.topArrayClose();
         }
     }
@@ -175,8 +193,8 @@ public:
     using Super = SerCompound<Ser>;
 
     ~SerObject() {
-        this->assertIsTop();
         if (this->m_ownsClose) {
+            this->assertIsTop();
             this->m_state.topObjectClose();
         }
     }
@@ -249,6 +267,11 @@ public:
     bool optkeyval(std::string_view k, V&& v) const {
         val(k, std::forward<V>(v));
         return true;
+    }
+
+    template <typename O>
+    decltype(auto) open(O&& o) const {
+        return huse_open(*this, std::forward<O>(o));
     }
 
 private:
