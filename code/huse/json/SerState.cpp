@@ -21,6 +21,9 @@ struct SerState::Impl {
         pojobuf::json::count_only_stack,
         pojobuf::invalid_value_strategy::skip
     >;
+    Impl(pojobuf::ostream_string_sink<>& sink, bool pretty)
+        : writer(sink, pretty)
+    {}
     WriterType writer;
 };
 static_assert(alignof(SerState::Impl) <= alignof(std::max_align_t));
@@ -67,7 +70,7 @@ struct JsonRedirectStreambuf final : public std::streambuf
 
 SerState::SerState(std::ostream& out, bool pretty)
     : m_sink(out)
-    , m_impl(new (m_implBuf) Impl{.writer{m_sink, pretty}})
+    , m_impl(new (m_implBuf) Impl(m_sink, pretty))
 {}
 
 SerState::~SerState() {
