@@ -1,9 +1,8 @@
 # Copyright (c) Borislav Stanimirov
 # SPDX-License-Identifier: MIT
 #
-CPMAddPackage(gh:iboB/picobench@2.08)
-CPMAddPackage(gh:simdjson/simdjson@3.13.0)
-CPMAddPackage(gh:iboB/json-test-data@1.1.0)
+CPMAddPackage(gh:iboB/picobench@2.10.0)
+CPMAddPackage(gh:iboB/json-test-data@1.2.0)
 
 if(NOT TARGET Boost::boost)
     CPMAddPackage(
@@ -33,7 +32,6 @@ macro(huse_benchmark name)
     target_link_libraries(${tgt} PRIVATE
         huse::huse
         Boost::json
-        simdjson::simdjson
         test-data::json
         picobench::picobench
     )
@@ -44,5 +42,4 @@ macro(huse_benchmark name)
     set_target_properties(run-${tgt} PROPERTIES FOLDER bench)
 endmacro()
 
-huse_benchmark(json-read)
-huse_benchmark(json-parse)
+huse_benchmark(json-de)

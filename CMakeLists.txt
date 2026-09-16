@@ -48,14 +48,14 @@ if(HUSE_BUILD_TESTS)
     add_subdirectory(test)
 endif()
 
-#~ if(ICM_DEV_MODE)
-#~     add_subdirectory(scratch)
-#~ endif()
-#~
 #~ if(HUSE_BUILD_EXAMPLES)
 #~     add_subdirectory(example)
 #~ endif()
-#~
-#~ if(HUSE_BUILD_BENCH)
-#~     add_subdirectory(bench)
-#~ endif()
+
+if(HUSE_BUILD_BENCH)
+    add_subdirectory(bench)
+endif()
+
+if(ICM_DEV_MODE)
+    add_subdirectory(sandbox)
+endif()
