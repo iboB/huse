@@ -84,7 +84,6 @@ public:
     }
 
     // DeNode compat
-    FORCE_INLINE const SerNode& val() const { return *this; }
     explicit constexpr operator bool() const noexcept { return true; }
 };
 
@@ -180,6 +179,8 @@ public:
     using Super::ar;
     using Super::obj;
 
+    FORCE_INLINE const Node& val() const { return *this; }
+
 private:
     explicit SerArray(Ser& state)
         : Super(state, true)
@@ -217,7 +218,6 @@ public:
         this->m_state.topObjectPushKey(k);
         return *this;
     }
-
 
     SerObject obj(std::string_view k) const {
         return key(k).obj();
