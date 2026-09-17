@@ -21,6 +21,12 @@ public:
         : m_document(std::move(doc))
     {}
 
+    PojobufDocDeState(const PojobufDocDeState&) = delete;
+    PojobufDocDeState& operator=(const PojobufDocDeState&) = delete;
+
+    PojobufDocDeState(PojobufDocDeState&&) noexcept = default;
+    PojobufDocDeState& operator=(PojobufDocDeState&&) noexcept = default;
+
     ~PojobufDocDeState();
 
     void initRoot() {
