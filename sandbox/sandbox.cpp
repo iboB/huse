@@ -3,6 +3,7 @@
 //
 #include <iostream>
 #include <huse/json/DeRoot.hpp>
+#include <huse/json/SerRoot.hpp>
 
 int main()
 {
@@ -10,9 +11,12 @@ int main()
 
     try
     {
-        auto d = huse::json::DeRoot(huse::Parse, json);
-        //int i;
-        //d.val(i);
+        huse::json::DeRoot d(huse::Parse, json);
+        int i;
+        d.obj().val("val", i);
+
+        huse::json::SerRoot s(std::cout);
+        s.val(i);
     }
     catch (std::exception& e)
     {
