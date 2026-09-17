@@ -119,6 +119,16 @@ public:
         return huse_open(std::move(*this), std::forward<O>(o));
     }
 
+    void discard() {
+        if (m_ownsTop) {
+            m_state.pop();
+            m_ownsTop = false;
+#if !defined(NDEBUG)
+            m_entryId = ~uintptr_t(0);
+#endif
+        }
+    }
+
     // SerNode compat
     FORCE_INLINE void renderCompact() {}
 };
