@@ -49,9 +49,9 @@ if(HUSE_BUILD_TESTS)
     add_subdirectory(test)
 endif()
 
-#~ if(HUSE_BUILD_EXAMPLES)
-#~     add_subdirectory(example)
-#~ endif()
+if(HUSE_BUILD_EXAMPLES)
+    add_subdirectory(example)
+endif()
 
 if(HUSE_BUILD_BENCH)
     add_subdirectory(bench)

@@ -71,8 +71,7 @@ struct PolySerializableFacetImpl : public PolySerializableFacet {
     }
 };
 
-TEST_CASE("poly roundtrip")
-{
+TEST_CASE("poly roundtrip") {
     const PolySerializable orig = {72, "xyz"};
 
     std::ostringstream sout;

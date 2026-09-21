@@ -1,50 +1,35 @@
 // Copyright (c) Borislav Stanimirov
 // SPDX-License-Identifier: MIT
 //
-#include <huse/json/Serializer.hpp>
-#include <huse/json/Deserializer.hpp>
-#include <huse/helpers/StdVector.hpp>
+#include <huse/json/SerRoot.hpp>
+#include <huse/json/DeRoot.hpp>
+#include <huse/ext/ValStdVector.hpp>
+#include <huse/ext/ValStdOptional.hpp>
 
 #include <iostream>
 #include <vector>
 #include <string>
 
-template <typename Self>
-struct SerializableT
-{
-    void huseSerialize(huse::SerializerNode& n) const
-    {
-        Self::serializeT(n, *static_cast<const Self*>(this));
-    }
-    void huseDeserialize(huse::DeserializerNode& n)
-    {
-        Self::serializeT(n, *static_cast<Self*>(this));
-    }
-};
-
-struct Skill : public SerializableT<Skill>
-{
+struct Skill {
     std::string label;
     int mp; // mana to use skill
 
     template <typename Node, typename Self>
-    static void serializeT(Node& n, Self& self)
-    {
+    static void huse_serde(Node& n, Self& self) {
         auto obj = n.obj();
+        obj.renderCompact();
         obj.val("skill", self.label);
         obj.val("MP", self.mp);
     }
 };
 
-struct Familiar : public SerializableT<Familiar>
-{
+struct Familiar {
     std::string name;
     int hp;
     Skill skill;
 
     template <typename Node, typename Self>
-    static void serializeT(Node& n, Self& self)
-    {
+    static void huse_serde(Node& n, Self& self) {
         auto obj = n.obj();
         obj.val("familiar", self.name);
         obj.val("HP", self.hp);
@@ -52,8 +37,7 @@ struct Familiar : public SerializableT<Familiar>
     }
 };
 
-struct Character : public SerializableT<Character>
-{
+struct Character {
     std::string name;
     int hp;
     int mp;
@@ -61,8 +45,7 @@ struct Character : public SerializableT<Character>
     std::optional<Familiar> familiar;
 
     template <typename Node, typename Self>
-    static void serializeT(Node& n, Self& self)
-    {
+    static void huse_serde(Node& n, Self& self) {
         auto obj = n.obj();
         obj.val("character", self.name);
         obj.val("HP", self.hp);
@@ -72,8 +55,7 @@ struct Character : public SerializableT<Character>
     }
 };
 
-int main()
-{
+int main() {
     std::string json = R"json([
         {
             "character": "John Snow",
@@ -95,13 +77,13 @@ int main()
         }
     ])json";
     std::vector<Character> characters;
-    auto d = huse::json::Make_Deserializer(json.data(), json.length());
 
     // read characters
+    huse::json::DeRoot d(huse::Parse, json);
     d.val(characters);
 
     // print characters as pretty json
-    auto s = huse::json::Make_Serializer(std::cout, true);
+    huse::json::SerRoot s(std::cout, true);
     s.val(characters);
 
     std::cout << '\n';
