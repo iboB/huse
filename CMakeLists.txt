@@ -32,6 +32,7 @@ option(HUSE_BUILD_BENCH "huse: build benchmarks" ${ICM_DEV_MODE})
 # packages
 CPMAddPackage(gh:iboB/splat@1.3.5)
 CPMAddPackage(gh:iboB/itlib@1.12.2)
+CPMAddPackage(gh:iboB/trex@0.2.0)
 
 if(NOT TARGET pojobuf::pojobuf)
     set(CPM_pojobuf_SOURCE ${CMAKE_SOURCE_DIR}/../pojobuf)

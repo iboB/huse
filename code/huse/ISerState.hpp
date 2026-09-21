@@ -3,6 +3,7 @@
 //
 #pragma once
 #include "api.h"
+#include "Ctx.hpp"
 #include <string_view>
 #include <string>
 #include <cstdint>
@@ -46,6 +47,8 @@ public:
     virtual void topStringStreamClose() = 0;
 
     [[noreturn]] virtual void throwException(std::string msg) const;
+
+    Ctx ctx;
 };
 
 inline void huseState_serde(ISerState& self, bool val) {

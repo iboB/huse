@@ -13,6 +13,7 @@ target_sources(huse
         huse/ISerState.cpp
         huse/Trace.cpp
         huse/Exception.cpp
+        huse/CtxDomain.cpp
 
         huse/json/DeState.cpp
         huse/json/SerState.cpp
@@ -24,4 +25,5 @@ target_link_libraries(huse
         splat::splat
         itlib::itlib
         pojobuf::pojobuf
+        trex::trex
 )

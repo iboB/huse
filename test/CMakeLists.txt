@@ -9,3 +9,4 @@ endmacro()
 
 huse_test(json)
 huse_test(StringStream)
+huse_test(poly)

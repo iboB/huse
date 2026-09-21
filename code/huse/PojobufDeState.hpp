@@ -4,6 +4,7 @@
 #pragma once
 #include "api.h"
 #include "Type.hpp"
+#include "Ctx.hpp"
 #include <pojobuf/value.hpp>
 #include <itlib/small_vector.hpp>
 #include <limits>
@@ -153,6 +154,8 @@ public:
         push(v);
         return k;
     }
+
+    Ctx ctx;
 
 protected:
     itlib::small_vector<StackEntry, 32> m_stack;

@@ -1,16 +1,14 @@
 // Copyright (c) Borislav Stanimirov
 // SPDX-License-Identifier: MIT
 //
-#include <huse/json/Deserializer.hpp>
-#include <huse/json/Serializer.hpp>
-#include <huse/CtxDomain.hpp>
+#include <huse/json/DeRoot.hpp>
+#include <huse/json/SerRoot.hpp>
 
-#include <dynamix/declare_mixin.hpp>
-#include <dynamix/define_mixin.hpp>
-#include <dynamix/msg/declare_msg.hpp>
-#include <dynamix/msg/define_msg.hpp>
-#include <dynamix/msg/msg_traits.hpp>
-#include <dynamix/mutate.hpp>
+#include <huse/CtxDomain.hpp>
+#include <huse/Ctx.hpp>
+
+#include <trex/facets/declare.hpp>
+#include <trex/facets/define.hpp>
 
 #include <sstream>
 
@@ -26,54 +24,75 @@ struct PolySerializable {
         o.val("a", self.a);
         o.val("b", self.b);
     }
-
-    struct Io {
-        virtual void operator()(huse::SerializerNode& n, const PolySerializable& ps) const = 0;
-        virtual void operator()(huse::DeserializerNode& n, PolySerializable& ps) const = 0;
-    };
-
-    struct Serialize;
 };
 
-DYNAMIX_DECLARE_SIMPLE_MSG(getPolySerializableIo, const PolySerializable::Io*(const huse::CtxObj&));
+struct PolySerializableFacet {
+    virtual void ser(const huse::SerNode<huse::ISerState>& n, const PolySerializable& ps) const = 0;
+    virtual void de(const huse::DeNode<huse::PojobufDeState>&n, PolySerializable & ps) const = 0;
+};
+TREX_DECLARE_FACET(huse::CtxDomain, PolySerializableFacet);
 
-struct PolySerializable::Serialize {
-    template <typename N, typename PS>
-    void operator()(N& n, PS& ps) const {
-        auto& ctx = n.ctx();
-        auto* io = getPolySerializableIo::call(ctx);
-        if (io) {
-            (*io)(n, ps);
-        }
-        else {
-            PS::defaultSerialize(n, ps);
-        }
+void huseState_serde(huse::ISerState& self, const PolySerializable& val) {
+    huse::SerNode node(self);
+    if (auto psf = self.ctx.pget<PolySerializableFacet>()) {
+        psf->ser(node, val);
+    }
+    else {
+        PolySerializable::defaultSerialize(node, val);
+    }
+}
+
+void huseState_serde(huse::PojobufDeState& self, PolySerializable& out) {
+    huse::DeNode node(self);
+    if (auto psf = self.ctx.pget<PolySerializableFacet>()) {
+        psf->de(node, out);
+    }
+    else {
+        PolySerializable::defaultSerialize(node, out);
+    }
+}
+
+struct PolySerializableFacetImpl : public PolySerializableFacet {
+    void ser(const huse::SerNode<huse::ISerState>& n, const PolySerializable& ps) const override {
+        auto o = n.obj();
+        o.val("aa", ps.a * 100);
+        o.val("bb", ps.b + "_");
+    }
+    void de(const huse::DeNode<huse::PojobufDeState>& n, PolySerializable& ps) const override {
+        auto o = n.obj();
+        o.val("aa", ps.a);
+        CHECK(ps.a % 100 == 0);
+        ps.a /= 100;
+
+        o.val("bb", ps.b);
+        CHECK(ps.b.length() >= 1);
+        CHECK(ps.b.back() == '_');
+        ps.b.pop_back();
     }
 };
 
-DYNAMIX_DECLARE_MIXIN(struct SDEx);
-
-TEST_CASE("poly i/o")
+TEST_CASE("poly roundtrip")
 {
     const PolySerializable orig = {72, "xyz"};
-    PolySerializable::Serialize helper;
-    std::ostringstream sout;
-    huse::json::Make_Serializer(sout).cval(orig, helper);
 
+    std::ostringstream sout;
+    huse::json::SerRoot(sout).val(orig);
     auto json = sout.str();
     sout.str("");
     CHECK(json == R"({"a":72,"b":"xyz"})");
 
     PolySerializable cc;
-    huse::json::Make_Deserializer(json).cval(cc, helper);
+    huse::json::DeRoot(huse::Parse, json).val(cc);
 
     CHECK(orig.a == cc.a);
     CHECK(orig.b == cc.b);
 
+    PolySerializableFacetImpl psf;
+
     {
-        auto s = huse::json::Make_Serializer(sout);
-        mutate(s.ctx(), dynamix::add<SDEx>());
-        s.cval(orig, helper);
+        huse::json::SerRoot s(sout);
+        s.ctx.reset_ref<PolySerializableFacet>(psf);
+        s.val(orig);
     }
 
     json = sout.str();
@@ -81,47 +100,13 @@ TEST_CASE("poly i/o")
 
     PolySerializable cc2;
     {
-        auto d = huse::json::Make_Deserializer(json);
-        mutate(d.ctx(), dynamix::add<SDEx>());
-        d.cval(cc2, helper);
+        auto d = huse::json::DeRoot(huse::Parse, json);
+        d.ctx.reset_ref<PolySerializableFacet>(psf);
+        d.val(cc2);
     }
 
     CHECK(orig.a == cc2.a);
     CHECK(orig.b == cc2.b);
 }
 
-struct SDEx {
-    struct Io final : public PolySerializable::Io {
-        void operator()(huse::SerializerNode& n, const PolySerializable& ps) const override {
-            auto o = n.obj();
-            o.val("aa", ps.a * 100);
-            o.val("bb", ps.b + "_");
-        }
-        void operator()(huse::DeserializerNode& n, PolySerializable& ps) const override {
-            auto o = n.obj();
-            o.val("aa", ps.a);
-            CHECK(ps.a % 100 == 0);
-            ps.a /= 100;
-
-            o.val("bb", ps.b);
-            CHECK(ps.b.length() >= 1);
-            CHECK(ps.b.back() == '_');
-            ps.b.pop_back();
-        }
-    };
-    Io m_io;
-
-    static const PolySerializable::Io* get(const SDEx* self) {
-        return &self->m_io;
-    }
-};
-
-DYNAMIX_DEFINE_MIXIN(huse::CtxDomain, SDEx)
-    .implements_by<getPolySerializableIo>(&SDEx::get)
-;
-
-DYNAMIX_DEFINE_SIMPLE_MSG_EX(getPolySerializableIo, unicast, false,
-    [](const huse::CtxObj&)->const PolySerializable::Io* {
-        return nullptr;
-    }
-);
+TREX_DEFINE_FACET(huse::CtxDomain, PolySerializableFacet);
