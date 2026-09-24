@@ -90,7 +90,7 @@ TEST_CASE("poly roundtrip") {
 
     {
         huse::json::SerRoot s(sout);
-        s.ctx.reset_ref<PolySerializableFacet>(psf);
+        s.ctx.set_ref<PolySerializableFacet>(psf);
         s.val(orig);
     }
 
