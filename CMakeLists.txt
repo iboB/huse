@@ -31,9 +31,9 @@ option(HUSE_BUILD_BENCH "huse: build benchmarks" ${ICM_DEV_MODE})
 #######################################
 # packages
 CPMAddPackage(gh:iboB/splat@1.3.5)
-CPMAddPackage(gh:iboB/itlib@1.12.2)
+CPMAddPackage(gh:iboB/itlib@1.12.3)
 CPMAddPackage(gh:iboB/trex@0.2.1)
-CPMAddPackage(gh:iboB/pojobuf@0.1.0)
+CPMAddPackage(gh:iboB/pojobuf@0.1.1)
 
 #######################################
 # subdirs
